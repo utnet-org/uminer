@@ -1,0 +1,5 @@
+build/bin/{{.BinaryName}} usr/bin
+{{- if eq .BinaryName "gunc" }}
+build/deb/utility/completions/bash/gunc etc/bash_completion.d
+build/deb/utility/completions/zsh/_geth usr/share/zsh/vendor-completions
+{{end -}}
