@@ -517,10 +517,10 @@ func (g *Genesis) MustCommit(db uncdb.Database, triedb *trie.Database) *types.Bl
 func DefaultGenesisBlock() *Genesis {
 	return &Genesis{
 		Config:     params.MainnetChainConfig,
-		Nonce:      66,
+		Nonce:      1,
 		ExtraData:  hexutil.MustDecode("0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa"),
 		GasLimit:   5000,
-		Difficulty: big.NewInt(17179869184),
+		Difficulty: big.NewInt(1),
 		Alloc:      decodePrealloc(mainnetAllocData),
 	}
 }
@@ -533,7 +533,7 @@ func DefaultGoerliGenesisBlock() *Genesis {
 		ExtraData:  hexutil.MustDecode("0x22466c6578692069732061207468696e6722202d204166726900000000000000e0a2bd4258d2768837baa26a28fe71dc079f84c70000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
 		GasLimit:   10485760,
 		Difficulty: big.NewInt(1),
-		Alloc:      decodePrealloc(goerliAllocData),
+		Alloc:      decodePrealloc(mainnetAllocData),
 	}
 }
 
@@ -546,7 +546,7 @@ func DefaultSepoliaGenesisBlock() *Genesis {
 		GasLimit:   0x1c9c380,
 		Difficulty: big.NewInt(0x20000),
 		Timestamp:  1633267481,
-		Alloc:      decodePrealloc(sepoliaAllocData),
+		Alloc:      decodePrealloc(mainnetAllocData),
 	}
 }
 
@@ -558,7 +558,7 @@ func DefaultHoleskyGenesisBlock() *Genesis {
 		GasLimit:   0x17d7840,
 		Difficulty: big.NewInt(0x01),
 		Timestamp:  1695902100,
-		Alloc:      decodePrealloc(holeskyAllocData),
+		Alloc:      decodePrealloc(mainnetAllocData),
 	}
 }
 
