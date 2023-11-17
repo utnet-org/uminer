@@ -860,7 +860,7 @@ func (api *API) TraceTransaction(ctx context.Context, hash common.Hash, config *
 	return api.traceTx(ctx, msg, txctx, vmctx, statedb, config)
 }
 
-// TraceCall lets you trace a given eth_call. It collects the structured logs
+// TraceCall lets you trace a given unc_call. It collects the structured logs
 // created during the execution of UVM if the given transaction was added on
 // top of the provided block and returns them as a JSON object.
 func (api *API) TraceCall(ctx context.Context, args uncapi.TransactionArgs, blockNrOrHash rpc.BlockNumberOrHash, config *TraceCallConfig) (interface{}, error) {

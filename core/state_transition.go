@@ -141,7 +141,7 @@ type Message struct {
 
 	// When SkipAccountChecks is true, the message nonce is not checked against the
 	// account nonce in state. It also disables checking that the sender is an EOA.
-	// This field will be set to true for operations like RPC eth_call.
+	// This field will be set to true for operations like RPC unc_call.
 	SkipAccountChecks bool
 }
 
@@ -289,7 +289,7 @@ func (st *StateTransition) preCheck() error {
 	}
 	// Make sure that transaction gasFeeCap is greater than the baseFee (post london)
 	if st.uvm.ChainConfig().IsLondon(st.uvm.Context.BlockNumber) {
-		// Skip the checks if gas fields are zero and baseFee was explicitly disabled (eth_call)
+		// Skip the checks if gas fields are zero and baseFee was explicitly disabled (unc_call)
 		skipCheck := st.uvm.Config.NoBaseFee && msg.GasFeeCap.BitLen() == 0 && msg.GasTipCap.BitLen() == 0
 		if !skipCheck {
 			if l := msg.GasFeeCap.BitLen(); l > 256 {
@@ -327,7 +327,7 @@ func (st *StateTransition) preCheck() error {
 	// Check that the user is paying at least the current blob fee
 	if st.uvm.ChainConfig().IsCancun(st.uvm.Context.BlockNumber, st.uvm.Context.Time) {
 		if st.blobGasUsed() > 0 {
-			// Skip the checks if gas fields are zero and blobBaseFee was explicitly disabled (eth_call)
+			// Skip the checks if gas fields are zero and blobBaseFee was explicitly disabled (unc_call)
 			skipCheck := st.uvm.Config.NoBaseFee && msg.BlobGasFeeCap.BitLen() == 0
 			if !skipCheck {
 				// This will panic if blobBaseFee is nil, but blobBaseFee presence

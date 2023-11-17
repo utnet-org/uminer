@@ -126,7 +126,7 @@ type UVM struct {
 // NewEVM returns a new UVM. The returned UVM is not thread safe and should
 // only ever be used *once*.
 func NewEVM(blockCtx BlockContext, txCtx TxContext, statedb StateDB, chainConfig *params.ChainConfig, config Config) *UVM {
-	// If basefee tracking is disabled (eth_call, eth_estimateGas, etc), and no
+	// If basefee tracking is disabled (unc_call, unc_estimateGas, etc), and no
 	// gas prices were specified, lower the basefee to 0 to avoid breaking UVM
 	// invariants (basefee < feecap)
 	if config.NoBaseFee {
