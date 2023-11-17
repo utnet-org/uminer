@@ -29,9 +29,27 @@ Welcome to the Uminer! This document outlines the processes and guidelines for c
 
 ## Coding Guidelines
 
-1. **Code Style**: Follow [specific coding style guide or language-specific conventions].
-2. **Documentation**: Document your code where necessary. Use clear and concise comments to explain complex logic.
-3. **Testing**: Write tests for new features or bug fixes.
+1. **Follow `go-unility` Coding Conventions**:
+   - **Code Style**: Adhere to the coding style used in the `go-unility` project. This includes [effective Go](https://golang.org/doc/effective_go) coding standards and additional project-specific conventions.
+   - **Formatting**: Use tools like `gofmt` or `goimports` to format your code according to Go standards. This ensures consistency across the codebase.
+   - **Commenting and Documentation**: Follow the commenting style of `go-unility`. This means writing clear, concise comments that explain non-obvious features or implementations. Additionally, update or add documentation reflecting the purpose and use of your contributions.
+   - **Naming Conventions**: Use meaningful and descriptive names, following the naming conventions in `go-unility`. For instance, use `MixedCaps` or `mixedCaps` rather than underscores to write multiword names.
+   - **Error Handling**: Follow Go's conventional error handling patterns as demonstrated in `go-unility`. Check for errors where necessary and handle them appropriately.
+   - **Tests**: Write tests for your code following `go-unility`'s testing patterns. Ensure that your code passes all existing tests and that your new tests sufficiently cover any new functionality.
+
+2. **Code Review Process**:
+   - Your code submissions will be reviewed according to the `go-unility` review process. Familiarize yourself with this process to understand how your contributions will be evaluated.
+
+3. **Referencing `go-unility` Code**:
+   - If your contribution is closely related to existing `go-unility` code, reference the relevant files or sections in your pull request description.
+
+4. **Documentation**: 
+    - Document your code where necessary. Use clear and concise comments to explain complex logic.
+
+5. **Testing**:
+    - Write tests for new features or bug fixes.
+
+Remember, consistency with the existing codebase is crucial. When in doubt, refer to the `go-unility` repository for guidance on style and best practices.
 
 ## Distribution
 
@@ -42,26 +60,6 @@ Welcome to the Uminer! This document outlines the processes and guidelines for c
 
 1. **Issues**: Use the GitHub issue tracker for bugs, feature requests, or discussions.
 2. **Communication**: For real-time communication, we use [Slack/Discord/Other platforms]. Please keep the discussion professional and respectful.
-3. **Code of Conduct**: Adhere to the [Code of Conduct](LINK_TO_CODE_OF_CONDUCT). We strive for a welcoming and inclusive environment.
-
-## Coding Guidelines
-
-1. **Follow `go-ethereum` Coding Conventions**:
-   - **Code Style**: Adhere to the coding style used in the `go-ethereum` project. This includes [effective Go](https://golang.org/doc/effective_go) coding standards and additional project-specific conventions.
-   - **Formatting**: Use tools like `gofmt` or `goimports` to format your code according to Go standards. This ensures consistency across the codebase.
-   - **Commenting and Documentation**: Follow the commenting style of `go-ethereum`. This means writing clear, concise comments that explain non-obvious features or implementations. Additionally, update or add documentation reflecting the purpose and use of your contributions.
-   - **Naming Conventions**: Use meaningful and descriptive names, following the naming conventions in `go-ethereum`. For instance, use `MixedCaps` or `mixedCaps` rather than underscores to write multiword names.
-   - **Error Handling**: Follow Go's conventional error handling patterns as demonstrated in `go-ethereum`. Check for errors where necessary and handle them appropriately.
-   - **Tests**: Write tests for your code following `go-ethereum`'s testing patterns. Ensure that your code passes all existing tests and that your new tests sufficiently cover any new functionality.
-
-2. **Code Review Process**:
-   - Your code submissions will be reviewed according to the `go-ethereum` review process. Familiarize yourself with this process to understand how your contributions will be evaluated.
-
-3. **Referencing `go-ethereum` Code**:
-   - If your contribution is closely related to existing `go-ethereum` code, reference the relevant files or sections in your pull request description.
-
-Remember, consistency with the existing codebase is crucial. When in doubt, refer to the `go-ethereum` repository for guidance on style and best practices.
-
 
 ## Getting Help
 
