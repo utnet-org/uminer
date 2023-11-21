@@ -36,4 +36,16 @@ func (s *Signer) UpdatePower(newPower int) {
 	s.Power = newPower
 }
 
+// Example function to get the current signer
+func (c *Coffer) GetCurrentSigner() (*Signer, error) {
+	// Logic to return the current signer
+	return nil, nil
+}
+
+// Example function to add a new signer (only callable by the super account)
+func (c *Coffer) AddNewSigner(newSigner *Signer) error {
+	// Logic to add a new signer
+	return nil
+}
+
 // Other signer-related functions...

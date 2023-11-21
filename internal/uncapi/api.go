@@ -50,18 +50,18 @@ import (
 	"github.com/yanhuangpai/go-utility/unc/tracers/logger"
 )
 
-// UnilityAPI provides an API to access Utility related information.
-type UnilityAPI struct {
+// UtilityAPI provides an API to access Utility related information.
+type UtilityAPI struct {
 	b Backend
 }
 
-// NewUnilityAPI creates a new Utility protocol API.
-func NewUnilityAPI(b Backend) *UnilityAPI {
-	return &UnilityAPI{b}
+// NewUtilityAPI creates a new Utility protocol API.
+func NewUtilityAPI(b Backend) *UtilityAPI {
+	return &UtilityAPI{b}
 }
 
 // GasPrice returns a suggestion for a gas price for legacy transactions.
-func (s *UnilityAPI) GasPrice(ctx context.Context) (*hexutil.Big, error) {
+func (s *UtilityAPI) GasPrice(ctx context.Context) (*hexutil.Big, error) {
 	tipcap, err := s.b.SuggestGasTipCap(ctx)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (s *UnilityAPI) GasPrice(ctx context.Context) (*hexutil.Big, error) {
 }
 
 // MaxPriorityFeePerGas returns a suggestion for a gas tip cap for dynamic fee transactions.
-func (s *UnilityAPI) MaxPriorityFeePerGas(ctx context.Context) (*hexutil.Big, error) {
+func (s *UtilityAPI) MaxPriorityFeePerGas(ctx context.Context) (*hexutil.Big, error) {
 	tipcap, err := s.b.SuggestGasTipCap(ctx)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ type feeHistoryResult struct {
 }
 
 // FeeHistory returns the fee market history.
-func (s *UnilityAPI) FeeHistory(ctx context.Context, blockCount math.HexOrDecimal64, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*feeHistoryResult, error) {
+func (s *UtilityAPI) FeeHistory(ctx context.Context, blockCount math.HexOrDecimal64, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*feeHistoryResult, error) {
 	oldest, reward, baseFee, gasUsed, err := s.b.FeeHistory(ctx, uint64(blockCount), lastBlock, rewardPercentiles)
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func (s *UnilityAPI) FeeHistory(ctx context.Context, blockCount math.HexOrDecima
 // - highestBlock:  block number of the highest block header this node has received from peers
 // - pulledStates:  number of state entries processed until now
 // - knownStates:   number of known state entries that still need to be pulled
-func (s *UnilityAPI) Syncing() (interface{}, error) {
+func (s *UtilityAPI) Syncing() (interface{}, error) {
 	progress := s.b.SyncProgress()
 
 	// Return not syncing if the synchronisation already completed
@@ -254,19 +254,19 @@ func (s *TxPoolAPI) Inspect() map[string]map[string]map[string]string {
 	return content
 }
 
-// UnilityAccountAPI provides an API to access accounts managed by this node.
+// UtilityAccountAPI provides an API to access accounts managed by this node.
 // It offers only methods that can retrieve accounts.
-type UnilityAccountAPI struct {
+type UtilityAccountAPI struct {
 	am *accounts.Manager
 }
 
-// NewUnilityAccountAPI creates a new UnilityAccountAPI.
-func NewUnilityAccountAPI(am *accounts.Manager) *UnilityAccountAPI {
-	return &UnilityAccountAPI{am: am}
+// NewUtilityAccountAPI creates a new UtilityAccountAPI.
+func NewUtilityAccountAPI(am *accounts.Manager) *UtilityAccountAPI {
+	return &UtilityAccountAPI{am: am}
 }
 
 // Accounts returns the collection of accounts this node manages.
-func (s *UnilityAccountAPI) Accounts() []common.Address {
+func (s *UtilityAccountAPI) Accounts() []common.Address {
 	return s.am.Accounts()
 }
 
@@ -508,7 +508,7 @@ func (s *PersonalAccountAPI) SignTransaction(ctx context.Context, args Transacti
 }
 
 // Sign calculates an Utility ECDSA signature for:
-// keccak256("\x19Unility Signed Message:\n" + len(message) + message))
+// keccak256("\x19Utility Signed Message:\n" + len(message) + message))
 //
 // Note, the produced signature conforms to the secp256k1 curve R, S and V values,
 // where the V value will be 27 or 28 for legacy reasons.
@@ -537,7 +537,7 @@ func (s *PersonalAccountAPI) Sign(ctx context.Context, data hexutil.Bytes, addr 
 // EcRecover returns the address for the account that was used to create the signature.
 // Note, this function is compatible with unc_sign and personal_sign. As such it recovers
 // the address of:
-// hash = keccak256("\x19Unility Signed Message:\n"${message length}${message})
+// hash = keccak256("\x19Utility Signed Message:\n"${message length}${message})
 // addr = ecrecover(hash, signature)
 //
 // Note, the signature must conform to the secp256k1 curve R, S and V values, where
@@ -1948,7 +1948,7 @@ func (s *TransactionAPI) SendRawTransaction(ctx context.Context, input hexutil.B
 }
 
 // Sign calculates an ECDSA signature for:
-// keccak256("\x19Unility Signed Message:\n" + len(message) + message).
+// keccak256("\x19Utility Signed Message:\n" + len(message) + message).
 //
 // Note, the produced signature conforms to the secp256k1 curve R, S and V values,
 // where the V value will be 27 or 28 for legacy reasons.

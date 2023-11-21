@@ -51,7 +51,7 @@ A memory-corruption bug within the UVM can cause a consensus error, where vulner
 
 #### Handling
 
-On the evening of 17th, we discussed options on how to handle it. We made a state test to reproduce the issue, and verified that neither `openunility`, `nunicrpytmind` nor `besu` were affected by the same vulnerability, and started a full-sync with a patched version of `gunc`. 
+On the evening of 17th, we discussed options on how to handle it. We made a state test to reproduce the issue, and verified that neither `openutility`, `nunicrpytmind` nor `besu` were affected by the same vulnerability, and started a full-sync with a patched version of `gunc`. 
 
 It was decided that in this specific instance, it would be possible to make a public announcement and a patch release: 
 
@@ -128,7 +128,7 @@ Action point: enable push-based alerts to be sent from the forkmon, to speed up 
 
 ## Links
 
-- [1] https://twitter.com/go_unility/status/1428051458763763721
+- [1] https://twitter.com/go_utility/status/1428051458763763721
 - [2] https://twitter.com/mhswende/status/1431259601530458112
 
 

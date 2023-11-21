@@ -106,7 +106,7 @@ var (
 	}
 
 	// A debian package is created for all executables listed here.
-	debUnility = debPackage{
+	debUtility = debPackage{
 		Name:        "utility",
 		Version:     params.Version,
 		Executables: debExecutables,
@@ -114,7 +114,7 @@ var (
 
 	// Debian meta packages to build and push to Ubuntu PPA
 	debPackages = []debPackage{
-		debUnility,
+		debUtility,
 	}
 
 	// Distros for which packages are created.

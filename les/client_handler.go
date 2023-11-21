@@ -33,13 +33,13 @@ import (
 // responses.
 type clientHandler struct {
 	forkFilter forkid.Filter
-	backend    *LightUnility
+	backend    *LightUtility
 
 	closeCh chan struct{}
 	wg      sync.WaitGroup // WaitGroup used to track all connected peers.
 }
 
-func newClientHandler(backend *LightUnility) *clientHandler {
+func newClientHandler(backend *LightUtility) *clientHandler {
 	handler := &clientHandler{
 		forkFilter: forkid.NewFilter(backend.blockchain),
 		backend:    backend,

@@ -7,7 +7,7 @@ package hw.trezor.messages.utility;
 
 // Sugar for easier handling in Java
 option java_package = "com.satoshilabs.trezor.lib.protobuf";
-option java_outer_classname = "TrezorMessageUnility";
+option java_outer_classname = "TrezorMessageUtility";
 
 import "messages-common.proto";
 
