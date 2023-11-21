@@ -65,6 +65,11 @@ func (ec *Client) Client() *rpc.Client {
 	return ec.c
 }
 
+// Coffer functions
+// func (ec *Client) CofferSigner(ctx context.Context) (*common.Address, error) {
+//   return ec.
+// }
+
 // Blockchain Access
 
 // ChainID retrieves the current chain ID for transaction replay protection.

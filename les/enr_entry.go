@@ -41,7 +41,7 @@ type ethEntry struct {
 func (ethEntry) ENRKey() string { return "unc" }
 
 // setupDiscovery creates the node discovery source for the unc protocol.
-func (unc *LightUnility) setupDiscovery() (enode.Iterator, error) {
+func (unc *LightUtility) setupDiscovery() (enode.Iterator, error) {
 	it := enode.NewFairMix(0)
 
 	// Enable DNS discovery.

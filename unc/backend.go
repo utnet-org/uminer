@@ -108,7 +108,7 @@ type Utility struct {
 func New(stack *node.Node, config *uncconfig.Config) (*Utility, error) {
 	// Ensure configuration values are compatible and sane
 	if config.SyncMode == downloader.LightSync {
-		return nil, errors.New("can't run unc.Utility in light sync mode, use les.LightUnility")
+		return nil, errors.New("can't run unc.Utility in light sync mode, use les.LightUtility")
 	}
 	if !config.SyncMode.IsValid() {
 		return nil, fmt.Errorf("invalid sync mode %d", config.SyncMode)
@@ -316,7 +316,7 @@ func (s *Utility) APIs() []rpc.API {
 	return append(apis, []rpc.API{
 		{
 			Namespace: "unc",
-			Service:   NewUnilityAPI(s),
+			Service:   NewUtilityAPI(s),
 		}, {
 			Namespace: "miner",
 			Service:   NewMinerAPI(s),

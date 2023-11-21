@@ -104,7 +104,7 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 	return []rpc.API{
 		{
 			Namespace: "unc",
-			Service:   NewUnilityAPI(apiBackend),
+			Service:   NewUtilityAPI(apiBackend),
 		}, {
 			Namespace: "unc",
 			Service:   NewBlockChainAPI(apiBackend),
@@ -119,7 +119,7 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 			Service:   NewDebugAPI(apiBackend),
 		}, {
 			Namespace: "unc",
-			Service:   NewUnilityAccountAPI(apiBackend.AccountManager()),
+			Service:   NewUtilityAccountAPI(apiBackend.AccountManager()),
 		}, {
 			Namespace: "personal",
 			Service:   NewPersonalAccountAPI(apiBackend, nonceLock),

@@ -50,7 +50,7 @@ import (
 	"github.com/yanhuangpai/go-utility/unc/uncconfig"
 )
 
-type LightUnility struct {
+type LightUtility struct {
 	lesCommons
 
 	peers              *serverPeerSet
@@ -82,7 +82,7 @@ type LightUnility struct {
 }
 
 // New creates an instance of the light client.
-func New(stack *node.Node, config *uncconfig.Config) (*LightUnility, error) {
+func New(stack *node.Node, config *uncconfig.Config) (*LightUtility, error) {
 	chainDb, err := stack.OpenDatabase("lightchaindata", config.DatabaseCache, config.DatabaseHandles, "unc/db/chaindata/", false)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func New(stack *node.Node, config *uncconfig.Config) (*LightUnility, error) {
 
 	peers := newServerPeerSet()
 	merger := consensus.NewMerger(chainDb)
-	leth := &LightUnility{
+	leth := &LightUtility{
 		lesCommons: lesCommons{
 			genesis:     genesisHash,
 			config:      config,
@@ -202,7 +202,7 @@ func New(stack *node.Node, config *uncconfig.Config) (*LightUnility, error) {
 }
 
 // VfluxRequest sends a batch of requests to the given node through discv5 UDP TalkRequest and returns the responses
-func (s *LightUnility) VfluxRequest(n *enode.Node, reqs vflux.Requests) vflux.Replies {
+func (s *LightUtility) VfluxRequest(n *enode.Node, reqs vflux.Requests) vflux.Replies {
 	if !s.udpEnabled {
 		return nil
 	}
@@ -217,7 +217,7 @@ func (s *LightUnility) VfluxRequest(n *enode.Node, reqs vflux.Requests) vflux.Re
 
 // vfxVersion returns the version number of the "les" service subdomain of the vflux UDP
 // service, as advertised in the ENR record
-func (s *LightUnility) vfxVersion(n *enode.Node) uint {
+func (s *LightUtility) vfxVersion(n *enode.Node) uint {
 	if n.Seq() == 0 {
 		var err error
 		if !s.udpEnabled {
@@ -241,7 +241,7 @@ func (s *LightUnility) vfxVersion(n *enode.Node) uint {
 
 // prenegQuery sends a capacity query to the given server node to determine if
 // a connection slot is immediately available
-func (s *LightUnility) prenegQuery(n *enode.Node) int {
+func (s *LightUtility) prenegQuery(n *enode.Node) int {
 	if s.vfxVersion(n) < 1 {
 		// UDP query not supported, always try TCP connection
 		return 1
@@ -287,7 +287,7 @@ func (s *LightDummyAPI) Mining() bool {
 
 // APIs returns the collection of RPC services the utility package offers.
 // NOTE, some of these services probably need to be moved to somewhere else.
-func (s *LightUnility) APIs() []rpc.API {
+func (s *LightUtility) APIs() []rpc.API {
 	apis := uncapi.GetAPIs(s.ApiBackend)
 	apis = append(apis, s.engine.APIs(s.BlockChain().HeaderChain())...)
 	return append(apis, []rpc.API{
@@ -304,19 +304,19 @@ func (s *LightUnility) APIs() []rpc.API {
 	}...)
 }
 
-func (s *LightUnility) ResetWithGenesisBlock(gb *types.Block) {
+func (s *LightUtility) ResetWithGenesisBlock(gb *types.Block) {
 	s.blockchain.ResetWithGenesisBlock(gb)
 }
 
-func (s *LightUnility) BlockChain() *light.LightChain { return s.blockchain }
-func (s *LightUnility) TxPool() *light.TxPool         { return s.txPool }
-func (s *LightUnility) Engine() consensus.Engine      { return s.engine }
-func (s *LightUnility) LesVersion() int               { return int(ClientProtocolVersions[0]) }
-func (s *LightUnility) EventMux() *event.TypeMux      { return s.eventMux }
-func (s *LightUnility) Merger() *consensus.Merger     { return s.merger }
+func (s *LightUtility) BlockChain() *light.LightChain { return s.blockchain }
+func (s *LightUtility) TxPool() *light.TxPool         { return s.txPool }
+func (s *LightUtility) Engine() consensus.Engine      { return s.engine }
+func (s *LightUtility) LesVersion() int               { return int(ClientProtocolVersions[0]) }
+func (s *LightUtility) EventMux() *event.TypeMux      { return s.eventMux }
+func (s *LightUtility) Merger() *consensus.Merger     { return s.merger }
 
 // Protocols returns all the currently configured network protocols to start.
-func (s *LightUnility) Protocols() []p2p.Protocol {
+func (s *LightUtility) Protocols() []p2p.Protocol {
 	return s.makeProtocols(ClientProtocolVersions, s.handler.runPeer, func(id enode.ID) interface{} {
 		if p := s.peers.peer(id.String()); p != nil {
 			return p.Info()
@@ -327,7 +327,7 @@ func (s *LightUnility) Protocols() []p2p.Protocol {
 
 // Start implements node.Lifecycle, starting all internal goroutines needed by the
 // light utility protocol implementation.
-func (s *LightUnility) Start() error {
+func (s *LightUtility) Start() error {
 	log.Warn("Light client mode is an experimental feature")
 
 	// Regularly update shutdown marker
@@ -352,7 +352,7 @@ func (s *LightUnility) Start() error {
 
 // Stop implements node.Lifecycle, terminating all internal goroutines used by the
 // Utility protocol.
-func (s *LightUnility) Stop() error {
+func (s *LightUtility) Stop() error {
 	close(s.closeCh)
 	s.serverPool.Stop()
 	s.peers.close()

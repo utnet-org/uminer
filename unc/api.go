@@ -21,32 +21,32 @@ import (
 	"github.com/yanhuangpai/go-utility/common/hexutil"
 )
 
-// UnilityAPI provides an API to access Utility full node-related information.
-type UnilityAPI struct {
+// UtilityAPI provides an API to access Utility full node-related information.
+type UtilityAPI struct {
 	e *Utility
 }
 
-// NewUnilityAPI creates a new Utility protocol API for full nodes.
-func NewUnilityAPI(e *Utility) *UnilityAPI {
-	return &UnilityAPI{e}
+// NewUtilityAPI creates a new Utility protocol API for full nodes.
+func NewUtilityAPI(e *Utility) *UtilityAPI {
+	return &UtilityAPI{e}
 }
 
 // Unicrpytbase is the address that mining rewards will be sent to.
-func (api *UnilityAPI) Unicrpytbase() (common.Address, error) {
+func (api *UtilityAPI) Unicrpytbase() (common.Address, error) {
 	return api.e.Unicrpytbase()
 }
 
 // Coinbase is the address that mining rewards will be sent to (alias for Unicrpytbase).
-func (api *UnilityAPI) Coinbase() (common.Address, error) {
+func (api *UtilityAPI) Coinbase() (common.Address, error) {
 	return api.Unicrpytbase()
 }
 
 // Hashrate returns the POW hashrate.
-func (api *UnilityAPI) Hashrate() hexutil.Uint64 {
+func (api *UtilityAPI) Hashrate() hexutil.Uint64 {
 	return hexutil.Uint64(api.e.Miner().Hashrate())
 }
 
 // Mining returns an indication if this node is currently mining.
-func (api *UnilityAPI) Mining() bool {
+func (api *UtilityAPI) Mining() bool {
 	return api.e.IsMining()
 }

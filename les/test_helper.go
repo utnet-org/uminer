@@ -192,7 +192,7 @@ func newTestClientHandler(backend *backends.SimulatedBackend, odr *LesOdr, index
 	genesis := gspec.MustCommit(db, trie.NewDatabase(db, trie.HashDefaults))
 	chain, _ := light.NewLightChain(odr, gspec.Config, engine)
 
-	client := &LightUnility{
+	client := &LightUtility{
 		lesCommons: lesCommons{
 			genesis:     genesis.Hash(),
 			config:      &uncconfig.Config{LightPeers: 100, NetworkId: NetworkId},

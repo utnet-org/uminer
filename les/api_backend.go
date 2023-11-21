@@ -44,7 +44,7 @@ import (
 type LesApiBackend struct {
 	extRPCEnabled       bool
 	allowUnprotectedTxs bool
-	unc                 *LightUnility
+	unc                 *LightUtility
 	gpo                 *gasprice.Oracle
 }
 

@@ -27,21 +27,21 @@ Welcome to the Uminer! This document outlines the processes and guidelines for c
 2. **Merge Strategy**: We use a squash merge strategy to keep the history clean and manageable.
 3. **Post-Merge**: After merging, the contributor's branch can be deleted to keep the repository tidy.
 
-## Coding Guidelines
+## Golang Coding Guidelines
 
-1. **Follow `go-unility` Coding Conventions**:
-   - **Code Style**: Adhere to the coding style used in the `go-unility` project. This includes [effective Go](https://golang.org/doc/effective_go) coding standards and additional project-specific conventions.
+1. **Follow `go-utility` Coding Conventions**:
+   - **Code Style**: Adhere to the coding style used in the `go-utility` project. This includes [effective Go](https://golang.org/doc/effective_go) coding standards and additional project-specific conventions.
    - **Formatting**: Use tools like `gofmt` or `goimports` to format your code according to Go standards. This ensures consistency across the codebase.
-   - **Commenting and Documentation**: Follow the commenting style of `go-unility`. This means writing clear, concise comments that explain non-obvious features or implementations. Additionally, update or add documentation reflecting the purpose and use of your contributions.
-   - **Naming Conventions**: Use meaningful and descriptive names, following the naming conventions in `go-unility`. For instance, use `MixedCaps` or `mixedCaps` rather than underscores to write multiword names.
-   - **Error Handling**: Follow Go's conventional error handling patterns as demonstrated in `go-unility`. Check for errors where necessary and handle them appropriately.
-   - **Tests**: Write tests for your code following `go-unility`'s testing patterns. Ensure that your code passes all existing tests and that your new tests sufficiently cover any new functionality.
+   - **Commenting and Documentation**: Follow the commenting style of `go-utility`. This means writing clear, concise comments that explain non-obvious features or implementations. Additionally, update or add documentation reflecting the purpose and use of your contributions.
+   - **Naming Conventions**: Use meaningful and descriptive names, following the naming conventions in `go-utility`. For instance, use `MixedCaps` or `mixedCaps` rather than underscores to write multiword names.
+   - **Error Handling**: Follow Go's conventional error handling patterns as demonstrated in `go-utility`. Check for errors where necessary and handle them appropriately.
+   - **Tests**: Write tests for your code following `go-utility`'s testing patterns. Ensure that your code passes all existing tests and that your new tests sufficiently cover any new functionality.
 
 2. **Code Review Process**:
-   - Your code submissions will be reviewed according to the `go-unility` review process. Familiarize yourself with this process to understand how your contributions will be evaluated.
+   - Your code submissions will be reviewed according to the `go-utility` review process. Familiarize yourself with this process to understand how your contributions will be evaluated.
 
-3. **Referencing `go-unility` Code**:
-   - If your contribution is closely related to existing `go-unility` code, reference the relevant files or sections in your pull request description.
+3. **Referencing `go-utility` Code**:
+   - If your contribution is closely related to existing `go-utility` code, reference the relevant files or sections in your pull request description.
 
 4. **Documentation**: 
     - Document your code where necessary. Use clear and concise comments to explain complex logic.
@@ -49,7 +49,30 @@ Welcome to the Uminer! This document outlines the processes and guidelines for c
 5. **Testing**:
     - Write tests for new features or bug fixes.
 
-Remember, consistency with the existing codebase is crucial. When in doubt, refer to the `go-unility` repository for guidance on style and best practices.
+Remember, consistency with the existing codebase is crucial. When in doubt, refer to the `go-utility` repository for guidance on style and best practices.
+
+## Rust Coding Guidelines
+
+For contributions involving Rust, we follow a set of best practices to maintain code quality and consistency:
+
+1. **Code Style**: Adhere to the [Rust Style Guidelines](https://rust-lang.github.io/rustfmt/) as outlined in the Rust community. Use `rustfmt` to format your code automatically.
+
+2. **Error Handling**: Make use of Rust's robust error handling features. Prefer using `Result<T, E>` for functions that can fail, and handle errors appropriately.
+
+3. **Documentation**: Follow the [Rust Documentation Guidelines](https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html). Use doc comments (`///`) for documentation and regular comments (`//`) for inline code explanations.
+
+4. **Testing**: Write tests for your code using Rust's integrated testing framework. Tests should cover both common use cases and edge cases.
+
+5. **Performance**: Write efficient Rust code. Utilize features like ownership, borrowing, and lifetimes to manage resources effectively.
+
+6. **Dependency Management**: Carefully manage dependencies. Keep them up-to-date and secure. Use `Cargo.toml` for declaring dependencies.
+
+7. **Code Review**: Contributions will be reviewed for adherence to these guidelines. Ensure that your code is clean, well-documented, and follows Rust's idiomatic practices.
+
+8. **Safe Rust**: Prioritize writing safe Rust. Avoid using `unsafe` blocks unless absolutely necessary and justify their use in comments.
+
+For more detailed guidelines, refer to [The Rust Programming Language](https://doc.rust-lang.org/book/) book and [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/).
+
 
 ## Distribution
 
