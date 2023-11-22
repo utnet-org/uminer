@@ -20,6 +20,7 @@ package web3ext
 var Modules = map[string]string{
 	"admin":    AdminJs,
 	"clique":   CliqueJs,
+	"coffer":   CofferJs,
 	"ethash":   EthashJs,
 	"debug":    DebugJs,
 	"unc":      EthJs,
@@ -85,6 +86,30 @@ web3._extend({
 		new web3._extend.Property({
 			name: 'proposals',
 			getter: 'clique_proposals'
+		}),
+	]
+});
+`
+
+const CofferJs = `
+web3._extend({
+	property: 'coffer',
+	methods: [
+		new web3._extend.Method({
+			name: 'updateSuperAccount',
+			call: 'coffer_updateSuperAccount',
+			params: 2
+		}),
+		new web3._extend.Method({
+			name: 'superAccount',
+			call: 'coffer_superAccount',
+			params: 0
+		}),
+	],
+	properties: [
+		new web3._extend.Property({
+			name: 'superAccount',
+			getter: 'coffer_superAccount'
 		}),
 	]
 });
@@ -511,6 +536,11 @@ web3._extend({
 	property: 'unc',
 	methods: [
 		new web3._extend.Method({
+			name: 'test',
+			call: 'unc_test',
+			params: 0
+		}),
+		new web3._extend.Method({
 			name: 'chainId',
 			call: 'unc_chainId',
 			params: 0
@@ -649,6 +679,10 @@ const MinerJs = `
 web3._extend({
 	property: 'miner',
 	methods: [
+		new web3._extend.Method({
+			name: 'test',
+			call: 'miner_test',
+		}),
 		new web3._extend.Method({
 			name: 'start',
 			call: 'miner_start',

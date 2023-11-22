@@ -17,6 +17,7 @@
 package unc
 
 import (
+	"fmt"
 	"math/big"
 	"time"
 
@@ -32,6 +33,11 @@ type MinerAPI struct {
 // NewMinerAPI create a new MinerAPI instance.
 func NewMinerAPI(e *Utility) *MinerAPI {
 	return &MinerAPI{e}
+}
+
+func (api *MinerAPI) Test() bool {
+	fmt.Printf("Miner Test \n")
+	return true
 }
 
 // Start starts the miner with the given number of threads. If threads is nil,

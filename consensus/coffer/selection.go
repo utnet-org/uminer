@@ -5,7 +5,12 @@ import "math/rand"
 // SelectSigner selects a signer from a slice of signers based on their power.
 func (ctx *Coffer) SelectSigner() *Signer {
 	if len(ctx.Signers) == 0 {
-		return &ctx.SuperAccount
+
+		return &Signer{
+			Address1: ctx.SuperAccount,
+			Address2: ctx.SuperAccount,
+			Power:    0,
+		}
 	}
 	totalPower := 0
 	for _, signer := range ctx.Signers {

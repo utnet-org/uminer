@@ -30,6 +30,7 @@ import (
 	"github.com/yanhuangpai/go-utility/consensus"
 	"github.com/yanhuangpai/go-utility/consensus/beacon"
 	"github.com/yanhuangpai/go-utility/consensus/clique"
+	"github.com/yanhuangpai/go-utility/consensus/coffer"
 	"github.com/yanhuangpai/go-utility/core"
 	"github.com/yanhuangpai/go-utility/core/bloombits"
 	"github.com/yanhuangpai/go-utility/core/rawdb"
@@ -78,6 +79,9 @@ type Utility struct {
 
 	// DB interfaces
 	chainDb uncdb.Database // Block chain database
+
+	// Consensus Coffer
+	coffer *coffer.Coffer
 
 	eventMux       *event.TypeMux
 	engine         consensus.Engine
@@ -156,10 +160,21 @@ func New(stack *node.Node, config *uncconfig.Config) (*Utility, error) {
 	if networkID == 0 {
 		networkID = chainConfig.ChainID.Uint64()
 	}
+	// Initialize the Coffer consensus mechanism
+	genesis := config.Genesis // Make sure this is the correct way to get the genesis block
+	if genesis == nil {
+		genesis = core.DefaultGenesisBlock()
+	}
+	cofferInstance, err := coffer.NewCoffer(genesis)
+	if err != nil {
+		// Handle error
+		return nil, err
+	}
 	unc := &Utility{
 		config:            config,
 		merger:            consensus.NewMerger(chainDb),
 		chainDb:           chainDb,
+		coffer:            cofferInstance,
 		eventMux:          stack.EventMux(),
 		accountManager:    stack.AccountManager(),
 		engine:            engine,
@@ -332,6 +347,9 @@ func (s *Utility) APIs() []rpc.API {
 		}, {
 			Namespace: "net",
 			Service:   s.netRPCService,
+		}, {
+			Namespace: "coffer",
+			Service:   NewCofferAPI(s),
 		},
 	}...)
 }
