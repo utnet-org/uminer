@@ -332,6 +332,9 @@ func (s *Utility) APIs() []rpc.API {
 		}, {
 			Namespace: "net",
 			Service:   s.netRPCService,
+		}, {
+			Namespace: "coffer",
+			Service:   NewCofferAPI(s),
 		},
 	}...)
 }
