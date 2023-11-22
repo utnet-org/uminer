@@ -161,7 +161,10 @@ func New(stack *node.Node, config *uncconfig.Config) (*Utility, error) {
 		networkID = chainConfig.ChainID.Uint64()
 	}
 	// Initialize the Coffer consensus mechanism
-	genesis := core.DefaultGenesisBlock() // Make sure this is the correct way to get the genesis block
+	genesis := config.Genesis // Make sure this is the correct way to get the genesis block
+	if genesis == nil {
+		genesis = core.DefaultGenesisBlock()
+	}
 	cofferInstance, err := coffer.NewCoffer(genesis)
 	if err != nil {
 		// Handle error
