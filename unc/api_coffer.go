@@ -32,10 +32,18 @@ func NewCofferAPI(e *Utility) *CofferAPI {
 	return &CofferAPI{e}
 }
 
+// SuperAccount displays the super account for Coffer
 func (api *CofferAPI) SuperAccount() common.Address {
 
-	//	superAccount := common.HexToAddress("0x2116825a1f6De9C479f8BC36d4a0F32074182924")
 	superAccount := api.e.coffer.SuperAccount
 	fmt.Printf("%s\n", superAccount)
 	return superAccount
+}
+
+// UpdateSuperAccount updates the super account for Coffer
+func (api *CofferAPI) UpdateSuperAccount(signature string, newSuperAccount common.Address) error {
+
+	error := api.e.coffer.UpdateSuperAccount(signature, newSuperAccount)
+	fmt.Printf("%s\n", error)
+	return error
 }
