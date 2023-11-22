@@ -1,33 +1,36 @@
 package coffer
 
-import "errors"
+import (
+	"errors"
 
-var superAccountAddress string // Set this during initialization
+	"github.com/yanhuangpai/go-utility/common" // Path to the package where Block is defined
+)
+
 // Signer represents a participant in the Coffer consensus mechanism.
 type Signer struct {
-	PublicKey1 string // Original public key for verification
-	PublicKey2 string // Secondary public key for signing blocks
-	Power      int    // Power level assigned by the super account
+	Address1 common.Address // Original public key for verification
+	Address2 common.Address // Secondary public key for signing blocks
+	Power    int            // Power level assigned by the super account
 	// Other fields...
 }
 
 // NewSigner creates a new signer. Can only be called by the super account.
-func NewSigner(callerAddress, publicKey string, power int) *Signer {
-	if callerAddress != superAccountAddress {
+func (c *Coffer) NewSigner(callerAddress, address1 common.Address, power int) *Signer {
+	if callerAddress != c.SuperAccount {
 		return nil // Or handle the error as per your design
 	}
 	// Proceed to create a new Signer
 	return &Signer{
-		PublicKey1: publicKey,
-		Power:      power,
+		Address1: address1,
+		Power:    power,
 	}
 }
 
-func (s *Signer) SetPublicKey2(callerKey, publicKey2 string) error {
-	if callerKey != s.PublicKey1 {
+func (s *Signer) ActivateSigner(callerAddress, address2 common.Address) error {
+	if callerAddress != s.Address1 {
 		return errors.New("unauthorized caller")
 	}
-	s.PublicKey2 = publicKey2
+	s.Address2 = address2
 	return nil
 }
 

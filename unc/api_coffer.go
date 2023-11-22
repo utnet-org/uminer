@@ -33,7 +33,9 @@ func NewCofferAPI(e *Utility) *CofferAPI {
 }
 
 func (api *CofferAPI) SuperAccount() common.Address {
-	superAccount := common.HexToAddress("0x2116825a1f6De9C479f8BC36d4a0F32074182924")
+
+	//	superAccount := common.HexToAddress("0x2116825a1f6De9C479f8BC36d4a0F32074182924")
+	superAccount := api.e.coffer.SuperAccount
 	fmt.Printf("%s\n", superAccount)
 	return superAccount
 }
