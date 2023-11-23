@@ -41,7 +41,7 @@ func (api *CofferAPI) SuperAccount() common.Address {
 }
 
 // UpdateSuperAccount updates the super account for Coffer
-func (api *CofferAPI) UpdateSuperAccount(signature string, newSuperAccount common.Address) error {
+func (api *CofferAPI) UpdateSuperAccount(signature, newSuperAccount string) error {
 
 	error := api.e.coffer.UpdateSuperAccount(signature, newSuperAccount)
 	fmt.Printf("%s\n", error)
