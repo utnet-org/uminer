@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/big"
 	"strings"
 
 	"github.com/yanhuangpai/go-utility/common"
@@ -17,6 +18,22 @@ type Coffer struct {
 	SuperAccount common.Address
 	Signers      []Signer
 	// Other necessary fields...
+}
+
+// CofferTransaction define a new transaction type in the blockchain.
+// This involves modifying the data structure that represents a transaction.
+type CofferTransaction struct {
+	// Standard transaction fields
+	Nonce    uint64
+	GasPrice *big.Int
+	GasLimit uint64
+	To       *common.Address
+	Value    *big.Int
+	Data     []byte
+	V, R, S  *big.Int
+
+	// Fields specific to coffer
+	Coffer Coffer
 }
 
 // NewCoffer creates a new Coffer consensus mechanism.
@@ -34,56 +51,23 @@ func NewCoffer(genesis *core.Genesis) (*Coffer, error) {
 
 // UpdateSuperAccount updates the super account, need the old super account's private key to sign
 func (c *Coffer) UpdateSuperAccount(signatureHex, newSuperAccount string) error {
-
-	// signatureHex = strings.TrimPrefix(signatureHex, "0x")
-	// signatureBytes, err := hex.DecodeString(signatureHex)
-	// if err != nil {
-	// 	log.Fatalf("Failed to decode hex string: %v", err)
-	// }
-	// if len(signatureBytes) != 65 {
-	// 	log.Fatalf("Invalid signature length: got %d bytes, want 65 bytes", len(signatureBytes))
-	// }
-
-	// if signatureBytes[crypto.RecoveryIDOffset] != 27 && signatureBytes[crypto.RecoveryIDOffset] != 28 {
-	// 	log.Fatalf("invalid Ethereum signature (V is not 27 or 28)")
-	// }
-
-	// signatureBytes[crypto.RecoveryIDOffset] -= 27 // Transform yellow paper V from 27/28 to 0/1
-
-	// // Construct the message that was supposedly signed
-	// message := fmt.Sprintf(newSuperAccount.Hex())
-	// messageHash := crypto.Keccak256Hash([]byte(message))
-
-	// // Recover the public key from the signature
-	// publicKey, err := crypto.SigToPub(messageHash.Bytes(), signatureBytes)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return errors.New("failed to verify signature")
-	// }
-
-	// // Convert the public key to an Ethereum address
-	// signer := crypto.PubkeyToAddress(*publicKey)
-
-	// // Check if the signer is the current super account
-	// if signer != c.SuperAccount {
-	// 	return errors.New("only the current super account can update to a new super account : " + signer.String())
-	// }
-
-	// Update the super account
-	result, recoverAddr := verifySig(c.SuperAccount.String(), newSuperAccount, signatureHex)
+	// Verify the super account
+	result, _ := verifySig(c.SuperAccount.String(), newSuperAccount, signatureHex)
 	if !result {
-		return errors.New("only the current super account can update to a new super account : " + recoverAddr.String())
+
+		return errors.New("only the current super account can update to a new super account")
 	}
+	// Update the super account
 	c.SuperAccount = common.HexToAddress(newSuperAccount)
 	return nil
 }
 
-func verifySig(from, msg, sigHex string) (bool, *common.Address) {
+func verifySig(from, msg, sigHex string) (bool, error) {
 	sig, err := hexutil.Decode(sigHex)
 	if err != nil {
 		err = fmt.Errorf("invalid sig ('%s'), %w", sigHex, err)
 		log.Fatal(err)
-		return false, nil
+		return false, err
 	}
 
 	messageToHash := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(msg), msg)
@@ -97,10 +81,10 @@ func verifySig(from, msg, sigHex string) (bool, *common.Address) {
 	if err != nil {
 		err = fmt.Errorf("failed to recover public key from sig ('%s'), %w", sigHex, err)
 		log.Fatal(err)
-		return false, nil
+		return false, err
 	}
 
 	recoveredAddr := crypto.PubkeyToAddress(*pk)
 	fmt.Printf("recovered address is ('%s')", recoveredAddr)
-	return strings.EqualFold(from, recoveredAddr.Hex()), &recoveredAddr
+	return strings.EqualFold(from, recoveredAddr.Hex()), nil
 }

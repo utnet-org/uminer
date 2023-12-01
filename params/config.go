@@ -25,10 +25,11 @@ import (
 
 // Genesis hashes to enforce below configs on.
 var (
-	MainnetGenesisHash = common.HexToHash("0xdc37cfd5ee1499bbc9497c8474a0e275c9e0e90cf1749e64cf66ce5e10f0804f")
-	HoleskyGenesisHash = common.HexToHash("0xb5f7f912443c940f21fd611f12828d75b534364ed9e95ca4e307729a4661bde4")
-	SepoliaGenesisHash = common.HexToHash("0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9")
-	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
+	MainnetGenesisHash  = common.HexToHash("0x271253d565be53ac01ffceef43e7fb34092b3fd97d72987b9d95a86bea6b626e")
+	HoleskyGenesisHash  = common.HexToHash("0xb5f7f912443c940f21fd611f12828d75b534364ed9e95ca4e307729a4661bde4")
+	SepoliaGenesisHash  = common.HexToHash("0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9")
+	GoerliGenesisHash   = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
+	SuperAccountAddress = common.HexToAddress("0xb7b2c617bd6b5546516c8388647707c55202738e")
 )
 
 func newUint64(val uint64) *uint64 { return &val }

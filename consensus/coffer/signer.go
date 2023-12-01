@@ -15,15 +15,24 @@ type Signer struct {
 }
 
 // NewSigner creates a new signer. Can only be called by the super account.
-func (c *Coffer) NewSigner(callerAddress, address1 common.Address, power int) *Signer {
-	if callerAddress != c.SuperAccount {
-		return nil // Or handle the error as per your design
+func (c *Coffer) NewSigner(signatureHex, address1 string, power int) (Signer, error) {
+	// Verify the super account
+	result, _ := verifySig(c.SuperAccount.String(), address1, signatureHex)
+	if !result {
+
+		emptySigner := &Signer{
+			Address1: common.HexToAddress(address1),
+			Power:    0,
+		}
+		return *emptySigner, errors.New("only the current super account can update to a new super account")
 	}
 	// Proceed to create a new Signer
-	return &Signer{
-		Address1: address1,
+	signer := &Signer{
+		Address1: common.HexToAddress(address1),
 		Power:    power,
 	}
+
+	return *signer, nil
 }
 
 func (s *Signer) ActivateSigner(callerAddress, address2 common.Address) error {

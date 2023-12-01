@@ -136,6 +136,9 @@ type StateDB struct {
 	AccountDeleted int
 	StorageDeleted int
 
+	// Coffer data
+	coffer Coffer
+
 	// Testing hooks
 	onCommit func(states *triestate.Set) // Hook invoked when commit is performed
 }
@@ -165,6 +168,12 @@ func New(root common.Hash, db Database, snaps *snapshot.Tree) (*StateDB, error) 
 		accessList:           newAccessList(),
 		transientStorage:     newTransientStorage(),
 		hasher:               crypto.NewKeccakState(),
+		coffer: Coffer{
+			superAccount: params.SuperAccountAddress,
+			signers:      []Signer{},                          // Initialize the slice
+			signerMap:    make(map[common.Address]SignerInfo), // Initialize the map
+			totalPower:   0,
+		},
 	}
 	if sdb.snaps != nil {
 		sdb.snap = sdb.snaps.Snapshot(root)
