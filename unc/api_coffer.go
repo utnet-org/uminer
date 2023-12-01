@@ -17,9 +17,10 @@
 package unc
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/yanhuangpai/go-utility/common"
+	"github.com/yanhuangpai/go-utility/core/state"
 )
 
 // CofferAPI provides an API to control the coffer.
@@ -32,18 +33,38 @@ func NewCofferAPI(e *Utility) *CofferAPI {
 	return &CofferAPI{e}
 }
 
-// SuperAccount displays the super account for Coffer
-func (api *CofferAPI) SuperAccount() common.Address {
-
-	superAccount := api.e.coffer.SuperAccount
-	fmt.Printf("%s\n", superAccount)
-	return superAccount
+// getStateDB access the StateDB instance.
+// This could be done through the blockchain's current state:
+func (api *CofferAPI) getStateDB() (*state.StateDB, error) {
+	block := api.e.BlockChain().CurrentBlock()
+	if block == nil {
+		return nil, errors.New("current block is nil")
+	}
+	return api.e.BlockChain().StateAt(block.Root)
 }
 
-// UpdateSuperAccount updates the super account for Coffer
-func (api *CofferAPI) UpdateSuperAccount(signature, newSuperAccount string) error {
+// GetCofferData retrieve the Coffer data
+func (api *CofferAPI) GetCofferData() (*state.Coffer, error) {
+	stateDB, err := api.getStateDB()
+	if err != nil {
+		return nil, err
+	}
+	return &stateDB.Coffer, nil
+}
 
-	error := api.e.coffer.UpdateSuperAccount(signature, newSuperAccount)
-	fmt.Printf("%s\n", error)
-	return error
+// SuperAccount displays the super account for Coffer
+func (api *CofferAPI) SuperAccount() (common.Address, error) {
+	coffer, err := api.GetCofferData()
+	if err != nil {
+		return common.Address{}, err
+	}
+	return coffer.SuperAccount, nil
+}
+
+// ChangeSuperAccount updates the super account for Coffer
+func (api *CofferAPI) ChangeSuperAccount(signature, newSuperAccount string) error {
+
+	// error := api.e.coffer.ChangeSuperAccount(signature, newSuperAccount)
+	// fmt.Printf("%s\n", error)
+	return nil
 }

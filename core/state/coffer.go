@@ -19,15 +19,15 @@ package state
 import "github.com/yanhuangpai/go-utility/common"
 
 type Coffer struct {
-	superAccount common.Address
-	signers      []Signer                      // Array for ordered storage
-	signerMap    map[common.Address]SignerInfo // Mapping for fast access
-	totalPower   uint64                        // Total cumulative power for random selection
+	SuperAccount common.Address
+	Signers      []Signer                      // Array for ordered storage
+	SignerMap    map[common.Address]SignerInfo // Mapping for fast access
+	TotalPower   uint64                        // Total cumulative power for random selection
 }
 
 type Signer struct {
-	address1 common.Address // Initial address set by the super account
-	address2 common.Address // Address set by the owner of the chipset
+	Address1 common.Address // Initial address set by the super account
+	Address2 common.Address // Address set by the owner of the chipset
 	power    uint64         // Weight or power of the signer
 }
 
@@ -36,24 +36,24 @@ type SignerInfo struct {
 	power uint64 // Weight or power of the signer
 }
 
-func (s *StateDB) AddCofferSigner(addr1, addr2 common.Address, power uint64) {
-	// Create a new Signer
-	newSigner := Signer{
-		address1: addr1,
-		address2: addr2,
-		power:    power,
-	}
+// func (s *StateDB) AddCofferSigner(addr1, addr2 common.Address, power uint64) {
+// 	// Create a new Signer
+// 	newSigner := Signer{
+// 		Address1: addr1,
+// 		Address2: addr2,
+// 		power:    power,
+// 	}
 
-	// Append the new signer to the Signers slice
-	s.coffer.signers = append(s.coffer.signers, newSigner)
+// 	// Append the new signer to the Signers slice
+// 	s.coffer.Signers = append(s.coffer.Signers, newSigner)
 
-	// Create a SignerInfo and add it to the SignerMap
-	signerInfo := SignerInfo{
-		index: len(s.coffer.signers) - 1, // Index of the new signer in the Signers slice
-		power: power,
-	}
-	s.coffer.signerMap[addr1] = signerInfo
+// 	// Create a SignerInfo and add it to the SignerMap
+// 	signerInfo := SignerInfo{
+// 		index: len(s.coffer.Signers) - 1, // Index of the new signer in the Signers slice
+// 		power: power,
+// 	}
+// 	s.coffer.SignerMap[addr1] = signerInfo
 
-	// Update the total power in the Coffer
-	s.coffer.totalPower += power
-}
+// 	// Update the total power in the Coffer
+// 	s.coffer.TotalPower += power
+// }

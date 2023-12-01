@@ -10,7 +10,9 @@ import (
 	"github.com/yanhuangpai/go-utility/common"
 	"github.com/yanhuangpai/go-utility/common/hexutil"
 	"github.com/yanhuangpai/go-utility/core"
+	"github.com/yanhuangpai/go-utility/core/state"
 	"github.com/yanhuangpai/go-utility/crypto"
+	"github.com/yanhuangpai/go-utility/uncdb"
 )
 
 // Coffer is the main structure for the Coffer consensus mechanism.
@@ -49,8 +51,20 @@ func NewCoffer(genesis *core.Genesis) (*Coffer, error) {
 	}, nil
 }
 
-// UpdateSuperAccount updates the super account, need the old super account's private key to sign
-func (c *Coffer) UpdateSuperAccount(signatureHex, newSuperAccount string) error {
+func NewCofferFromDB(db uncdb.Database) (*state.Coffer, error) {
+	// Retrieve Coffer data from the database
+	// Example: data := db.Get(/* coffer data key */)
+
+	// Initialize and return a new Coffer instance using the retrieved data
+	coffer := &state.Coffer{
+		// Initialize fields using data
+	}
+
+	return coffer, nil
+}
+
+// ChangeSuperAccount updates the super account, need the old super account's private key to sign
+func (c *Coffer) ChangeSuperAccount(signatureHex, newSuperAccount string) error {
 	// Verify the super account
 	result, _ := verifySig(c.SuperAccount.String(), newSuperAccount, signatureHex)
 	if !result {
