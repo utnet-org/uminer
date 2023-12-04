@@ -101,6 +101,11 @@ web3._extend({
 			params: 2
 		}),
 		new web3._extend.Method({
+			name: 'updateSuperAccount',
+			call: 'coffer_updateSuperAccount',
+			params: 6
+		}),
+		new web3._extend.Method({
 			name: 'superAccount',
 			call: 'coffer_superAccount',
 			params: 0

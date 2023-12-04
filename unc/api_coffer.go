@@ -18,9 +18,11 @@ package unc
 
 import (
 	"errors"
+	"math/big"
 
 	"github.com/yanhuangpai/go-utility/common"
 	"github.com/yanhuangpai/go-utility/core/state"
+	"github.com/yanhuangpai/go-utility/core/types"
 )
 
 // CofferAPI provides an API to control the coffer.
@@ -59,6 +61,44 @@ func (api *CofferAPI) SuperAccount() (common.Address, error) {
 		return common.Address{}, err
 	}
 	return coffer.SuperAccount, nil
+}
+
+// UpdateSuperAccount handles the super account update request.
+func (api *CofferAPI) UpdateSuperAccount(oldSuperAccount, newSuperAccount common.Address, nonce uint64, gasLimit uint64, gasPrice *big.Int, signature []byte) (string, error) {
+	// Create a new SuperAccountUpdateTx transaction
+	tx := &types.SuperAccountUpdateTx{
+		OldSuperAccount: oldSuperAccount,
+		NewSuperAccount: newSuperAccount,
+		Nonce:           nonce,
+		GasLimit:        gasLimit,
+		GasPrice:        gasPrice,
+		Signature:       signature,
+	}
+	// Retrieve the current state
+	stateDB, err := api.getStateDB()
+	if err != nil {
+		return "", err
+	}
+
+	// Get the sender's address from the transaction
+	sender, err := tx.Sender()
+	if err != nil {
+		return "", err
+	}
+
+	// Ensure the sender is the current super account
+	if sender != tx.OldSuperAccount {
+		return "", errors.New("unauthorized: sender is not the current super account")
+	}
+
+	// Process the transaction
+	err = stateDB.ProcessTransaction(tx)
+	if err != nil {
+		return "", err
+	}
+
+	// Return transaction ID or another success message
+	return "Transaction processed successfully", nil
 }
 
 // ChangeSuperAccount updates the super account for Coffer

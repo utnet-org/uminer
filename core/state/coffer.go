@@ -16,7 +16,13 @@
 
 package state
 
-import "github.com/yanhuangpai/go-utility/common"
+import (
+	"fmt"
+	"math/big"
+
+	"github.com/yanhuangpai/go-utility/common"
+	"github.com/yanhuangpai/go-utility/core/types"
+)
 
 type Coffer struct {
 	SuperAccount common.Address
@@ -34,6 +40,52 @@ type Signer struct {
 type SignerInfo struct {
 	index int    // Index in the Signers array
 	power uint64 // Weight or power of the signer
+}
+
+// Validate checks the validity of the SuperAccountUpdateTx transaction.
+func (s *StateDB) Validate(tx *types.SuperAccountUpdateTx) error {
+	// Verify the nonce
+	currentNonce := s.GetNonce(tx.OldSuperAccount)
+	if tx.Nonce != currentNonce {
+		return fmt.Errorf("invalid nonce: got %d, want %d", tx.Nonce, currentNonce)
+	}
+
+	// Check the signature (simplified example)
+	sender, err := tx.Sender()
+	if err != nil {
+		return fmt.Errorf("failed to verify signature: %v", err)
+	}
+
+	// Ensure the sender is the current super account
+	if sender != s.Coffer.SuperAccount {
+		return fmt.Errorf("unauthorized: sender is not the current super account")
+	}
+
+	// Check the account's balance for gas fees (simplified)
+	balance := s.GetBalance(tx.OldSuperAccount)
+	gasCost := new(big.Int).Mul(tx.GasPrice, new(big.Int).SetUint64(tx.GasLimit))
+	if balance.Cmp(gasCost) < 0 {
+		return fmt.Errorf("insufficient balance to pay for gas")
+	}
+
+	// Additional checks can be added here
+
+	return nil
+}
+
+// ProcessTransaction updates the Coffer structure based on the transaction.
+func (s *StateDB) ProcessTransaction(tx *types.SuperAccountUpdateTx) error {
+
+	// Validate the transaction
+	if err := s.Validate(tx); err != nil {
+		return fmt.Errorf("transaction validation failed: %v", err)
+	}
+	// Update the super account
+	s.Coffer.SuperAccount = tx.NewSuperAccount
+
+	// Additional logic to process the transaction can be added here
+
+	return nil
 }
 
 // func (s *StateDB) AddCofferSigner(addr1, addr2 common.Address, power uint64) {

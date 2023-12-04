@@ -136,7 +136,7 @@ type StateDB struct {
 	AccountDeleted int
 	StorageDeleted int
 
-	// Coffer data
+	// Coffer data includes signers and superAccount, as well as total power
 	Coffer Coffer
 
 	// Testing hooks
