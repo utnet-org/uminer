@@ -3,6 +3,7 @@ package types
 import (
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/yanhuangpai/go-utility/common"
@@ -80,21 +81,23 @@ func (tx *SuperAccountUpdateTx) DecodeRLP(encodedTx []byte) error {
 
 // Sender returns the address derived from the signature (i.e., the sender of the transaction).
 func (tx *SuperAccountUpdateTx) Sender() (common.Address, error) {
-	if len(tx.Signature) == 0 {
-		return common.Address{}, errors.New("no signature present in transaction")
+	if len(tx.Signature) != 65 {
+		return common.Address{}, fmt.Errorf("invalid signature length: expected 65 bytes, got %d", len(tx.Signature))
 	}
-
-	// Serialize the transaction excluding the signature
-	encodedTx, err := rlp.EncodeToBytes(tx)
-	if err != nil {
-		return common.Address{}, err
-	}
+	// Concatenate the addresses as strings with the same delimiter
+	serializedTx := tx.OldSuperAccount.Hex() + "|" + tx.NewSuperAccount.Hex()
 
 	// Hash the serialized transaction
-	h := crypto.Keccak256Hash(encodedTx)
+	message := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(serializedTx), serializedTx)
+	h := crypto.Keccak256Hash([]byte(message))
+	fmt.Printf("sender: %s", h)
 
+	signature := tx.Signature
+	if signature[crypto.RecoveryIDOffset] == 27 || signature[crypto.RecoveryIDOffset] == 28 {
+		signature[crypto.RecoveryIDOffset] -= 27
+	}
 	// Recover the public key from the signature
-	pubkey, err := crypto.SigToPub(h.Bytes(), tx.Signature)
+	pubkey, err := crypto.SigToPub(h.Bytes(), signature)
 	if err != nil {
 		return common.Address{}, err
 	}

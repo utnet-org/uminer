@@ -18,9 +18,12 @@ package unc
 
 import (
 	"errors"
-	"math/big"
+	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/yanhuangpai/go-utility/common"
+	"github.com/yanhuangpai/go-utility/common/hexutil"
 	"github.com/yanhuangpai/go-utility/core/state"
 	"github.com/yanhuangpai/go-utility/core/types"
 )
@@ -64,7 +67,38 @@ func (api *CofferAPI) SuperAccount() (common.Address, error) {
 }
 
 // UpdateSuperAccount handles the super account update request.
-func (api *CofferAPI) UpdateSuperAccount(oldSuperAccount, newSuperAccount common.Address, nonce uint64, gasLimit uint64, gasPrice *big.Int, signature []byte) (string, error) {
+func (api *CofferAPI) UpdateSuperAccount(oldSuperAccount, newSuperAccount common.Address, nonceStr, gasLimitStr, gasPriceStr, signatureStr string) (string, error) {
+	currentSuper, err := api.SuperAccount()
+	if err != nil {
+		return "", err
+	}
+	if strings.ToLower(oldSuperAccount.Hex()) != strings.ToLower(currentSuper.Hex()) {
+		return "", errors.New("unauthorized: oldSuperAccount the current super account")
+	}
+	// Parse the nonce from hex string to uint64
+	nonce, err := strconv.ParseUint(strings.TrimPrefix(nonceStr, "0x"), 16, 64)
+	if err != nil {
+		return "", fmt.Errorf("invalid nonce: %v", err)
+	}
+
+	// Parse the gasLimit from hex string to uint64
+	gasLimit, err := strconv.ParseUint(strings.TrimPrefix(gasLimitStr, "0x"), 16, 64)
+	if err != nil {
+		return "", fmt.Errorf("invalid gas limit: %v", err)
+	}
+
+	// Parse the gasPrice from hex string to big.Int
+	gasPrice, err := hexutil.DecodeBig(gasPriceStr)
+	if err != nil {
+		return "", fmt.Errorf("invalid gas price: %v", err)
+	}
+
+	// Decode the signature from hex string
+	signature, err := hexutil.Decode(signatureStr)
+	if err != nil {
+		return "", fmt.Errorf("invalid signature: %v", err)
+	}
+
 	// Create a new SuperAccountUpdateTx transaction
 	tx := &types.SuperAccountUpdateTx{
 		OldSuperAccount: oldSuperAccount,
@@ -78,17 +112,6 @@ func (api *CofferAPI) UpdateSuperAccount(oldSuperAccount, newSuperAccount common
 	stateDB, err := api.getStateDB()
 	if err != nil {
 		return "", err
-	}
-
-	// Get the sender's address from the transaction
-	sender, err := tx.Sender()
-	if err != nil {
-		return "", err
-	}
-
-	// Ensure the sender is the current super account
-	if sender != tx.OldSuperAccount {
-		return "", errors.New("unauthorized: sender is not the current super account")
 	}
 
 	// Process the transaction

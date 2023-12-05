@@ -19,6 +19,7 @@ package state
 import (
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/yanhuangpai/go-utility/common"
 	"github.com/yanhuangpai/go-utility/core/types"
@@ -57,7 +58,7 @@ func (s *StateDB) Validate(tx *types.SuperAccountUpdateTx) error {
 	}
 
 	// Ensure the sender is the current super account
-	if sender != s.Coffer.SuperAccount {
+	if strings.ToLower(sender.Hex()) != strings.ToLower(tx.OldSuperAccount.Hex()) {
 		return fmt.Errorf("unauthorized: sender is not the current super account")
 	}
 
