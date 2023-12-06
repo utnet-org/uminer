@@ -1,6 +1,0 @@
-Welcome to the Gunc JavaScript console!
-
- modules: admin:1.0 debug:1.0 engine:1.0 miner:1.0 net:1.0 rpc:1.0 txpool:1.0 unc:1.0 web3:1.0
-
-To exit, press ctrl-d or type exit
-> caught interrupt, exiting
