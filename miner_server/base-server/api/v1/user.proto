@@ -1,0 +1,188 @@
+syntax = "proto3";
+
+package baseserver.api.v1;
+
+option go_package = "uminer/uminer_server/base-server/api/v1;v1";
+
+
+//import "uminer/common/api/v1/configkey.proto";
+//import "validate/validate.proto";
+//import "uminer/common/api/v1/common.proto";
+
+service UserService {
+  rpc ListUser (ListUserRequest) returns (ListUserReply);
+  rpc FindUser (FindUserRequest) returns (FindUserReply);
+  rpc AddUser (AddUserRequest) returns (AddUserReply);
+  rpc UpdateUser (UpdateUserRequest) returns (UpdateUserReply);
+  rpc ListUserInCond (ListUserInCondRequest) returns (ListUserInCondReply);
+  rpc CheckOrInitUser (CheckOrInitUserRequest) returns (CheckOrInitUserReply);
+
+  rpc ListUserConfigKey (ListUserConfigKeyRequest) returns (ListUserConfigKeyReply);
+  rpc GetUserConfig (GetUserConfigRequest) returns (GetUserConfigReply);
+  rpc UpdateUserConfig (UpdateUserConfigRequest) returns (UpdateUserConfigReply);
+  rpc UpdateUserMinioAccount (UpdateUserMinioAccountRequest) returns (UpdateUserMinioAccountReply);
+  rpc UpdateUserMinioBuckets (UpdateUserMinioBucketsRequest) returns (UpdateUserMinioBucketsReply);
+}
+
+enum UserStatus
+{
+  PLACEHOLDER = 0;
+  FREEZE = 1;
+  ACTIVITY = 2;
+}
+
+enum GenderType
+{
+    NO = 0;
+    MALE = 1;
+    FEMALE = 2;
+}
+
+message UserItem {
+  string id = 1;
+  int64 createdAt = 2;
+  int64 updatedAt = 3;
+  string fullName = 4;
+  string email = 5;
+  string phone = 6;
+  string password = 7;
+  GenderType gender = 8;
+  UserStatus status = 9;
+  repeated Bind bind = 10;
+  repeated string resourcePools = 12;
+  string desc=13;
+//  common.api.v1.UserPermission permission = 14;
+  string permission = 14;
+  repeated string buckets = 15;
+  string minioUserName = 16;
+}
+
+message Bind {
+  string platform = 1;
+  string userId = 2;
+  string userName = 3;
+}
+
+message AddUserRequest {
+  string fullName = 1;
+  string email = 2 ;
+  string phone = 3;
+  string password = 4;
+  GenderType gender = 5;
+  Bind bind = 6;
+  string desc=7;
+}
+
+message AddUserReply {
+  UserItem user = 1;
+}
+
+message CheckOrInitUserRequest {
+  string id = 1;
+}
+
+message CheckOrInitUserReply {
+
+}
+
+message FindUserRequest {
+  string id = 1;
+  string email = 2;
+  string phone = 3;
+  Bind bind = 4;
+}
+
+message FindUserReply {
+  UserItem user = 1;
+}
+
+message ListUserRequest {
+  uint32 pageIndex = 1;
+  uint32 pageSize = 2;
+  string sortBy = 3;
+  string orderBy = 4;
+  string fullName = 5;
+  string email = 6;
+  string phone = 7;
+  string searchKey = 8;
+  UserStatus status = 9;
+  string desc = 10;
+}
+
+message ListUserReply {
+  int64 totalSize = 1;
+  repeated UserItem users = 2;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  string fullName = 2;
+  string email = 3;
+  string phone = 4;
+  string password = 5;
+  GenderType gender = 6;
+  UserStatus status = 7;
+  repeated Bind bind = 8;
+  repeated string resourcePools = 9;
+  string desc=10;
+//  common.api.v1.UserPermission permission = 11;
+  string permission = 11;
+
+}
+
+message UpdateUserReply {
+  UserItem user = 1;
+}
+
+message ListUserInCondRequest {
+  repeated string ids = 1;
+}
+
+message ListUserInCondReply {
+  repeated UserItem users = 1;
+}
+
+message ListUserConfigKeyRequest {
+
+}
+
+message ListUserConfigKeyReply {
+//  repeated common.api.v1.ConfigKey  configKeys = 1;
+  repeated string configKeys = 1;
+}
+
+message GetUserConfigRequest {
+  string userId = 1;
+}
+
+message GetUserConfigReply {
+  map<string, string> config = 1;
+}
+
+message UpdateUserConfigRequest {
+  string userId = 1;
+  map<string, string> config = 2;
+}
+
+message UpdateUserConfigReply {
+
+}
+
+message UpdateUserMinioAccountRequest {
+  string userId = 1;
+  string minioUserName = 2;
+  string minioPassword = 3;
+}
+
+message UpdateUserMinioAccountReply {
+
+}
+
+message UpdateUserMinioBucketsRequest {
+  string userId = 1;
+  repeated string buckets = 2;
+}
+
+message UpdateUserMinioBucketsReply {
+
+}

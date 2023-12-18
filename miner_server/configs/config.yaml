@@ -1,0 +1,92 @@
+app:
+  name: minerserver
+  version: v1.0
+  isDev: true #是否本地调试
+  logLevel: info
+server:
+  http:
+    addr: 0.0.0.0:8001
+    timeout: 60s
+  grpc:
+    addr: 0.0.0.0:9001
+    timeout: 60s
+data:
+  database:
+    driver: mysql
+    source: uminer_backend:ut123456@tcp(localhost:3306)/?sslmode=disable
+#  minio:
+#    base:
+#      endPoint: 192.168.1.6:31311
+#      accessKeyID: minioadmin
+#      secretAccessKey: minioadmin
+#      useSSL: false
+#      mountPath: /nfsdata/spider-242-41/minio
+#      pvcName: spider-minio-pvc
+#      proxyPath: /oss
+#    business:
+#      downloadExpiry: 86400
+#      uploadExpiry: 86400
+#  harbor:
+#    host: 192.168.1.5:87
+#    username: admin
+#    password: Harbor12345
+#    apiVersion: v2.0
+#    useSSL: false
+#  redis:
+#    addr: 192.168.1.6:30642
+#    username:
+#    password: abcde
+#  influxdb:
+#    addr: 192.168.1.6:30476
+#    username: spider
+#    password: spider
+#    database: spider
+#  jointCloud:
+#    baseUrl: http://192.168.207.141:8709
+#    username: test
+#    password: 7ee15bc8fee766cad1bd70ccf5f4dc14
+#    sessionExpirySec: 540 #实际有效期为600
+#  pytorchServer:
+#    imageAddr: swr.cn-south-1.myhuaweicloud.com/openispider/pytorchserver
+#    version: 2.0.2
+#  prometheus:
+#    baseUrl: http://192.168.1.6:30003
+
+#service:
+#  minerServerAddr: http://127.0.0.1:8001
+#  dockerDatasetPath: /dataset
+#  dockerCodePath: /code
+#  dockerModelPath: /model
+#  dockerUserHomePath: /userhome
+#  resourceLabelKey: spider.utlab.io/type
+#  billingPeriodSec: 60
+#  isUseMultusCNI: false
+#  networksConf: default/macvlan-cx5-bond-conf
+#  routineNum: 10
+#  develop:
+#    autoStopIntervalSec: 7200
+#    isSetUploadFileSize: true  #值为false时，上传文件大小不能超过1M；为true时，不限制
+#  resource:
+#    customizedResourceBindingNodeLabelKeyFormat: openi.spider.resource.%s
+#    customizedResourceBindingNodeLabelValue: bound
+#    defaultPoolName: common-pool
+#    poolInfoStoreKey: ResourcePoolInfo
+#    poolBindingNodeLabelKeyFormat: openi.spider.resourcepool.%s
+#    poolBindingNodeLabelValue: bound
+#    poolSelectLabelKey: platform
+#    poolSelectLabelValue: openi.spider
+#    discoveryLeaderLeaseLockName: resourcediscovery
+#    discoveryDuration: 15s
+#    ignoreSystemResources: hugepages-1Gi,pods,hugepages-2Mi,ephemeral-storage
+#administrator:
+#  username: "admin"
+#  password: "123456"
+#  email: ""
+#  phone: ""
+#module:
+#  storage:
+#    source:
+#      capacity: "100Gi"
+#      nfs:
+#        server: 192.168.203.72
+#        path: "/data/datasets/data/spider-dev-minio"

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package common.api.v1;
+
+option go_package = "server/common/api/v1;v1";
+
+message ConfigKey {
+  string key = 1;     // 键值，必填，保存配置时传入
+  string title = 2;   // 标题，必填
+  string type = 3;    // 类型，选填，input、radio、checkbox，默认为input
+  string desc = 4;    // 描述，选填
+  repeated string options = 5; // 选项，选填，radio、checkbox时必填
+  string regexp = 6;  // 正则，选填
+  bool required = 7; // 选填，默认为false
+}

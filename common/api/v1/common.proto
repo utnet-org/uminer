@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package common.api.v1;
+
+option go_package = "server/common/api/v1;v1";
+
+message Mount {
+  message Nfs {
+    string server = 1;
+    string path = 2;
+  }
+  message Spider {
+    string bucket = 1;
+    string object = 2;
+  }
+  string containerPath = 1;
+  bool readOnly = 2;
+  Nfs nfs = 3;
+  Spider spider = 4;
+}
+
+message UserPermission {
+  bool mountExternalStorage = 1;
+}
+
+message Bind {
+  string platform = 1;
+  string userId = 2;
+  string userName = 3;
+}

@@ -1,0 +1,161 @@
+syntax = "proto3";
+package baseserver.internal.conf;
+
+option go_package = "internal/conf;conf";
+
+import "google/protobuf/duration.proto";
+
+message Bootstrap {
+  App app = 1;
+  Server server = 2;
+  Data data = 3;
+//  Service service = 4;
+//  Administrator administrator = 5;
+  bytes storage = 4;
+}
+
+message App {
+  string name = 1;
+  string version = 2;
+  bool isDev = 3;
+  string logLevel = 4;
+}
+
+message Server {
+  message HTTP {
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration timeout = 3;
+  }
+  message GRPC {
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration timeout = 3;
+  }
+  HTTP http = 1;
+  GRPC grpc = 2;
+}
+
+message Database {
+  string driver = 1;
+  string source = 2;
+}
+message Pipeline {
+  string baseUrl = 1;
+  string token = 2;
+}
+message Kubernetes {
+  string masterUrl = 1;
+  string configPath = 2;
+  bool isSetUploadFileSize = 3;
+  int32 qps = 4;
+}
+message MinioBase {
+  string endPoint = 1;
+  string accessKeyID = 2;
+  string secretAccessKey = 3;
+  bool  useSSL= 4;
+  string mountPath = 5;
+  string pvcName = 6;
+  string proxyPath = 7;
+}
+message MinioBusiness {
+  int64 downloadExpiry = 1; // 下载链接有效期
+  int64 uploadExpiry = 2;   // 上传链接有效期
+}
+message Minio {
+  MinioBase base = 1;
+  MinioBusiness business= 2;
+}
+message Harbor {
+  string host = 1;
+  string username = 2;
+  string password = 3;
+  string apiVersion = 4;
+  bool   useSSL = 5;
+}
+
+message Redis {
+  string addr = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message Influxdb {
+  string addr = 1;
+  string username = 2;
+  string password = 3;
+  string database = 4;
+  string precision = 5;
+}
+
+message PytorchServer {
+  string imageAddr = 1;
+  string version = 2;
+}
+
+message Prometheus {
+  string baseUrl = 1;
+}
+
+message Data {
+  Database database = 1;
+//  Kubernetes kubernetes = 2;
+//  Minio minio = 3;
+//  Harbor harbor = 4;
+//  Redis redis = 5;
+//  Influxdb influxdb = 6;
+//  JointCloud jointCloud = 7;
+//  PytorchServer pytorchServer = 9;
+//  Prometheus prometheus = 11;
+}
+
+message Develop {
+  string jpyBaseUrlEnv = 1;
+  int64  autoStopIntervalSec = 2;
+  bool   isSetUploadFileSize = 4;
+}
+
+message Resource {
+  string poolInfoStoreKey = 1;
+  string poolBindingNodeLabelKeyFormat = 2;
+  string poolBindingNodeLabelValue = 3;
+  string poolSelectLabelKey = 4;
+  string poolSelectLabelValue = 5;
+  string discoveryLeaderLeaseLockName = 6;
+  string customizedResourceBindingNodeLabelKeyFormat = 7;
+  string customizedResourceBindingNodeLabelValue = 8;
+  string defaultPoolName = 9;
+  string discoveryDuration = 10;
+  string ignoreSystemResources = 11;
+}
+
+message JointCloud {
+  string baseUrl = 1;
+  string username = 2;
+  string password = 3;
+  int32 sessionExpirySec = 4;
+}
+
+message Service {
+  string baseServerAddr = 2;
+  string dockerDatasetPath = 3;
+  string dockerCodePath = 4;
+  string dockerModelPath = 5;
+  Develop develop = 6;
+  Resource resource = 7;
+  string resourceLabelKey = 8;
+  int64  billingPeriodSec = 9;
+  string dockerModelDeployPath = 10;
+  string dockerUserHomePath = 11;
+  bool   isUseMultusCNI = 12;
+  string networksConf = 13;
+  int32 routineNum = 14;
+}
+
+message Administrator {
+  string username = 1;
+  string password = 2;
+  string email = 3;
+  string phone = 4;
+}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package common.api.v1;
+
+option go_package = "server/common/api/v1;v1";
+
+enum NotebookEventRecordType {
+  PLACEHOLDER = 0;
+  CREATE = 1;
+  START = 2;
+  RUN = 3;
+  STOP = 4;
+  SAVE = 5;
+}
