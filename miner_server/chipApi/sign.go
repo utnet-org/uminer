@@ -12,25 +12,53 @@ package chipApi
 import "C"
 import (
 	"fmt"
+	"strconv"
 	"unsafe"
 )
 
-func SignChips(segmentStart uint64, segmentEnd uint64, p2 string, message string) {
-	cP2 := C.CString(p2)
-	cMessage := C.CString(message)
-	res := C.chipSignature(C.ulong(segmentStart), C.ulong(segmentEnd), cP2, cMessage)
-	//fmt.Println(cMessage, *res) // Custom print logic for ECDSA_SIG
+// ChipSign struct of chip signature
+type ChipSign struct {
+	Signature string
+	Status    bool
+}
 
-	// Accessing the returned array
-	numSignatures := segmentEnd - segmentStart // Replace with the actual number of signatures
-
-	// Convert the C array to a Go slice for easier handling
-	signatures := (*[1 << 30]C.struct_ChipSignature)(unsafe.Pointer(res))[:numSignatures:numSignatures]
-
-	// Print the content of each ChipSignature
-	for i, signature := range signatures {
-		fmt.Printf("Signature %d: %s\n", i, C.GoString((*C.char)(unsafe.Pointer(signature.SignMsg))))
-		fmt.Printf("PubKey %d: %s\n", i, C.GoString((*C.char)(unsafe.Pointer(signature.PubK))))
+func SignMinerChips(SerialNumber string, busId string, p2 string, message string) ChipSign {
+	// locate the chipId
+	list := BMChipsInfos()
+	chipId := -1
+	for _, item := range list {
+		if item.SerialNum == SerialNumber {
+			if item.Chips[0].BusId == busId {
+				devId, _ := strconv.ParseInt(item.Chips[0].DevId, 10, 64)
+				chipId = int(devId)
+			} else if item.Chips[1].BusId == busId {
+				devId, _ := strconv.ParseInt(item.Chips[1].DevId, 10, 64)
+				chipId = int(devId)
+			} else if item.Chips[2].BusId == busId {
+				devId, _ := strconv.ParseInt(item.Chips[2].DevId, 10, 64)
+				chipId = int(devId)
+			}
+		}
+	}
+	if chipId == -1 {
+		return ChipSign{
+			Signature: "",
+			Status:    false,
+		}
 	}
 
+	cP2 := C.CString(p2)
+	cMessage := C.CString(message)
+	res := C.chipSignature(C.ulong(chipId), C.ulong(chipId+1), cP2, cMessage)
+
+	// Convert the C array to a Go slice for easier handling
+	signatures := (*[1 << 30]C.struct_ChipSignature)(unsafe.Pointer(res))[:1:1]
+
+	// get final ChipSignature result
+	fmt.Printf("Signature %d: %s\n", chipId, C.GoString((*C.char)(unsafe.Pointer(signatures[0].SignMsg))))
+	fmt.Printf("PubKey %d: %s\n", chipId, C.GoString((*C.char)(unsafe.Pointer(signatures[0].PubK))))
+	return ChipSign{
+		Signature: C.GoString((*C.char)(unsafe.Pointer(signatures[0].SignMsg))),
+		Status:    true,
+	}
 }

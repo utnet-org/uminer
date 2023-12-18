@@ -16,27 +16,9 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"unsafe"
 )
 
-// GetChipsDetails 从c++端读取参数返回
-func GetChipsDetails() {
-
-	res := C.queryChipDetails()
-
-	// Accessing the returned array
-	num := 10
-
-	// Convert the C array to a Go slice for easier handling
-	chips := (*[1 << 30]C.struct_bmsmi)(unsafe.Pointer(res))[:num]
-
-	// Print the content of each ChipSignature
-	for _, chip := range chips {
-		fmt.Printf("chip id %d: %d\n", chip.dev_id, chip.dev_id)
-		fmt.Printf("chip status %d: %d\n", chip.dev_id, chip.status)
-	}
-}
-
+// TPUCards struct of tpu card parameter
 type TPUCards struct {
 	CardID    string
 	Name      string
@@ -50,6 +32,8 @@ type TPUCards struct {
 	// tpu chips information
 	Chips []BMChips
 }
+
+// BMChips struct of bmchip parameter
 type BMChips struct {
 	DevId string
 	BusId string
@@ -70,27 +54,26 @@ type BMChips struct {
 	Status  string
 }
 
-// BMChipsInfos 直接读取bm-smi的txt文件参数
-func BMChipsInfos() {
+// BMChipsInfos reading data from txt written from bm-smi
+func BMChipsInfos() []TPUCards {
+	// open file
+	cardList := make([]TPUCards, 0)
 	file, err := os.Open("bm_smi_1.txt")
 	if err != nil {
-		fmt.Println("无法打开芯片参数文件:", err)
-		return
+		fmt.Println("fail to open file: ", err)
+		return cardList
 	}
 	//defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	if err := scanner.Err(); err != nil {
-		fmt.Println("文件扫描错误:", err)
+		fmt.Println("scan file error: ", err)
 	}
 
 	// 定义正则表达式，用于匹配控制字符
 	reg := regexp.MustCompile("\x1b\\[.*?[@-~]")
 
-	// 计数器用于追踪当前行数
 	lineCount := 0
-
-	cardList := make([]TPUCards, 0)
 	chipList := make([]BMChips, 0)
 	card := TPUCards{
 		CardID:    "",
@@ -289,10 +272,10 @@ func BMChipsInfos() {
 		if readLine == 16 || (readLine%9 == 7 && readLine > 16) {
 			card.Chips = chipList
 			cardList = append(cardList, card)
-			fmt.Println(cardList)
-			fmt.Println("+++++++++++++++++++++++++")
+			//fmt.Println(cardList)
+			//fmt.Println("+++++++++++++++++++++++++")
 		}
 
 	}
-
+	return cardList
 }
