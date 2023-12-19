@@ -1,15 +1,5 @@
 package chipApi
 
-//#cgo CXXFLAGS: -std=c++11
-//#cgo CFLAGS: -I/Users/mac/Desktop/UtilityChain/ut_miner/src
-//#cgo LDFLAGS: -L/Users/mac/Desktop/UtilityChain/ut_miner/src -lchip -lstdc++
-//#cgo LDFLAGS: -L/usr/local/opt/openssl/lib -lcrypto
-//#include <chip.h>
-//#include <openssl/ec.h>
-//#include <openssl/ecdsa.h>
-//#include <openssl/obj_mac.h>
-//
-import "C"
 import (
 	"bufio"
 	"fmt"

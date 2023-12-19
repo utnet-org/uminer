@@ -1,8 +1,8 @@
 package chipApi
 
 //#cgo CXXFLAGS: -std=c++11
-//#cgo CFLAGS: -I/Users/mac/Desktop/UtilityChain/ut_miner/src
-//#cgo LDFLAGS: -L/Users/mac/Desktop/UtilityChain/ut_miner/src -lchip -lstdc++
+//#cgo CFLAGS: -I/Users/mac/sandbox/utnet/uminer/bm_chip/src
+//#cgo LDFLAGS: -L/Users/mac/sandbox/utnet/uminer/bm_chip/src -lchip -lstdc++
 //#cgo LDFLAGS: -L/usr/local/opt/openssl/lib -lcrypto
 //#include <chip.h>
 //#include <openssl/ec.h>
@@ -24,11 +24,11 @@ type ChipKeyPairs struct {
 }
 
 // BurnChips api through cgo to drive bmchip to burn and get p2-pubKey pairs
-func BurnChips(SerialNumber string, busId string, chipId int) {
-	res := C.chipBurningStepOne(C.int(chipId))
+func BurnChips(SerialNumber string, busId string, chipId int) ChipKeyPairs {
+	res := C.chipBurning(C.int(chipId))
 
 	// Convert the C array to a Go slice for easier handling
-	chipArray := (*[1 << 30]C.struct_ChipDeclarationOne)(unsafe.Pointer(&res))[:1:1]
+	chipArray := (*[1 << 30]C.struct_ChipDeclaration)(unsafe.Pointer(&res))[:1:1]
 	chip := chipArray[0]
 
 	keyPairs := ChipKeyPairs{
@@ -40,6 +40,6 @@ func BurnChips(SerialNumber string, busId string, chipId int) {
 	fmt.Printf("P2 %d: %s\n", chipId, keyPairs.P2)
 	fmt.Printf("PubKey %d: %s\n", chipId, keyPairs.PubKey)
 
-	// Pack tx for chain upload
+	return keyPairs
 
 }

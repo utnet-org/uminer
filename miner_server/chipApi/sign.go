@@ -1,8 +1,8 @@
 package chipApi
 
 //#cgo CXXFLAGS: -std=c++11
-//#cgo CFLAGS: -I/Users/mac/Desktop/UtilityChain/ut_miner/src
-//#cgo LDFLAGS: -L/Users/mac/Desktop/UtilityChain/ut_miner/src -lchip -lstdc++
+//#cgo CFLAGS: -I/Users/mac/sandbox/utnet/uminer/bm_chip/src
+//#cgo LDFLAGS: -L/Users/mac/sandbox/utnet/uminer/bm_chip/src -lchip -lstdc++
 //#cgo LDFLAGS: -L/usr/local/opt/openssl/lib -lcrypto
 //#include <chip.h>
 //#include <openssl/ec.h>
@@ -49,7 +49,7 @@ func SignMinerChips(SerialNumber string, busId string, p2 string, message string
 
 	cP2 := C.CString(p2)
 	cMessage := C.CString(message)
-	res := C.chipSignature(C.ulong(chipId), C.ulong(chipId+1), cP2, cMessage)
+	res := C.chipSignature(C.ulong(chipId), cP2, cMessage)
 
 	// Convert the C array to a Go slice for easier handling
 	signatures := (*[1 << 30]C.struct_ChipSignature)(unsafe.Pointer(res))[:1:1]
