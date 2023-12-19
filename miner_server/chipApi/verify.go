@@ -37,5 +37,8 @@ func VerifyMinerChips(segmentStart uint64, segmentEnd uint64, p2 string, pubK st
 		}
 
 	}
-
+	return ChipSign{
+		Signature: "",
+		Status:    false,
+	}
 }
