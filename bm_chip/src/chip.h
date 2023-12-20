@@ -51,6 +51,7 @@ struct ChipSignature {
 //    const EC_POINT *PubK;
     unsigned char* SignMsg;
     unsigned char* PubK;
+    int  status;
 };
 // burning on efuse: P2 + PubKey
 struct ChipDeclaration {
@@ -65,9 +66,13 @@ struct ChipVerify {
 
 /* method for chips */
 // chip burning
-struct ChipDeclaration chipBurning(int dev_id);
+int chipBurning(int dev_id);
+// chip get P2 and pubkey
+int chipGenPPubkey(int dev_id);
+// read P2 and pubkey from file
+struct ChipDeclaration readPPubkey(int dev_id);
 // chip signature
-struct ChipSignature* chipSignature(unsigned long chipId, const char* p2, const char* message);
+struct ChipSignature* chipSignature(unsigned long chipId, unsigned char* p2, const char* pubkey, const char* message, unsigned int size_p2, unsigned int  size_pubkey);
 // chip verification
 struct ChipVerify* chipVerify(unsigned long segment1, unsigned long segment2, const char* p2, const char* pubK, const char* message);
 

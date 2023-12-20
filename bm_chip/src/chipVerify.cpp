@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <iostream>
+#include <cstring>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/sha.h>
