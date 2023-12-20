@@ -1,8 +1,8 @@
-package chipApi
+package main
 
 //#cgo CXXFLAGS: -std=c++11
-//#cgo CFLAGS: -I/Users/mac/sandbox/utnet/uminer/bm_chip/src
-//#cgo LDFLAGS: -L/Users/mac/sandbox/utnet/uminer/bm_chip/src -lchip -lstdc++
+//#cgo CFLAGS: -I../../bm_chip/src
+//#cgo LDFLAGS: -L../../bm_chip/src -lchip -lstdc++
 //#cgo LDFLAGS: -L/usr/local/opt/openssl/lib -lcrypto
 //#include <chip.h>
 //#include <openssl/ec.h>
