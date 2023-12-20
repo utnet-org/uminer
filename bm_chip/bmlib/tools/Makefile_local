@@ -1,0 +1,9 @@
+SRCS_C      = $(wildcard *.c)
+SRCS_CXX    = $(wildcard *.cpp)
+
+TGTS_C      = $(addprefix ./, $(notdir $(SRCS_C:.c=)))
+TGTS_CXX    = $(addprefix ./, $(notdir $(SRCS_CXX:.cpp=)))
+
+all : $(TGTS_C) $(TGTS_CXX)
+./%:./%.cpp
+	g++  $< -o $@
