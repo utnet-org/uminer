@@ -23,8 +23,15 @@ std::string byteArrayToHexTest(const unsigned char* byteArray, size_t length) {
         ss << std::setw(2) << static_cast<unsigned int>(byteArray[i]);
     return ss.str();
 }
-void signDemo(unsigned int size_p2){
-    FILE *file_p2 = fopen("../key/p2_10", "r");
+
+void burnDemo(int devId){
+    chipBurning(devId);
+}
+void genKeysDemo(int devId){
+    chipGenKeyPairs(devId);
+}
+void signDemo(int devId, unsigned int size_p2){
+    FILE *file_p2 = fopen(("../key/p2_"+ std::to_string(devId)).c_str(), "r");
     unsigned int size_p2_padding;
     unsigned char* P2 = (unsigned char *)malloc(size_p2);
     if (file_p2) {
@@ -37,6 +44,7 @@ void signDemo(unsigned int size_p2){
 
     } else {
         printf("Error opening file.\n");
+        return;
     }
     std::string str = byteArrayToHexTest(P2, size_p2_padding);
     const char* P2Byte = str.c_str();
@@ -50,11 +58,12 @@ void signDemo(unsigned int size_p2){
                        "UedEqPGLRBclMElR3r9WI6GNIsPAa/w/uQIDAQAB\n"
                        "-----END RSA PUBLIC KEY-----";
     std::string msg = "utility";
-    chipSignature(10, P2Byte, PubK.c_str(), msg.c_str(), size_p2_padding, 426);
+    chipSignature(devId, P2Byte, PubK.c_str(), msg.c_str(), size_p2_padding, 426);
 }
 
 int main() {
-    signDemo(1680);
+    genKeysDemo(11);
+    signDemo(10, 1680);
     return 0;
 
 }

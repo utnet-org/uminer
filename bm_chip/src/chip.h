@@ -8,12 +8,6 @@
 // default value
 #define ATTR_FAULT_VALUE         (int)0xFFFFFC00
 
-// signature and public key
-struct keyPairs{
-    EC_KEY *Eckey;
-    const EC_POINT *PubK;
-};
-
 
 // to cgo
 #ifdef __cplusplus
@@ -68,9 +62,9 @@ struct ChipVerify {
 // chip burning
 int chipBurning(int dev_id);
 // chip get P2 and pubkey
-int chipGenPPubkey(int dev_id);
+int chipGenKeyPairs(int dev_id);
 // read P2 and pubkey from file
-struct ChipDeclaration readPPubkey(int dev_id);
+struct ChipDeclaration readKeyPairs(int dev_id);
 // chip signature
 struct ChipSignature* chipSignature(unsigned long chipId, const char* p2, const char* pubkey, const char* message, unsigned int size_p2, unsigned int  size_pubkey);
 // chip verification
@@ -80,8 +74,6 @@ struct ChipVerify* chipVerify(unsigned long segment1, unsigned long segment2, co
 
 #ifdef __cplusplus
 }
-
-struct keyPairs getKeyPairs();
 
 ChipSignature SignAtSPACC(int seq, unsigned char hash[SHA256_DIGEST_LENGTH]);
 

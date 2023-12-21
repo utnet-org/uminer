@@ -4,70 +4,100 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
-#include <openssl/ec.h>
-#include <openssl/ecdsa.h>
-#include <openssl/sha.h>
-#include <openssl/obj_mac.h>
+
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include <bmlib_runtime.h>
 
 #include "chip.h"
+#include "util.h"
 
-std::string byteArrayToHex(const unsigned char* byteArray, size_t length) {
-    std::stringstream ss;
-    ss << std::hex << std::setfill('0');
-    for (size_t i = 0; i < length; ++i)
-        ss << std::setw(2) << static_cast<unsigned int>(byteArray[i]);
-    return ss.str();
-}
+#ifdef __linux__
+#include <sys/syscall.h>
+#else
+#include <windows.h>
+#endif
 
-void BurnAtSPACCDemo(int burnTimes, int seq, unsigned char*  p, unsigned char*  pubkey) {
 
-    std::string str1 = "";
-    std::string str2 = "";
-    if (burnTimes == 1) {
-        // 第一次烧录
-        printf("aes key programed success the 1st time!\n");
-        // 模拟两个随意的string
-        str1 = "chipP1_" + std::to_string(seq);
-        str2 = "chipPubkey_" + std::to_string(seq);
-    }
-    if (burnTimes == 2) {
-        // 第二次烧录
-        printf("aes key programed success the 2nd time!\n");
-        // 模拟两个随意的string
-        str1 = "chipP2_" + std::to_string(seq);
-        str2 = "chipPubkey_" + std::to_string(seq);
+int chipGenKeyPairs(int seq) {
+
+    /*** read p2 and pubKey by SPACC and PKA ***/
+#if !defined(USING_CMODEL) && !defined(SOC_MODE)
+    bm_handle_t handle;
+    bm_status_t ret = BM_SUCCESS;
+    unsigned int size_p2 = 10;
+    unsigned int  size_pubkey = 10;
+    unsigned int size_signature;
+
+    ret = bm_dev_request(&handle, seq);
+    if ((ret != BM_SUCCESS) || (handle == NULL)) {
+        printf("bm_dev_request error, ret = %d\n", ret);
+        return -3;
     }
 
-    // 得到加密私钥和公钥并赋值
-    strcpy(reinterpret_cast<char*>(p), str1.c_str());
-    strcpy(reinterpret_cast<char*>(pubkey), str2.c_str());
-
-}
-
-int chipGenPPubkey(int seq) {
-
-    // 从驱动烧录结束后 读取私钥再加密priK
-
-    unsigned int size_p2 = 2048;
-    unsigned int  size_pubkey = 2048;
-    unsigned char* p2 = (unsigned char*)malloc(size_p2);
     unsigned char* pubkey = (unsigned char*)malloc(size_pubkey);
+    unsigned char* p2     = (unsigned char*)malloc(size_p2);
 
-    ChipDeclaration oneChip;
+    /* get key pairs */
+    ret = bmcpu_gen_p2_pubkey(handle, p2, &size_p2, pubkey, &size_pubkey);
+    if (ret != BM_SUCCESS) {
+        printf("bmcpu_gen_p2_pubkey error, ret = %d\n", ret);
+        bm_dev_free(handle);
+        return -1;
+    }
+//    strcpy((char*)pubkey, "hello");
+//    strcpy((char*)p2, "world");
 
-    // get p2 and pubkey and store in files
 
-    // 如果烧录出问题直接返回nullptr
-    if (NULL == p2 ||  NULL == pubkey ){
-        fprintf(stderr, "Error burning the chip %d\n", seq);
+    /* Must be 16btye aligned storage, otherwise spacc cannot decrypt correctly*/
+    unsigned int size_p2_padding = (size_p2 + 15) & ~15;
+    printf("size_pubkey: %d size_p2: %d\n", size_pubkey, size_p2);
+    printf("pubkey: %s  \n", pubkey);
+
+    FILE *file_pubkey = fopen(("../../bm_chip/src/key/pubkey_"+ std::to_string(seq)).c_str(), "w");
+    FILE *file_p2 = fopen(("../../bm_chip/src/key/p2_"+ std::to_string(seq)).c_str(), "w");
+    if (file_pubkey) {
+        size_t bytes_written = fwrite(pubkey, 1, size_pubkey, file_pubkey);
+        if (bytes_written == size_pubkey) {
+            printf("Data written to pubkey successfully.\n");
+        } else {
+            printf("Error writing data to pubkey\n");
+        }
+        fclose(file_pubkey);
+    } else {
+        printf("Error opening file.\n");
         return 0;
     }
 
+    if (file_p2) {
+        size_t bytes_written = fwrite(p2, 1, size_p2_padding, file_p2);
+        if (bytes_written == size_p2_padding) {
+            printf("Data written to p2 successfully.\n");
+        } else {
+            printf("Error writing data to p2.\n");
+        }
+        fclose(file_p2);
+    } else {
+        printf("Error opening file.\n");
+        return 0;
+    }
+
+    free(pubkey);
+    free(p2);
+    bm_dev_free(handle);
+#else
+
+#endif
     return 1;
 
 }
 
-ChipDeclaration readPPubkey(int seq) {
+ChipDeclaration readKeyPairs(int seq) {
+
     unsigned int size_p2 = 2048;
     unsigned int size_pubkey = 2048;
     unsigned char* p2 = (unsigned char*)malloc(size_p2);
@@ -120,10 +150,31 @@ ChipDeclaration readPPubkey(int seq) {
 
 int chipBurning(int dev_id) {
 
+    /*** burning at efuse ***/
+#if !defined(USING_CMODEL) && !defined(SOC_MODE)
     printf("\nthe chip dev_id %d to be burned ... \n", dev_id);
+    bm_handle_t handle;
+    bm_status_t ret = BM_SUCCESS;
 
-    /*** 芯片烧录 ***/
+    ret = bm_dev_request(&handle, dev_id);
+    if ((ret != BM_SUCCESS) || (handle == NULL)) {
+        printf("bm_dev_request error, ret = %d\n", ret);
+        return -3;
+    }
 
+    ret = bmcpu_gen_aes_key(handle);
+    if (ret != 1) {
+        printf("burn_aes_key error, error = %d\n", ret);
+        bm_dev_free(handle);
+        return ret;
+    }
+
+    bm_dev_free(handle);
+    printf("aes key programed success!\n");
+
+#else
+
+#endif
     return 1;
 
 }

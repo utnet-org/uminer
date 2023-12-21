@@ -7,6 +7,7 @@
 #include <openssl/obj_mac.h>
 
 #include "chip.h"
+#include "util.h"
 
 ChipVerify* chipVerify(unsigned long segment1, unsigned long segment2, const char* p2, const char* pubK, const char* message) {
 

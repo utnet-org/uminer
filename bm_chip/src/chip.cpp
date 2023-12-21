@@ -1,9 +1,16 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string>
+#include <sstream>
+#include <string.h>
+#include <iomanip>
+
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/sha.h>
 #include <openssl/obj_mac.h>
 
-#include "chip.h"
+#include "util.h"
 
 keyPairs getKeyPairs(){
     keyPairs a;
@@ -28,4 +35,12 @@ keyPairs getKeyPairs(){
     a.Eckey = eckey;
     a.PubK = pub_key;
     return a;
+}
+
+std::string byteArrayToHex(const unsigned char* byteArray, size_t length) {
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    for (size_t i = 0; i < length; ++i)
+        ss << std::setw(2) << static_cast<unsigned int>(byteArray[i]);
+    return ss.str();
 }

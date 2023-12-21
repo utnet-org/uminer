@@ -1,6 +1,3 @@
-//#include <stdio.h>
-//#include <iostream>
-//#include <cstring>
 //#include <openssl/ec.h>
 //#include <openssl/ecdsa.h>
 //#include <openssl/sha.h>
@@ -10,6 +7,7 @@
 #include <stdio.h>
 #include <cstring>
 #include <string>
+#include <iostream>
 #include <sstream>
 #include <string.h>
 #include <pthread.h>
@@ -23,6 +21,7 @@
 #include <openssl/buffer.h>
 
 #include "chip.h"
+#include "util.h"
 
 #ifdef __linux__
 #include <sys/syscall.h>
@@ -119,8 +118,11 @@ ChipSignature* chipSignature(unsigned long chipId, const char* P2Char, const cha
         emptys->status = 0;
         return emptys;
     }
+    // hex
+    std::string signatureHex = byteArrayToHex(signature, size_signature);
     printf("signature size: %d\n",size_signature);
     printf("signature: %s\n",signature);
+    std::cout << signatureHex << std::endl;
 
     /* get values */
     signatureList[0].SignMsg = new unsigned char[size_pubkey];
