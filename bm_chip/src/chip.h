@@ -59,6 +59,8 @@ struct ChipVerify {
 };
 
 /* method for chips */
+// start chip cpu
+int startCPU(int dev_id, const char * boot_file, const char * core_file);
 // chip burning
 int chipBurning(int dev_id);
 // chip get P2 and pubkey

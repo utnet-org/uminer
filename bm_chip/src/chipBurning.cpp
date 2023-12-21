@@ -29,8 +29,8 @@ int chipGenKeyPairs(int seq) {
 #if !defined(USING_CMODEL) && !defined(SOC_MODE)
     bm_handle_t handle;
     bm_status_t ret = BM_SUCCESS;
-    unsigned int size_p2 = 10;
-    unsigned int  size_pubkey = 10;
+    unsigned int size_p2 = 2048;
+    unsigned int size_pubkey = 2048;
     unsigned int size_signature;
 
     ret = bm_dev_request(&handle, seq);
@@ -60,6 +60,11 @@ int chipGenKeyPairs(int seq) {
 
     FILE *file_pubkey = fopen(("../../bm_chip/src/key/pubkey_"+ std::to_string(seq)).c_str(), "w");
     FILE *file_p2 = fopen(("../../bm_chip/src/key/p2_"+ std::to_string(seq)).c_str(), "w");
+
+    // this directory is for c++ demo
+//    FILE *file_pubkey = fopen(("../key/pubkey_"+ std::to_string(seq)).c_str(), "w");
+//    FILE *file_p2 = fopen(("../key/p2_"+ std::to_string(seq)).c_str(), "w");
+
     if (file_pubkey) {
         size_t bytes_written = fwrite(pubkey, 1, size_pubkey, file_pubkey);
         if (bytes_written == size_pubkey) {
@@ -163,7 +168,7 @@ int chipBurning(int dev_id) {
     }
 
     ret = bmcpu_gen_aes_key(handle);
-    if (ret != 1) {
+    if (ret != BM_SUCCESS) {
         printf("burn_aes_key error, error = %d\n", ret);
         bm_dev_free(handle);
         return ret;
