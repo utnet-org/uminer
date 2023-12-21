@@ -36,9 +36,24 @@ func BurnChips(SerialNumber string, busId string, chipId int) bool {
 
 }
 
+// GenChipsKeyPairs is
+func GenChipsKeyPairs(SerialNumber string, busId string, chipId int) {
+	res := C.chipGenKeyPairs(C.int(chipId))
+	if res == 1 {
+		fmt.Println("chip ", chipId, "generate p2 and pubKey success !")
+	} else if res == 0 {
+		fmt.Println("chip ", chipId, ": error opening file !")
+	} else if res == -1 {
+		fmt.Println("chip ", chipId, ": generate p2 and pubKey error !")
+	} else if res == -3 {
+		fmt.Println("chip ", chipId, ": bm_dev_request error !")
+	}
+
+}
+
 // ReadChipKeyPairs is
 func ReadChipKeyPairs(SerialNumber string, busId string, chipId int) ChipKeyPairs {
-	res := C.readPPubkey(C.int(chipId))
+	res := C.readKeyPairs(C.int(chipId))
 
 	// Convert the C array to a Go slice for easier handling
 	chipArray := (*[1 << 30]C.struct_ChipDeclaration)(unsafe.Pointer(&res))[:1:1]
