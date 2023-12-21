@@ -56,8 +56,8 @@ func SignMinerChips(SerialNumber string, busId string, p2 string, pubKey string,
 	signatures := (*[1 << 30]C.struct_ChipSignature)(unsafe.Pointer(res))[:1:1]
 
 	// get final ChipSignature result
-	fmt.Printf("Signature %d: %s\n", chipId, C.GoString((*C.char)(unsafe.Pointer(signatures[0].SignMsg))))
-	fmt.Printf("PubKey %d: %s\n", chipId, C.GoString((*C.char)(unsafe.Pointer(signatures[0].PubK))))
+	fmt.Printf("Signature of chip %d: %s\n", chipId, C.GoString((*C.char)(unsafe.Pointer(signatures[0].SignMsg))))
+	fmt.Printf("PubKey of chip %d: %s\n", chipId, C.GoString((*C.char)(unsafe.Pointer(signatures[0].PubK))))
 	return ChipSign{
 		Signature: C.GoString((*C.char)(unsafe.Pointer(signatures[0].SignMsg))),
 		Status:    true,

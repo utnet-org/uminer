@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
 #include <cstring>
-#include <stdlib.h>
 #include <sstream>
+#include <iomanip>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/sha.h>
@@ -10,13 +11,11 @@
 
 #include "chip.h"
 
-std::string hexStringToByteArray(const std::string& hexString) {
+std::string byteArrayToHex(const unsigned char* byteArray, size_t length) {
     std::stringstream ss;
-    for (size_t i = 0; i < hexString.length(); i += 2) {
-        std::string byteString = hexString.substr(i, 2);
-        unsigned char byte = static_cast<unsigned char>(std::stoi(byteString, nullptr, 16));
-        ss << byte;
-    }
+    ss << std::hex << std::setfill('0');
+    for (size_t i = 0; i < length; ++i)
+        ss << std::setw(2) << static_cast<unsigned int>(byteArray[i]);
     return ss.str();
 }
 
@@ -70,7 +69,7 @@ int chipGenPPubkey(int seq) {
 
 ChipDeclaration readPPubkey(int seq) {
     unsigned int size_p2 = 2048;
-    unsigned int  size_pubkey = 2048;
+    unsigned int size_pubkey = 2048;
     unsigned char* p2 = (unsigned char*)malloc(size_p2);
     unsigned char* pubkey = (unsigned char*)malloc(size_pubkey);
     unsigned int size_p2_padding;
@@ -78,9 +77,8 @@ ChipDeclaration readPPubkey(int seq) {
     ChipDeclaration oneChip;
 
     // read files to get results
-//    size_p2 = 1675;
-    FILE *file_pubkey = fopen(("../../bm_chip/src/pubkey_"+ std::to_string(seq)).c_str(), "r");
-    FILE *file_p2 = fopen(("../../bm_chip/src/p2_"+ std::to_string(seq)).c_str(), "r");
+    FILE *file_pubkey = fopen(("../../bm_chip/src/key/pubkey_"+ std::to_string(seq)).c_str(), "r");
+    FILE *file_p2 = fopen(("../../bm_chip/src/key/p2_"+ std::to_string(seq)).c_str(), "r");
     if (file_pubkey) {
         fseek(file_pubkey, 0, SEEK_END);
         size_pubkey = ftell(file_pubkey);
@@ -105,17 +103,16 @@ ChipDeclaration readPPubkey(int seq) {
         return oneChip;
     }
 
-    std::string byteArray = hexStringToByteArray("b8dbbe56e32ba53d9e5f17a45f07fb2551e05aeeeabe8cc7241c8779a9b5a796862fce3ea7eb9935fbf72ca32efee4ee68330b643df8efc10d66066cb801d72d9f1b75a8efa7df38327133b1a0947c0582762c349b3f2c8131de92374d2f0b3b84e3d1fc689c86861788feaeee641e2545d06d7353dbab871d78e506e0b2e246e9d9d8c02e14f414b30dec6f63f5");
-    std::cout << "解码后的字节数据: " << byteArray << std::endl;
+    // hex
+    std::string str = byteArrayToHex(p2, size_p2_padding);
+    const char* P2Byte = str.c_str();
 
-    std::string P2 = std::string(reinterpret_cast<char*>(p2));
-    std::string PubKey = std::string(reinterpret_cast<char*>(pubkey));
+    // get value
+    oneChip.EncryptedPrivK = P2Byte;
+    oneChip.PubK = reinterpret_cast<const char*>(pubkey);
 
-    oneChip.EncryptedPrivK = new unsigned char[P2.length() + 1];
-    oneChip.PubK = new unsigned char[PubKey.length() + 1];
-
-    strcpy(reinterpret_cast<char*>(oneChip.EncryptedPrivK), P2.c_str());
-    strcpy(reinterpret_cast<char*>(oneChip.PubK), PubKey.c_str());
+    free(p2);
+    free(pubkey);
 
     return oneChip;
 

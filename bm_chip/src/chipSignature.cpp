@@ -30,6 +30,19 @@
 #include <windows.h>
 #endif
 
+unsigned char* hexToByteArray(const std::string& hexString) {
+    size_t length = hexString.length() / 2;
+    printf("hexString length: %zu\n", hexString.length());
+    unsigned char* byteArray = new unsigned char[length];
+
+    for (size_t i = 0; i < hexString.length(); i += 2) {
+        std::string byteString = hexString.substr(i, 2);
+        unsigned char byte = static_cast<unsigned char>(std::stoi(byteString, nullptr, 16));
+        byteArray[i / 2] = byte; // 每两个字符转换为一个字节，存储到数组中
+    }
+
+    return byteArray;
+}
 /* Generate the RSA256 digest */
 void generate_sha256_digest(const unsigned char *data, size_t data_size, unsigned char *digest) {
     SHA256_CTX sha256_ctx;
@@ -63,13 +76,12 @@ int verify_with_public_key(const unsigned char *publicKeyData, unsigned int pub_
     return result;
 }
 
-ChipSignature* chipSignature(unsigned long chipId, unsigned char* P2Char, const char* PubKeyChar, const char* message, unsigned int size_p2, unsigned int  size_pubkey) {
+ChipSignature* chipSignature(unsigned long chipId, const char* P2Char, const char* PubKeyChar, const char* message, unsigned int size_p2, unsigned int  size_pubkey) {
 
 #if !defined(USING_CMODEL) && !defined(SOC_MODE)
     bm_handle_t handle;
     bm_status_t ret = BM_SUCCESS;
     unsigned int size_signature;
-    unsigned int size_p2_padding;
 
     ret = bm_dev_request(&handle, chipId);
     if ((ret != BM_SUCCESS) || (handle == NULL)) {
@@ -91,27 +103,13 @@ ChipSignature* chipSignature(unsigned long chipId, unsigned char* P2Char, const 
 
     /* digital signature */
     unsigned char* p2 = (unsigned char *)malloc(size_p2);
+    std:: string str2(P2Char);
+    p2 = hexToByteArray(str2);
     unsigned char* pubkey = (unsigned char *)malloc(size_pubkey);
-//    strcpy(reinterpret_cast<char*>(p2), const_cast<char*>(P2Char));
     strcpy(reinterpret_cast<char*>(pubkey), const_cast<char*>(PubKeyChar));
 
-//        FILE *file_p2 = fopen("../key/p2_10", "r");
-//        unsigned char* p21 = (unsigned char *)malloc(size_p2);
-//        if (file_p2) {
-//            fseek(file_p2, 0, SEEK_END);
-//            size_p2_padding = ftell(file_p2);
-//            fseek(file_p2, 0, SEEK_SET);
-//
-//            fread(p21, 1, size_p2_padding, file_p2);
-//
-//            fclose(file_p2);
-//
-//        } else {
-//            printf("Error opening file.\n");
-//        }
-
     ret = bmcpu_gen_sign(handle, signature, &size_signature,
-                         digest,sizeof(digest),P2Char,size_p2);
+                         digest,sizeof(digest), p2, size_p2);
     if (ret != BM_SUCCESS) {
         printf("bmcpu_gen_sign error, ret = %d\n", ret);
         bm_dev_free(handle);
@@ -121,8 +119,8 @@ ChipSignature* chipSignature(unsigned long chipId, unsigned char* P2Char, const 
         emptys->status = 0;
         return emptys;
     }
-    printf("signature size :%d\n",size_signature);
-    printf("signature :%s\n",signature);
+    printf("signature size: %d\n",size_signature);
+    printf("signature: %s\n",signature);
 
     /* get values */
     signatureList[0].SignMsg = new unsigned char[size_pubkey];
@@ -142,6 +140,8 @@ ChipSignature* chipSignature(unsigned long chipId, unsigned char* P2Char, const 
         signatureList[0].status = 0;
     }
 
+    free(p2);
+    free(pubkey);
     free(signature);
     bm_dev_free(handle);
 #else

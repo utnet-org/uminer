@@ -11,7 +11,6 @@ package main
 //
 import "C"
 import (
-	"encoding/hex"
 	"fmt"
 	"unsafe"
 )
@@ -28,9 +27,12 @@ type ChipKeyPairs struct {
 func BurnChips(SerialNumber string, busId string, chipId int) bool {
 	res := C.chipBurning(C.int(chipId))
 
-	fmt.Println("result  ", res)
-
-	return true
+	if res == 1 {
+		fmt.Println("chip ", chipId, "burned at efuse success !")
+		return true
+	}
+	fmt.Println("chip ", chipId, "burned at efuse failed !")
+	return false
 
 }
 
@@ -48,12 +50,9 @@ func ReadChipKeyPairs(SerialNumber string, busId string, chipId int) ChipKeyPair
 		P2:           C.GoString((*C.char)(unsafe.Pointer(chip.EncryptedPrivK))),
 		PubKey:       C.GoString((*C.char)(unsafe.Pointer(chip.PubK))),
 	}
-	p2 := hex.EncodeToString([]byte(keyPairs.P2))
-	decodeP2, _ := hex.DecodeString(p2)
-	fmt.Printf("P2 encode: %s\n", keyPairs.P2)
-	fmt.Printf("P2 %d: %s\n", chipId, p2)
+
+	fmt.Printf("P2 %d: %s\n", chipId, keyPairs.P2)
 	fmt.Printf("PubKey %d: %s\n", chipId, keyPairs.PubKey)
-	fmt.Printf("P2 decode: %s\n", decodeP2)
 
 	return keyPairs
 
