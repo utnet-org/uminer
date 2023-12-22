@@ -23,15 +23,30 @@ type ChipKeyPairs struct {
 	PubKey       string
 }
 
+// StartChips api through cgo to drive bmchip to activate cpu
+func StartChips(chipId int, fipBin string, rambootRootfs string) bool {
+	cfipBin := C.CString(fipBin)
+	cRambootRootfs := C.CString(rambootRootfs)
+	res := C.startCPU(C.int(chipId), cfipBin, cRambootRootfs)
+
+	if res == 1 {
+		fmt.Println("chip ", chipId, " activate success !")
+		return true
+	}
+	fmt.Println("chip ", chipId, " activate failed !")
+	return false
+
+}
+
 // BurnChips api through cgo to drive bmchip to burn and get p2-pubKey pairs
 func BurnChips(SerialNumber string, busId string, chipId int) bool {
 	res := C.chipBurning(C.int(chipId))
 
 	if res == 1 {
-		fmt.Println("chip ", chipId, "burned at efuse success !")
+		fmt.Println("chip ", chipId, " burned at efuse success !")
 		return true
 	}
-	fmt.Println("chip ", chipId, "burned at efuse failed !")
+	fmt.Println("chip ", chipId, " burned at efuse failed !")
 	return false
 
 }
