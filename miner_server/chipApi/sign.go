@@ -22,7 +22,7 @@ type ChipSign struct {
 	Status    bool
 }
 
-func SignMinerChips(SerialNumber string, busId string, p2 string, pubKey string, message string) ChipSign {
+func SignMinerChips(SerialNumber string, busId string, devId int, p2 string, pubKey string, p2Size int, pubKeySize int, message string) ChipSign {
 	// locate the chipId
 	list := BMChipsInfos()
 	chipId := -1
@@ -40,17 +40,19 @@ func SignMinerChips(SerialNumber string, busId string, p2 string, pubKey string,
 			}
 		}
 	}
-	if chipId == -1 {
-		return ChipSign{
-			Signature: "",
-			Status:    false,
-		}
-	}
+	//if chipId == -1 {
+	//	return ChipSign{
+	//		Signature: "",
+	//		Status:    false,
+	//	}
+	//}
+
+	chipId = devId
 
 	cP2 := C.CString(p2)
 	cpubKey := C.CString(pubKey)
 	cMessage := C.CString(message)
-	res := C.chipSignature(C.ulong(chipId), cP2, cpubKey, cMessage, C.uint(uint32(1675)), C.uint(uint32(426)))
+	res := C.chipSignature(C.ulong(chipId), cP2, cpubKey, cMessage, C.uint(p2Size), C.uint(pubKeySize))
 
 	// Convert the C array to a Go slice for easier handling
 	signatures := (*[1 << 30]C.struct_ChipSignature)(unsafe.Pointer(res))[:1:1]

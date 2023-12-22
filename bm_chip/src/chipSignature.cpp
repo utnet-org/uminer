@@ -79,9 +79,10 @@ ChipSignature* chipSignature(unsigned long chipId, const char* P2Char, const cha
     std::cout << signatureHex << std::endl;
 
     /* get values */
-    signatureList[0].SignMsg = new unsigned char[size_pubkey];
+    signatureList[0].SignMsg = new unsigned char[size_pubkey*2];  // multiply 2 here is to get rid of the wrong value output at cgo
     signatureList[0].PubK = new unsigned char[size_pubkey];
-    memcpy(signatureList[0].SignMsg, signature, size_pubkey);
+//    memcpy(signatureList[0].SignMsg, signature, size_pubkey);
+    strcpy(reinterpret_cast<char*>(signatureList[0].SignMsg), const_cast<char*>(signatureHex.c_str()));
     strcpy(reinterpret_cast<char*>(signatureList[0].PubK), const_cast<char*>(PubKeyChar));
 
     /* Verify digital signature */
