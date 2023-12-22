@@ -62,7 +62,7 @@ func ReadChipKeyPairs(SerialNumber string, busId string, chipId int) ChipKeyPair
 	keyPairs := ChipKeyPairs{
 		SerialNumber: SerialNumber,
 		BusId:        busId,
-		P2:           C.GoString((*C.char)(unsafe.Pointer(chip.EncryptedPrivK))),
+		P2:           C.GoString((*C.char)(unsafe.Pointer(chip.EncryptedPriK))),
 		PubKey:       C.GoString((*C.char)(unsafe.Pointer(chip.PubK))),
 	}
 

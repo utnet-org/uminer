@@ -133,7 +133,7 @@ ChipDeclaration readKeyPairs(int seq) {
 //        printf("Pubkey:\n%s\n", pubkey);
     } else {
         printf("Error opening file.\n");
-        oneChip.EncryptedPrivK = nullptr;
+        oneChip.EncryptedPriK = nullptr;
         oneChip.PubK = nullptr;
         return oneChip;
     }
@@ -143,8 +143,10 @@ ChipDeclaration readKeyPairs(int seq) {
     const char* P2Byte = str.c_str();
 
     // get value
-    oneChip.EncryptedPrivK = P2Byte;
+    oneChip.EncryptedPriK = P2Byte;
     oneChip.PubK = reinterpret_cast<const char*>(pubkey);
+    oneChip.EncryptedPriKSize = size_p2_padding;
+    oneChip.PubKSize = size_pubkey;
 
     free(p2);
     free(pubkey);
