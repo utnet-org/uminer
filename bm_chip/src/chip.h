@@ -52,11 +52,6 @@ struct ChipDeclaration {
     const char* EncryptedPrivK;
     const char* PubK;
 };
-// struct verification on block burst
-struct ChipVerify {
-    unsigned char* SignMsg;
-    int ifVerifyPass;
-};
 
 /* method for chips */
 // start chip cpu
@@ -70,7 +65,7 @@ struct ChipDeclaration readKeyPairs(int dev_id);
 // chip signature
 struct ChipSignature* chipSignature(unsigned long chipId, const char* p2, const char* pubkey, const char* message, unsigned int size_p2, unsigned int  size_pubkey);
 // chip verification
-struct ChipVerify* chipVerify(unsigned long segment1, unsigned long segment2, const char* p2, const char* pubK, const char* message);
+int signatureVerify(const char* signature, const char* pubK, unsigned int size_signature, unsigned int  size_pubkey, const char* message);
 
 
 

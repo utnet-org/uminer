@@ -12,33 +12,45 @@ package main
 import "C"
 import (
 	"fmt"
-	"unsafe"
 )
 
-func VerifyMinerChips(segmentStart uint64, segmentEnd uint64, p2 string, pubK string, message string) ChipSign {
-	cP2 := C.CString(p2)
+func VerifyMinerChips(signature string, pubK string, signatureSize int, pubKSize int, message string) bool {
+	cSignature := C.CString(signature)
 	cPubK := C.CString(pubK)
 	cMessage := C.CString(message)
-	res := C.chipVerify(C.ulong(segmentStart), C.ulong(segmentEnd), cP2, cPubK, cMessage)
+	res := C.signatureVerify(cSignature, cPubK, C.uint(signatureSize), C.uint(pubKSize), cMessage)
 
-	numSignatures := segmentEnd - segmentStart
-	chips := (*[1 << 30]C.struct_ChipVerify)(unsafe.Pointer(res))[:numSignatures:numSignatures]
-	for i, chip := range chips {
-		fmt.Printf("Signature %d: %s\n", i, C.GoString((*C.char)(unsafe.Pointer(chip.SignMsg))))
-		if chip.ifVerifyPass == 0 {
-			return ChipSign{
-				Signature: "",
-				Status:    false,
-			}
-		}
-		return ChipSign{
-			Signature: C.GoString((*C.char)(unsafe.Pointer(chip.SignMsg))),
-			Status:    true,
-		}
-
+	if res == 1 {
+		fmt.Println("signature is verified with success !")
+		return true
 	}
-	return ChipSign{
-		Signature: "",
-		Status:    false,
-	}
+	fmt.Println("signature is verified with failure !")
+	return false
 }
+
+//func VerifyChipsSignature(signature string, publicKey string, message string) bool {
+//	// 解析公钥
+//	block, _ := pem.Decode([]byte(publicKey))
+//	if block == nil {
+//		fmt.Println("failed to parse PEM block containing the public key")
+//		return false
+//	}
+//
+//	pubKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
+//	if err != nil {
+//		fmt.Println("failed to parse DER encoded public key: ", err)
+//		return false
+//	}
+//
+//	// 验证签名
+//	data := []byte(message)
+//	digest := sha256.Sum256(data)
+//	err = rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, digest[:], []byte(signature))
+//	if err != nil {
+//		fmt.Println("signature verification failed: ", err)
+//		return false
+//	}
+//
+//	fmt.Println("Signature verified successfully")
+//	return true
+//}

@@ -29,52 +29,6 @@
 #include <windows.h>
 #endif
 
-unsigned char* hexToByteArray(const std::string& hexString) {
-    size_t length = hexString.length() / 2;
-    printf("hexString length: %zu\n", hexString.length());
-    unsigned char* byteArray = new unsigned char[length];
-
-    for (size_t i = 0; i < hexString.length(); i += 2) {
-        std::string byteString = hexString.substr(i, 2);
-        unsigned char byte = static_cast<unsigned char>(std::stoi(byteString, nullptr, 16));
-        byteArray[i / 2] = byte; // 每两个字符转换为一个字节，存储到数组中
-    }
-
-    return byteArray;
-}
-/* Generate the RSA256 digest */
-void generate_sha256_digest(const unsigned char *data, size_t data_size, unsigned char *digest) {
-    SHA256_CTX sha256_ctx;
-    SHA256_Init(&sha256_ctx);
-    SHA256_Update(&sha256_ctx, data, data_size);
-    SHA256_Final(digest, &sha256_ctx);
-}
-
-/* Verify digital signature */
-int verify_with_public_key(const unsigned char *publicKeyData, unsigned int pub_key_length,
-                           const unsigned char *digest, unsigned int digest_size,
-                           const unsigned char *signature, unsigned int signature_length) {
-    BIO *public_key_bio = BIO_new_mem_buf((void *)publicKeyData, pub_key_length);
-    if (!public_key_bio) {
-        perror("Error creating BIO for public key");
-        return -1;
-    }
-    RSA *public_key = PEM_read_bio_RSAPublicKey(public_key_bio, NULL, NULL, NULL);
-    if (!public_key) {
-        perror("Error reading public key");
-        BIO_free(public_key_bio);
-        return -1;
-    }
-
-    BIO_free(public_key_bio);
-
-    int result = RSA_verify(NID_sha256, digest, digest_size, signature, signature_length, public_key);
-
-    RSA_free(public_key);
-
-    return result;
-}
-
 ChipSignature* chipSignature(unsigned long chipId, const char* P2Char, const char* PubKeyChar, const char* message, unsigned int size_p2, unsigned int  size_pubkey) {
 
 #if !defined(USING_CMODEL) && !defined(SOC_MODE)
