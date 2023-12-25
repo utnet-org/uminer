@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
+	api "uminer/base-server/api/v1"
+	"uminer/base-server/internal/conf"
+	"uminer/base-server/internal/data"
+	"uminer/base-server/internal/service/user"
 	"uminer/common/log"
-	api "uminer/miner_server/base-server/api/v1"
-	"uminer/miner_server/base-server/internal/conf"
-	"uminer/miner_server/base-server/internal/data"
-	"uminer/miner_server/base-server/internal/service/user"
 )
 
 type Service struct {

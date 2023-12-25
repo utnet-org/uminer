@@ -8,13 +8,13 @@ import (
 	"uminer/common/middleware/ctxcopy"
 	"uminer/common/middleware/logging"
 	"uminer/common/middleware/validate"
-	//api "uminer/miner_server/base-server/api/v1"
-	"uminer/miner_server/base-server/internal/conf"
-	"uminer/miner_server/base-server/internal/service"
+	api "uminer/miner-server/chipApi"
+	"uminer/miner-server/serverConf"
+	"uminer/miner-server/service"
 )
 
 // NewGRPCServer new a gRPC server.
-func NewGRPCServer(c *conf.Server, s *service.Service) *grpc.Server {
+func NewGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server {
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
 			middleware.Chain(
@@ -38,6 +38,6 @@ func NewGRPCServer(c *conf.Server, s *service.Service) *grpc.Server {
 	}
 
 	gs := grpc.NewServer(opts...)
-	//api.RegisterUserServiceServer(gs, s.UserService)
+	api.RegisterChipServiceServer(gs, s.ChipService)
 	return gs
 }

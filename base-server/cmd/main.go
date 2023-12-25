@@ -8,11 +8,10 @@ import (
 	"github.com/go-kratos/kratos/v2"
 	"gopkg.in/yaml.v2"
 	"time"
-	"uminer/miner_server/base-server/internal/conf"
-	"uminer/miner_server/base-server/internal/data"
-	server2 "uminer/miner_server/base-server/internal/server"
-	"uminer/miner_server/base-server/internal/service"
-
+	"uminer/base-server/internal/conf"
+	"uminer/base-server/internal/data"
+	"uminer/base-server/internal/server"
+	"uminer/base-server/internal/service"
 	"uminer/common/errors"
 	"uminer/common/graceful"
 	"uminer/common/log"
@@ -116,8 +115,8 @@ func initApp(ctx context.Context, bc *conf.Bootstrap, logger log.Logger) (*krato
 		return nil, nil, err
 	}
 
-	grpcServer := server2.NewGRPCServer(bc.Server, service)
-	httpServer := server2.NewHTTPServer(bc.Server, service)
+	grpcServer := server.NewGRPCServer(bc.Server, service)
+	httpServer := server.NewHTTPServer(bc.Server, service)
 	app := newApp(ctx, logger, httpServer, grpcServer)
 
 	return app, close, nil

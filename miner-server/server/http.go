@@ -6,12 +6,12 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"uminer/common/middleware/logging"
-	"uminer/miner_server/base-server/internal/conf"
-	"uminer/miner_server/base-server/internal/service"
+	"uminer/miner-server/serverConf"
+	"uminer/miner-server/service"
 )
 
 // NewHTTPServer new a HTTP server.
-func NewHTTPServer(c *conf.Server, service *service.Service) *http.Server {
+func NewHTTPServer(c *serverConf.Server, service *service.Service) *http.Server {
 	var opts = []http.ServerOption{}
 
 	http.Middleware(

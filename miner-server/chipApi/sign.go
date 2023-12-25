@@ -1,4 +1,4 @@
-package main
+package chipApi
 
 //#cgo CXXFLAGS: -std=c++11
 //#cgo CFLAGS: -I../../bm_chip/src

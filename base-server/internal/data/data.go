@@ -3,10 +3,10 @@ package data
 import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"uminer/base-server/internal/conf"
+	"uminer/base-server/internal/data/model"
+	"uminer/base-server/internal/data/model/fun"
 	"uminer/common/log"
-	"uminer/miner_server/base-server/internal/conf"
-	"uminer/miner_server/base-server/internal/data/model"
-	"uminer/miner_server/base-server/internal/data/model/fun"
 )
 
 type Data struct {
