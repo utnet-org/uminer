@@ -52,17 +52,23 @@ func BurnChips(SerialNumber string, busId string, chipId int) bool {
 }
 
 // GenChipsKeyPairs is
-func GenChipsKeyPairs(SerialNumber string, busId string, chipId int) {
+func GenChipsKeyPairs(SerialNumber string, busId string, chipId int) bool {
 	res := C.chipGenKeyPairs(C.int(chipId))
 	if res == 1 {
 		fmt.Println("chip ", chipId, "generate p2 and pubKey success !")
+		return true
 	} else if res == 0 {
 		fmt.Println("chip ", chipId, ": error opening file !")
+		return false
 	} else if res == -1 {
 		fmt.Println("chip ", chipId, ": generate p2 and pubKey error !")
+		return false
 	} else if res == -3 {
 		fmt.Println("chip ", chipId, ": bm_dev_request error !")
+		return false
 	}
+
+	return false
 
 }
 

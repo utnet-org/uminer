@@ -8,7 +8,7 @@ import (
 	"uminer/common/middleware/ctxcopy"
 	"uminer/common/middleware/logging"
 	"uminer/common/middleware/validate"
-	api "uminer/miner-server/chipApi"
+	api "uminer/miner-server/chipApi/rpc"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
 )

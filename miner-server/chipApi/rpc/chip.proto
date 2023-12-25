@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package minerserver.api.v1;
+
+option go_package = "uminer/miner_server/chipApi/rpc;chipApi";
+
+
+service ChipService {
+  rpc StartChipCPU (ChipsRequest) returns (ChipStatusReply);
+  rpc ListAllChips (ChipsRequest) returns (ListChipsReply);
+  rpc BurnChipEfuse (ChipsRequest) returns (ChipStatusReply);
+  rpc GenerateChipKeyPairs (ChipsRequest) returns (ChipStatusReply);
+  rpc ObtainChipKeyPairs (ChipsRequest) returns (ReadChipReply);
+  rpc SignChip (SignChipsRequest) returns (SignChipsReply);
+}
+
+
+message ChipItem {
+  string devId = 1;
+  string busId = 2;
+  string memory = 3;
+  string tpuuti = 4;
+  string boardT = 5;
+  string chipT = 6;
+  string tpuP = 7;
+  string tpuV = 8;
+  string tpuC = 9;
+  string currclk = 10;
+  string status = 11;
+}
+
+message CardItem {
+  string CardID = 1;
+  string name = 2;
+  string mode = 3;
+  string serialNum = 4;
+  string atx = 5;
+  string maxP = 6;
+  string boardP = 7;
+  string minclk = 8;
+  string maxclk = 9;
+  repeated ChipItem chips = 10;
+}
+
+
+message ChipsRequest {
+  string serialNum = 1;
+  string busId = 2;
+  string CardID = 3;
+}
+
+// start/burn/gen chip
+message ChipStatusReply{
+  bool status = 1;
+}
+
+// details information
+message ListChipsReply {
+  int64 totalSize = 1;
+  repeated CardItem cards = 2;
+}
+
+// read keys
+message ReadChipReply {
+  string SerialNumber  = 1;
+  string BusId = 2;
+  string p2 = 3;
+  string publicKey = 4;
+}
+
+//sign
+message SignChipsRequest {
+  string serialNum = 1;
+  string busId = 2;
+  string p2 = 3;
+  string publicKey = 4;
+  int64 p2Size = 5;
+  int64 publicKeySize = 6;
+  string msg = 7;
+}
+message SignChipsReply {
+  string signature = 1;
+  bool status = 2;
+}
