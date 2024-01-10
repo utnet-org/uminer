@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package minerserver.api.v1;
+
+option go_package = "uminer/miner_server/chainApi/rpc;chainApi";
+
+
+service ChainService {
+  rpc ClaimComputation (ClaimComputationRequest) returns (ClaimComputationReply);
+  rpc ChallengeComputation (ChallengeComputationRequest) returns (ChallengeComputationReply);
+
+}
+
+//message ClaimServerRequest {
+//  string address = 1;
+//  string serverIP = 2;
+//}
+//message ClaimServerReply {
+//  int64 blockHeight = 1;
+//  string containerId = 2;
+//  bool status = 3;
+//}
+
+message chipSets {
+  string serialNumber = 1;
+  string busID = 2;
+}
+message ClaimComputationRequest {
+  string address = 1;
+  string serverIP = 2;
+  repeated chipSets chipSets = 3;
+  int64 power = 4;
+}
+message ClaimComputationReply {
+  int64 blockHeight = 1;
+  string containerId = 2;
+  repeated int64 rangeSet = 3;
+
+}
+
+message ChallengeComputationRequest {
+  int64 segment = 1;
+  string message = 2;
+}
+message signatureSets {
+  string serialNumber = 1;
+  string busID = 2;
+  string signature = 3;
+}
+message ChallengeComputationReply {
+  string   containerID = 1;
+  repeated signatureSets signatureSets = 2;
+  bool     status = 3;
+}

@@ -3,14 +3,16 @@ package service
 import (
 	"context"
 	"uminer/common/log"
-	api "uminer/miner-server/chipApi/rpc"
+	chainApi "uminer/miner-server/chainApi/rpc"
+	chipApi "uminer/miner-server/chipApi/rpc"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service/types"
 )
 
 type Service struct {
-	ChipService api.ChipServiceServer
+	ChipService  chipApi.ChipServiceServer
+	ChainService chainApi.ChainServiceServer
 }
 
 func NewService(ctx context.Context, conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) (*Service, error) {
@@ -22,6 +24,7 @@ func NewService(ctx context.Context, conf *serverConf.Bootstrap, logger log.Logg
 	}
 
 	service.ChipService = types.NewChipService(conf, logger, data)
+	service.ChainService = types.NewChainService(conf, logger, data)
 
 	return service, nil
 }
