@@ -20,7 +20,9 @@ type ChipKeyPairs struct {
 	SerialNumber string
 	BusId        string
 	P2           string
+	P2Size       int
 	PubKey       string
+	PubKeySize   int
 }
 
 // StartChips api through cgo to drive bmchip to activate cpu
@@ -84,11 +86,13 @@ func ReadChipKeyPairs(SerialNumber string, busId string, chipId int) ChipKeyPair
 		SerialNumber: SerialNumber,
 		BusId:        busId,
 		P2:           C.GoString((*C.char)(unsafe.Pointer(chip.EncryptedPriK))),
+		P2Size:       int(chip.EncryptedPriKSize),
 		PubKey:       C.GoString((*C.char)(unsafe.Pointer(chip.PubK))),
+		PubKeySize:   int(chip.PubKSize),
 	}
 
-	fmt.Printf("P2 %d: %s\n", chipId, keyPairs.P2)
-	fmt.Printf("PubKey %d: %s\n", chipId, keyPairs.PubKey)
+	fmt.Printf("P2 %d: %s, size is %d\n", chipId, keyPairs.P2, keyPairs.P2Size)
+	fmt.Printf("PubKey %d: %s, size is %d\n", chipId, keyPairs.PubKey, keyPairs.PubKeySize)
 
 	return keyPairs
 
