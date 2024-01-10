@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -82,9 +83,38 @@ func (s *ChipService) ChallengeComputation(ctx context.Context, req *rpc.Challen
 	// read data from chains db ...
 	requiredChips := make([]MinerChip, 0)
 	containerID := ""
+	if len(requiredChips) == 0 {
+		return &rpc.ChallengeComputationReply{
+			ContainerID:   containerID,
+			SignatureSets: signatures,
+			Status:        false,
+		}, errors.New("no chip is selected")
+	}
 
+	// obtain the devId of the chip
+	cardLists := chipApi.BMChipsInfos()
 	for _, item := range requiredChips {
-		sign := chipApi.SignMinerChips(item.SN, item.BusID, 0, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
+		devId := -1
+		for _, card := range cardLists {
+			if card.SerialNum == item.SN {
+				for _, chip := range card.Chips {
+					if chip.BusId == item.BusID {
+						id, _ := strconv.ParseInt(chip.DevId, 10, 64)
+						devId = int(id)
+					}
+				}
+			}
+
+		}
+		if devId == -1 {
+			return &rpc.ChallengeComputationReply{
+				ContainerID:   containerID,
+				SignatureSets: signatures,
+				Status:        false,
+			}, errors.New("no chip is selected")
+		}
+
+		sign := chipApi.SignMinerChips(item.SN, item.BusID, devId, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
 		signatures = append(signatures, &rpc.SignatureSets{
 			SerialNumber: item.SN,
 			BusID:        item.BusID,

@@ -32,11 +32,18 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 	cards := make([]*rpc.CardItem, 0)
 
 	cardLists := chipApi.BMChipsInfos()
-	listLen := len(cardLists)
+	listLen := 0
 
 	for _, card := range cardLists {
 		tpus := make([]*rpc.ChipItem, 0)
+		if card.SerialNum != "" && card.SerialNum != req.SerialNum {
+			continue
+		}
+		// tpu chips
 		for _, chip := range card.Chips {
+			if chip.BusId != "" && chip.BusId != req.BusId {
+				continue
+			}
 			tpus = append(tpus, &rpc.ChipItem{
 				DevId:   chip.DevId,
 				BusId:   chip.BusId,
@@ -50,7 +57,9 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 				Currclk: chip.Currclk,
 				Status:  chip.Status,
 			})
+			listLen += 1
 		}
+		// all card infos
 		cards = append(cards, &rpc.CardItem{
 			CardID:    card.CardID,
 			Name:      card.Name,
@@ -69,6 +78,7 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 		TotalSize: int64(listLen),
 		Cards:     cards,
 	}, nil
+
 }
 
 // start chip CPU
@@ -146,8 +156,35 @@ func (s *ChipService) ObtainChipKeyPairs(ctx context.Context, req *rpc.ChipsRequ
 // sign a chip by p2 to get signature
 func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (*rpc.SignChipsReply, error) {
 
-	busId, _ := strconv.ParseInt(req.BusId, 10, 64)
-	sign := chipApi.SignMinerChips(req.SerialNum, req.BusId, int(busId), req.P2, req.PublicKey, int(req.P2Size), int(req.PublicKeySize), req.Msg)
+	if req.SerialNum == "" && req.BusId == "" {
+		return &rpc.SignChipsReply{
+			Signature: "",
+			Status:    false,
+		}, errors.New("no chip is selected")
+	}
+
+	// obtain the devId of the chip
+	devId := -1
+	cardLists := chipApi.BMChipsInfos()
+	for _, card := range cardLists {
+		if card.SerialNum == req.SerialNum {
+			for _, chip := range card.Chips {
+				if chip.BusId == req.BusId {
+					id, _ := strconv.ParseInt(chip.DevId, 10, 64)
+					devId = int(id)
+				}
+			}
+		}
+
+	}
+	if devId == -1 {
+		return &rpc.SignChipsReply{
+			Signature: "",
+			Status:    false,
+		}, errors.New("no chip is selected")
+	}
+
+	sign := chipApi.SignMinerChips(req.SerialNum, req.BusId, devId, req.P2, req.PublicKey, int(req.P2Size), int(req.PublicKeySize), req.Msg)
 	if sign.Signature == "" {
 		return &rpc.SignChipsReply{
 			Signature: sign.Signature,
