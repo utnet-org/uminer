@@ -3,7 +3,7 @@ package data
 import (
 	"context"
 	"uminer/common/log"
-	"uminer/miner-server/chipApi"
+	"uminer/miner-server/api/chipApi"
 
 	"gorm.io/gorm"
 )

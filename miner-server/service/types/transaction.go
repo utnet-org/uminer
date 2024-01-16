@@ -25,3 +25,13 @@ type reportMinerComputation struct {
 	BMChips    []MinerChip
 	totalPower int64
 }
+
+type RentalOrder struct {
+	RentalAddress string
+	UserAddress   string
+	ContainerId   string
+	Computation   int64
+	Duration      int64
+	Fee           float64
+	CreateTime    string
+}

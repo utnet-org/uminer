@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 	"uminer/common/log"
-	"uminer/miner-server/chainApi/rpc"
-	"uminer/miner-server/chipApi"
+	"uminer/miner-server/api/chainApi/rpc"
+	"uminer/miner-server/api/chipApi"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
 )

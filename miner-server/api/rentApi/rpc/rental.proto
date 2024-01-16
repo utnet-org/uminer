@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package minerserver.api.v1;
+
+option go_package = "uminer/miner_server/rentApi/rpc;rentApi";
+
+
+service RentalService {
+  rpc CreateRentalOrder (CreateRentalOrderRequest) returns (CreateRentalOrderReply);
+  rpc QueryRentalOrders (QueryRentalOrdersRequest) returns (QueryRentalOrdersReply);
+}
+
+
+message CreateRentalOrderRequest {
+  string rentalAddress = 1;
+  string userAddress = 2;
+  string containerId = 3;
+  int64  computation = 4;
+  int64  duration = 5;
+  float  fee = 6;
+  string createTime = 7;
+}
+message CreateRentalOrderReply{
+  bool status = 1;
+}
+
+message QueryRentalOrdersRequest {
+  string rentalAddress = 1;
+}
+message QueryRentalOrdersReply{
+  string rentalAddress = 1;
+  string userAddress = 2;
+  string containerId = 3;
+  int64  computation = 4;
+  int64  duration = 5;
+  string createTime = 6;
+}

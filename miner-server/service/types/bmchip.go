@@ -5,8 +5,8 @@ import (
 	"errors"
 	"strconv"
 	"uminer/common/log"
-	"uminer/miner-server/chipApi"
-	"uminer/miner-server/chipApi/rpc"
+	"uminer/miner-server/api/chipApi"
+	"uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
 )

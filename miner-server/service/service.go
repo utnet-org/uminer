@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"uminer/common/log"
-	chainApi "uminer/miner-server/chainApi/rpc"
-	chipApi "uminer/miner-server/chipApi/rpc"
+	chainApi "uminer/miner-server/api/chainApi/rpc"
+	chipApi "uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service/types"
