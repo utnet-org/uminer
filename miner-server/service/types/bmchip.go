@@ -60,17 +60,21 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 			listLen += 1
 		}
 		// all card infos
+		// get claim status
+		claimStatus := "unclaimed"
+		// claimStatus := getStatusOfCard(card.SerialNum)
 		cards = append(cards, &rpc.CardItem{
-			CardID:    card.CardID,
-			Name:      card.Name,
-			Mode:      card.Mode,
-			SerialNum: card.SerialNum,
-			Atx:       card.ATX,
-			MaxP:      card.MaxP,
-			BoardP:    card.BoardP,
-			Minclk:    card.Minclk,
-			Maxclk:    card.Maxclk,
-			Chips:     tpus,
+			CardID:      card.CardID,
+			Name:        card.Name,
+			Mode:        card.Mode,
+			SerialNum:   card.SerialNum,
+			Atx:         card.ATX,
+			MaxP:        card.MaxP,
+			BoardP:      card.BoardP,
+			Minclk:      card.Minclk,
+			Maxclk:      card.Maxclk,
+			Chips:       tpus,
+			ClaimStatus: claimStatus,
 		})
 	}
 

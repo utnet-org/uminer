@@ -6,6 +6,8 @@ option go_package = "uminer/miner_server/chainApi/rpc;chainApi";
 
 
 service ChainService {
+  rpc UpdateChainsStatus (ReportChainsStatusRequest) returns (ReportChainsStatusReply);
+  rpc UpdateMinerStatus (ReportMinerStatusRequest) returns (ReportMinerStatusReply);
   rpc ClaimComputation (ClaimComputationRequest) returns (ClaimComputationReply);
   rpc ChallengeComputation (ChallengeComputationRequest) returns (ChallengeComputationReply);
 
@@ -20,6 +22,27 @@ service ChainService {
 //  string containerId = 2;
 //  bool status = 3;
 //}
+
+// chain information
+message ReportChainsStatusRequest{
+}
+message ReportChainsStatusReply{
+  string computation = 1;
+  string rewards = 2;
+  string blockHeight = 3;
+  string NumberOfMiners = 4;
+}
+
+// miner information
+message ReportMinerStatusRequest{
+  string address = 1;
+}
+message ReportMinerStatusReply{
+  string computation = 1;
+  string rewards = 2;
+  string NumberOfBlock = 3;
+  string NumberOfWorkers = 4;
+}
 
 message chipSets {
   string serialNumber = 1;

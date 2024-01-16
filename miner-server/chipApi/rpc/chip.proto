@@ -39,7 +39,8 @@ message CardItem {
   string boardP = 7;
   string minclk = 8;
   string maxclk = 9;
-  repeated ChipItem chips = 10;
+  string claimStatus = 10;
+  repeated ChipItem chips = 11;
 }
 
 

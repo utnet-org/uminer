@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	//"github.com/ethereum/go-ethereum/rpc"
 	"strconv"
 	"time"
 	"uminer/common/log"
@@ -28,6 +29,48 @@ func NewChainService(conf *serverConf.Bootstrap, logger log.Logger, data *data.D
 		log:  log.NewHelper("ChipService", logger),
 		data: data,
 	}
+}
+
+// UpdateChainsStatus get basic info of blockchain
+func (s *ChipService) UpdateChainsStatus(ctx context.Context, req *rpc.ReportChainsStatusRequest) (*rpc.ReportChainsStatusReply, error) {
+
+	//client, err := rpc.Dial("http://node-url")
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	//blockHeight, err := getBlockHeight(client)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	return &rpc.ReportChainsStatusReply{
+		Computation:    "",
+		Rewards:        "",
+		BlockHeight:    "blockHeight",
+		NumberOfMiners: "",
+	}, nil
+}
+
+// UpdateMinerStatus get basic info of every miner
+func (s *ChipService) UpdateMinerStatus(ctx context.Context, req *rpc.ReportMinerStatusRequest) (*rpc.ReportMinerStatusReply, error) {
+
+	//client, err := rpc.Dial("http://node-url")
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	//blockHeight, err := getBlockHeight(client)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	return &rpc.ReportMinerStatusReply{
+		Computation:     "",
+		Rewards:         "",
+		NumberOfBlock:   "",
+		NumberOfWorkers: "",
+	}, nil
 }
 
 // ClaimComputation claim server/chips to the chain, binding miner address, obtain container cloud connection
