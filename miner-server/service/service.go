@@ -15,7 +15,20 @@ type Service struct {
 	ChainService chainApi.ChainServiceServer
 }
 
-func NewService(ctx context.Context, conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) (*Service, error) {
+func NewMinerService(ctx context.Context, conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) (*Service, error) {
+	var err error
+	service := &Service{}
+
+	if err != nil {
+		return nil, err
+	}
+
+	service.ChainService = types.NewChainService(conf, logger, data)
+
+	return service, nil
+}
+
+func NewWorkerService(ctx context.Context, conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) (*Service, error) {
 	var err error
 	service := &Service{}
 
@@ -24,7 +37,6 @@ func NewService(ctx context.Context, conf *serverConf.Bootstrap, logger log.Logg
 	}
 
 	service.ChipService = types.NewChipService(conf, logger, data)
-	service.ChainService = types.NewChainService(conf, logger, data)
 
 	return service, nil
 }

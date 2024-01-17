@@ -55,7 +55,7 @@ func main() {
 	defer close()
 
 	// start and wait for stop signal
-	fmt.Println("App started successfully.")
+	fmt.Println("Worker started successfully.")
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
@@ -74,12 +74,12 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger) (
 	//if err != nil {
 	//	return nil, nil, err
 	//}
-	service, err := service.NewService(ctx, bc, logger, nil)
+	service, err := service.NewWorkerService(ctx, bc, logger, nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	grpcServer := server.NewGRPCServer(bc.Server, service)
+	grpcServer := server.NewWorkerGRPCServer(bc.Server, service)
 	//reflection.Register(grpcServer.Server)
 	httpServer := server.NewHTTPServer(bc.Server, service)
 	app := newApp(ctx, logger, httpServer, grpcServer)

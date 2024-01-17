@@ -26,7 +26,7 @@ type ChainService struct {
 func NewChainService(conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) rpc.ChainServiceServer {
 	return &ChainService{
 		conf: conf,
-		log:  log.NewHelper("ChipService", logger),
+		log:  log.NewHelper("ChainService", logger),
 		data: data,
 	}
 }
