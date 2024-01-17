@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package minerserver.api.v1;
+
+option go_package = "uminer/miner_server/walletApi/rpc;walletApi";
+
+
+service RentalService {
+  rpc QueryCurrentBalance (QueryCurrentBalanceRequest) returns (QueryCurrentBalanceReply);
+  rpc QueryAllRewards (QueryAllRewardsRequest) returns (QueryAllRewardsReply);
+  rpc QueryAllTxRecord (QueryAllTxRecordRequest) returns (QueryAllTxRecordReply);
+}
+
+
+message QueryCurrentBalanceRequest {
+  string address = 1;
+}
+message QueryCurrentBalanceReply{
+  float balanceInUNC = 1;
+  float balanceInUSD = 2;
+}
+
+message QueryAllRewardsRequest {
+  string address = 1;
+}
+message QueryAllRewardsReply{
+  float miningRewards = 1;
+  float rentalIncome = 2;
+  float penalty = 3;
+}
+
+message QueryAllTxRecordRequest{
+  string address = 1;
+}
+message QueryAllTxRecordReply{
+  string txHash = 1;
+  int64 blockHeight = 2;
+  string fromAddr = 3;
+  string toAddr = 4;
+  string txTypes = 5;
+  float amount = 6;
+  float txFee = 7;
+  string createTime = 8;
+
+}

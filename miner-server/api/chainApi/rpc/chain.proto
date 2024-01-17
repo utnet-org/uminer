@@ -38,10 +38,11 @@ message ReportMinerStatusRequest{
   string address = 1;
 }
 message ReportMinerStatusReply{
-  string computation = 1;
-  string rewards = 2;
-  string NumberOfBlock = 3;
-  string NumberOfWorkers = 4;
+  string minerID = 1;
+  string computation = 2;
+  string rewards = 3;
+  string NumberOfBlock = 4;
+  string NumberOfWorkers = 5;
 }
 
 message chipSets {
