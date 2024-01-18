@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/golang/protobuf/ptypes/duration"
-	workerGrpc "google.golang.org/grpc"
 	"time"
+	"uminer/miner-server/api/chipApi/rpc"
+	"uminer/miner-server/service/types"
 
 	"uminer/common/graceful"
 	"uminer/common/log"
@@ -85,26 +86,46 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 	//if err != nil {
 	//	return nil, nil, err
 	//}
-	service, err := service.NewMinerService(ctx, bc, logger, nil)
+	newService, err := service.NewMinerService(ctx, bc, logger, nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// new miner grpc
-	grpcServer := server.NewMinerGRPCServer(bc.Server, service)
+	grpcServer := server.NewMinerGRPCServer(bc.Server, newService)
 	// connect worker grpc
-	var workerGrpcConnArr []*workerGrpc.ClientConn
+	var workerGrpcConnArr []rpc.ChipServiceServer //*workerGrpc.ClientConn
 	for _, addr := range workerAddresses {
-		grpcConn, err := workerGrpc.Dial(addr.GrpcServer, workerGrpc.WithInsecure())
-		if err != nil {
-			fmt.Println("failed to connect to worker: ", err)
+		workerHServer := &serverConf.Server_HTTP{
+			Network: "tcp",
+			Addr:    addr.HttpServer,
+			Timeout: &duration.Duration{Seconds: 60},
 		}
-		defer grpcConn.Close()
-		workerGrpcConnArr = append(workerGrpcConnArr, grpcConn)
+		workerGServer := &serverConf.Server_GRPC{
+			Network: "tcp",
+			Addr:    addr.GrpcServer,
+			Timeout: &duration.Duration{Seconds: 60},
+		}
+		bs := &serverConf.Bootstrap{
+			App: &serverConf.App{},
+			Server: &serverConf.Server{
+				Http: workerHServer,
+				Grpc: workerGServer,
+			},
+			Data:    &serverConf.Data{},
+			Storage: []byte("my_storage_data"), // 设置 Storage 字段
+		}
+		client := types.NewChipService(bs, logger, nil)
+		workerGrpcConnArr = append(workerGrpcConnArr, client)
+		//grpcConn, err := workerGrpc.Dial(addr.GrpcServer, workerGrpc.WithInsecure())
+		//if err != nil {
+		//	fmt.Println("failed to connect to worker: ", err)
+		//}
+		//defer grpcConn.Close()
+		//workerGrpcConnArr = append(workerGrpcConnArr, grpcConn)
 	}
 
-	//reflection.Register(grpcServer.Server)
-	httpServer := server.NewHTTPServer(bc.Server, service)
+	httpServer := server.NewHTTPServer(bc.Server, newService)
 	app := newApp(ctx, logger, httpServer, grpcServer)
 
 	return app, nil, nil

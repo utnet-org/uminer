@@ -74,14 +74,14 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger) (
 	//if err != nil {
 	//	return nil, nil, err
 	//}
-	service, err := service.NewWorkerService(ctx, bc, logger, nil)
+	newService, err := service.NewWorkerService(ctx, bc, logger, nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	grpcServer := server.NewWorkerGRPCServer(bc.Server, service)
+	grpcServer := server.NewWorkerGRPCServer(bc.Server, newService)
 	//reflection.Register(grpcServer.Server)
-	httpServer := server.NewHTTPServer(bc.Server, service)
+	httpServer := server.NewHTTPServer(bc.Server, newService)
 	app := newApp(ctx, logger, httpServer, grpcServer)
 
 	return app, nil, nil
