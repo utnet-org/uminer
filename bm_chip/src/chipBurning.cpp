@@ -58,8 +58,8 @@ int chipGenKeyPairs(int seq) {
     printf("size_pubkey: %d size_p2: %d\n", size_pubkey, size_p2);
     printf("pubkey: %s  \n", pubkey);
 
-    FILE *file_pubkey = fopen(("../../bm_chip/src/key/pubkey_"+ std::to_string(seq)).c_str(), "w");
-    FILE *file_p2 = fopen(("../../bm_chip/src/key/p2_"+ std::to_string(seq)).c_str(), "w");
+    FILE *file_pubkey = fopen(("../../../bm_chip/src/key/pubkey_"+ std::to_string(seq)).c_str(), "w");
+    FILE *file_p2 = fopen(("../../../bm_chip/src/key/p2_"+ std::to_string(seq)).c_str(), "w");
 
     // this directory is for c++ demo
 //    FILE *file_pubkey = fopen(("../key/pubkey_"+ std::to_string(seq)).c_str(), "w");
@@ -112,8 +112,8 @@ ChipDeclaration readKeyPairs(int seq) {
     ChipDeclaration oneChip;
 
     // read files to get results
-    FILE *file_pubkey = fopen(("../../bm_chip/src/key/pubkey_"+ std::to_string(seq)).c_str(), "r");
-    FILE *file_p2 = fopen(("../../bm_chip/src/key/p2_"+ std::to_string(seq)).c_str(), "r");
+    FILE *file_pubkey = fopen(("../../../bm_chip/src/key/pubkey_"+ std::to_string(seq)).c_str(), "r");
+    FILE *file_p2 = fopen(("../../../bm_chip/src/key/p2_"+ std::to_string(seq)).c_str(), "r");
     if (file_pubkey) {
         fseek(file_pubkey, 0, SEEK_END);
         size_pubkey = ftell(file_pubkey);

@@ -2,10 +2,9 @@ package data
 
 import (
 	"context"
+	"gorm.io/gorm"
 	"uminer/common/log"
 	"uminer/miner-server/api/chipApi"
-
-	"gorm.io/gorm"
 )
 
 // SelectChipList is for condition selection
