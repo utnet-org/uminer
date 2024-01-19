@@ -31,7 +31,7 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 
 	cards := make([]*rpc.CardItem, 0)
 
-	cardLists := chipApi.BMChipsInfos()
+	cardLists := chipApi.BMChipsInfos("../../api/chipApi/bm_smi.txt")
 	listLen := 0
 
 	for _, card := range cardLists {
@@ -88,8 +88,8 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 // start chip CPU
 func (s *ChipService) StartChipCPU(ctx context.Context, req *rpc.ChipsRequest) (*rpc.ChipStatusReply, error) {
 
-	fipBin := "../../bm_chip/src/fip.bin"
-	rambootRootfs := "../../bm_chip/src/ramboot_rootfs.itb"
+	fipBin := "../../../bm_chip/src/fip.bin"
+	rambootRootfs := "../../../bm_chip/src/ramboot_rootfs.itb"
 	busId, _ := strconv.ParseInt(req.BusId, 10, 64)
 
 	res := chipApi.StartChips(int(busId), fipBin, rambootRootfs)
@@ -169,7 +169,7 @@ func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (
 
 	// obtain the devId of the chip
 	devId := -1
-	cardLists := chipApi.BMChipsInfos()
+	cardLists := chipApi.BMChipsInfos("../../api/chipApi/bm_smi.txt")
 	for _, card := range cardLists {
 		if card.SerialNum == req.SerialNum {
 			for _, chip := range card.Chips {

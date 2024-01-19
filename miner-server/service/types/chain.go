@@ -135,7 +135,7 @@ func (s *ChipService) ChallengeComputation(ctx context.Context, req *rpc.Challen
 	}
 
 	// obtain the devId of the chip
-	cardLists := chipApi.BMChipsInfos()
+	cardLists := chipApi.BMChipsInfos("../../api/chipApi/bm_smi.txt")
 	for _, item := range requiredChips {
 		devId := -1
 		for _, card := range cardLists {
