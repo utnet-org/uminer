@@ -45,10 +45,10 @@ type BMChips struct {
 }
 
 // BMChipsInfos reading data from txt written from bm-smi
-func BMChipsInfos() []TPUCards {
+func BMChipsInfos(directory string) []TPUCards {
 	// open file
 	cardList := make([]TPUCards, 0)
-	file, err := os.Open("bm_smi_1.txt")
+	file, err := os.Open(directory)
 	if err != nil {
 		fmt.Println("fail to open file: ", err)
 		return cardList

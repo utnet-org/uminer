@@ -7,7 +7,7 @@ import (
 
 func TestChip(t *testing.T) {
 
-	cardList := BMChipsInfos()
+	cardList := BMChipsInfos("bm_smi_1.txt")
 	fmt.Println(cardList)
 	BurnChips("HQDZKC5BAAABJ0223", "000:d8:00:02", 6)
 	GenChipsKeyPairs("HQDZKC5BAAABJ0223", "000:d8:00:02", 10)

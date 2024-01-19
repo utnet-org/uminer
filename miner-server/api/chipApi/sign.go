@@ -24,7 +24,7 @@ type ChipSign struct {
 
 func SignMinerChips(SerialNumber string, busId string, devId int, p2 string, pubKey string, p2Size int, pubKeySize int, message string) ChipSign {
 	// locate the chipId
-	list := BMChipsInfos()
+	list := BMChipsInfos("../api/chipApi/bm_smi_1.txt")
 	chipId := -1
 	for _, item := range list {
 		if item.SerialNum == SerialNumber {
