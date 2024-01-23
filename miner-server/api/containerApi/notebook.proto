@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package minerserver.api.rentApi;
+
+option go_package = "uminer/miner_server/rentApi/rpc;rentApi";
+
+
+service NotebookService {
+  rpc CreateNotebook (CreateNoteBookRequest) returns (CreateNoteBookReply);
+  rpc DeleteNotebook (DeleteNotebookRequest) returns (DeleteNotebookReply);
+  rpc QueryNotebookByCondition (QueryNotebookByConditionRequest) returns (QueryNotebookByConditionReply);
+}
+
+
+message CreateNoteBookRequest {
+  string token = 1;
+  string name = 2;
+  string description = 3;
+  string algorithmId = 4;
+  string imageId = 5;
+  string resourceSpecId = 6;
+}
+message CreateNoteBookReply {
+  string id = 1;
+  bool status = 2;
+}
+
+message DeleteNotebookRequest {
+  string token = 1;
+  string id = 2;
+}
+message DeleteNotebookReply {
+  string id = 1;
+  bool status = 2;
+}
+
+message QueryNotebookByConditionRequest {
+  string token = 1;
+  string id = 2;
+  int64 pageSize= 3;
+  int64 pageIndex= 4;
+}
+message NotebookList {
+  string containerId  = 1;
+  string userId = 2;
+  string notebookJobId = 3;
+  string notebookUrl = 4;
+  string status = 5;
+  int64  createdAt = 6;
+}
+message QueryNotebookByConditionReply {
+    repeated NotebookList NoteBookList = 1;
+}

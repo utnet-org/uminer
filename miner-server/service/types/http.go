@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-func Post(url string, data interface{}, contentType string, authToken string) []byte {
+func HTTPRequest(method string, url string, data interface{}, contentType string, authToken string) []byte {
 	client := &http.Client{Timeout: 5 * time.Second}
 	jsonStr, _ := json.Marshal(data)
 
 	// 创建POST请求
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		panic(err)
 	}
