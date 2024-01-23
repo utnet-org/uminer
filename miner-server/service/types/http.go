@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const mainURL = "https://console.utlab.io/openaiserver"
+
 func HTTPRequest(method string, url string, data interface{}, contentType string, authToken string) []byte {
 	client := &http.Client{Timeout: 5 * time.Second}
 	jsonStr, _ := json.Marshal(data)

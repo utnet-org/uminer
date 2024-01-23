@@ -64,7 +64,7 @@ func (s *NoteBookService) CreateNotebook(ctx context.Context, req *containerApi.
 	}
 
 	// http addr request
-	requestUrl := "https://console.utlab.io/openaiserver/v1/developmanage/notebook"
+	requestUrl := mainURL + "/v1/developmanage/notebook"
 	jsonData := map[string]interface{}{
 		"algorithmId":      req.AlgorithmId,
 		"algorithmVersion": "V1",
@@ -106,7 +106,7 @@ func (s *NoteBookService) DeleteNotebook(ctx context.Context, req *containerApi.
 	}
 
 	// http addr request
-	requestUrl := "https://console.utlab.io/openaiserver/v1/developmanage/notebook/" + req.Id
+	requestUrl := mainURL + "/v1/developmanage/notebook/" + req.Id
 	jsonData := map[string]interface{}{
 		"id": req.Id,
 	}
@@ -133,9 +133,9 @@ func (s *NoteBookService) DeleteNotebook(ctx context.Context, req *containerApi.
 func (s *NoteBookService) QueryNotebookByCondition(ctx context.Context, req *containerApi.QueryNotebookByConditionRequest) (*containerApi.QueryNotebookByConditionReply, error) {
 	list := make([]*containerApi.NotebookList, 0)
 	// http addr request
-	requestUrl := "https://console.utlab.io/openaiserver/v1/developmanage/notebook/" + req.Id
+	requestUrl := mainURL + "/v1/developmanage/notebook/" + req.Id
 	if req.Id == "" {
-		requestUrl = "https://console.utlab.io/openaiserver/v1/developmanage/notebook"
+		requestUrl = mainURL + "/v1/developmanage/notebook"
 		jsonData := map[string]interface{}{
 			"pageSize":  req.PageSize,
 			"pageIndex": req.PageIndex,
