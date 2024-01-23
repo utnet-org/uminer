@@ -5,14 +5,16 @@ import (
 	"uminer/common/log"
 	chainApi "uminer/miner-server/api/chainApi/rpc"
 	chipApi "uminer/miner-server/api/chipApi/rpc"
+	"uminer/miner-server/api/rentalApi"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service/types"
 )
 
 type Service struct {
-	ChipService  chipApi.ChipServiceServer
-	ChainService chainApi.ChainServiceServer
+	ChipService   chipApi.ChipServiceServer
+	ChainService  chainApi.ChainServiceServer
+	RentalService rentalApi.RentalServiceServer
 }
 
 func NewMinerService(ctx context.Context, conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) (*Service, error) {
@@ -24,6 +26,7 @@ func NewMinerService(ctx context.Context, conf *serverConf.Bootstrap, logger log
 	}
 
 	service.ChainService = types.NewChainService(conf, logger, data)
+	service.RentalService = types.NewRentalService(conf, logger, data)
 
 	return service, nil
 }

@@ -21,19 +21,19 @@ import (
 )
 
 // verify at c++ by the openssl library
-func VerifyMinerChips(signature string, pubK string, signatureSize int, pubKSize int, message string) bool {
-	cSignature := C.CString(signature)
-	cPubK := C.CString(pubK)
-	cMessage := C.CString(message)
-	res := C.signatureVerify(cSignature, cPubK, C.uint(signatureSize), C.uint(pubKSize), cMessage)
-
-	if res == 1 {
-		fmt.Println("signature is verified with success !")
-		return true
-	}
-	fmt.Println("signature is verified with failure !")
-	return false
-}
+//func VerifyMinerChips(signature string, pubK string, signatureSize int, pubKSize int, message string) bool {
+//	cSignature := C.CString(signature)
+//	cPubK := C.CString(pubK)
+//	cMessage := C.CString(message)
+//	res := C.signatureVerify(cSignature, cPubK, C.uint(signatureSize), C.uint(pubKSize), cMessage)
+//
+//	if res == 1 {
+//		fmt.Println("signature is verified with success !")
+//		return true
+//	}
+//	fmt.Println("signature is verified with failure !")
+//	return false
+//}
 
 // verify at go by crypto library
 func hexStringToBytes(hexString string) ([]byte, error) {

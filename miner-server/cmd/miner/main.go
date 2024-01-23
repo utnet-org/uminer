@@ -5,14 +5,13 @@ import (
 	"github.com/go-kratos/kratos/v2"
 	"github.com/golang/protobuf/ptypes/duration"
 	"time"
-	"uminer/miner-server/api/chipApi/rpc"
-	"uminer/miner-server/service/types"
-
 	"uminer/common/graceful"
 	"uminer/common/log"
+	"uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/server"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
+	"uminer/miner-server/service/types"
 
 	"context"
 	minerGprc "github.com/go-kratos/kratos/v2/transport/grpc"
@@ -35,13 +34,13 @@ func main() {
 	// activate miner server
 	httpServer := &serverConf.Server_HTTP{
 		Network: "tcp",
-		Addr:    "0.0.0.0:8001",
+		Addr:    "127.0.0.1:8001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
 	grpcServer := &serverConf.Server_GRPC{
 		Network: "tcp",
-		Addr:    "0.0.0.0:9001",
+		Addr:    "192.168.10.71:9001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
@@ -117,12 +116,14 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 		}
 		client := types.NewChipService(bs, logger, nil)
 		workerGrpcConnArr = append(workerGrpcConnArr, client)
+
 		//grpcConn, err := workerGrpc.Dial(addr.GrpcServer, workerGrpc.WithInsecure())
 		//if err != nil {
 		//	fmt.Println("failed to connect to worker: ", err)
 		//}
 		//defer grpcConn.Close()
 		//workerGrpcConnArr = append(workerGrpcConnArr, grpcConn)
+
 	}
 
 	httpServer := server.NewHTTPServer(bc.Server, newService)

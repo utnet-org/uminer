@@ -10,6 +10,7 @@ import (
 	"uminer/common/middleware/validate"
 	chainApi "uminer/miner-server/api/chainApi/rpc"
 	chipApi "uminer/miner-server/api/chipApi/rpc"
+	rentalApi "uminer/miner-server/api/rentalApi"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
 )
@@ -40,6 +41,7 @@ func NewMinerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server {
 
 	gs := grpc.NewServer(opts...)
 	chainApi.RegisterChainServiceServer(gs, s.ChainService)
+	rentalApi.RegisterRentalServiceServer(gs, s.RentalService)
 	return gs
 }
 
