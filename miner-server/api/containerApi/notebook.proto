@@ -8,6 +8,8 @@ option go_package = "uminer/miner_server/containerApi";
 service NotebookService {
   rpc CreateNotebook (CreateNoteBookRequest) returns (CreateNoteBookReply);
   rpc DeleteNotebook (DeleteNotebookRequest) returns (DeleteNotebookReply);
+  rpc StartNotebook (StartStopNotebookRequest) returns (StartStopNotebookReply);
+  rpc StopNotebook (StartStopNotebookRequest) returns (StartStopNotebookReply);
   rpc QueryNotebookByCondition (QueryNotebookByConditionRequest) returns (QueryNotebookByConditionReply);
 }
 
@@ -30,6 +32,15 @@ message DeleteNotebookRequest {
   string id = 2;
 }
 message DeleteNotebookReply {
+  string id = 1;
+  bool status = 2;
+}
+
+message StartStopNotebookRequest {
+  string token = 1;
+  string id = 2;
+}
+message StartStopNotebookReply {
   string id = 1;
   bool status = 2;
 }

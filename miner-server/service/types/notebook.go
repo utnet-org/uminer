@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"uminer/common/log"
 	"uminer/miner-server/api/containerApi"
 	"uminer/miner-server/data"
@@ -51,7 +52,7 @@ type NoteBookService struct {
 func NewRentalService(conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) containerApi.NotebookServiceServer {
 	return &NoteBookService{
 		conf: conf,
-		log:  log.NewHelper("RentalService", logger),
+		log:  log.NewHelper("NotebookService", logger),
 		data: data,
 	}
 }
@@ -156,13 +157,103 @@ func (s *NoteBookService) DeleteNotebook(ctx context.Context, req *containerApi.
 	return reply, nil
 }
 
+// StartNotebook start notebook by miner after receiving request from renter
+func (s *NoteBookService) StartNotebook(ctx context.Context, req *containerApi.StartStopNotebookRequest) (*containerApi.StartStopNotebookReply, error) {
+
+	reply := &containerApi.StartStopNotebookReply{
+		Id:     "",
+		Status: false,
+	}
+
+	// http addr request
+	requestUrl := mainURL + "/v1/developmanage/notebook/" + req.Id + "/start"
+	jsonData := map[string]interface{}{
+		"id": req.Id,
+	}
+	resp := HTTPRequest("POST", requestUrl, jsonData, "application/json", req.Token)
+
+	var response struct {
+		Success bool `json:"success"`
+		Payload struct {
+			ID string `json:"id"`
+		} `json:"payload"`
+		Error interface{} `json:"error"`
+	}
+	err := json.Unmarshal(resp, &response)
+	if err != nil {
+		return reply, err
+	}
+
+	switch errObj := response.Error.(type) {
+	case map[string]interface{}:
+		// 转换为 map 类型成功，可以提取目标字段的值
+		message, ok := errObj["message"].(string)
+		if !ok {
+			return reply, errors.New("error message not found")
+		} else {
+			return reply, errors.New(message)
+		}
+	default:
+
+	}
+
+	reply.Id = response.Payload.ID
+	reply.Status = true
+	return reply, nil
+}
+
+// StopNotebook stop notebook by miner after receiving request from renter
+func (s *NoteBookService) StopNotebook(ctx context.Context, req *containerApi.StartStopNotebookRequest) (*containerApi.StartStopNotebookReply, error) {
+
+	reply := &containerApi.StartStopNotebookReply{
+		Id:     "",
+		Status: false,
+	}
+
+	// http addr request
+	requestUrl := mainURL + "/v1/developmanage/notebook/" + req.Id + "/stop"
+	jsonData := map[string]interface{}{
+		"id": req.Id,
+	}
+	resp := HTTPRequest("POST", requestUrl, jsonData, "application/json", req.Token)
+
+	var response struct {
+		Success bool `json:"success"`
+		Payload struct {
+			ID string `json:"id"`
+		} `json:"payload"`
+		Error interface{} `json:"error"`
+	}
+	err := json.Unmarshal(resp, &response)
+	if err != nil {
+		return reply, err
+	}
+
+	switch errObj := response.Error.(type) {
+	case map[string]interface{}:
+		// 转换为 map 类型成功，可以提取目标字段的值
+		message, ok := errObj["message"].(string)
+		if !ok {
+			return reply, errors.New("error message not found")
+		} else {
+			return reply, errors.New(message)
+		}
+	default:
+
+	}
+
+	reply.Id = response.Payload.ID
+	reply.Status = true
+	return reply, nil
+}
+
 // QueryNotebookByCondition query notebook by miner
 func (s *NoteBookService) QueryNotebookByCondition(ctx context.Context, req *containerApi.QueryNotebookByConditionRequest) (*containerApi.QueryNotebookByConditionReply, error) {
 	list := make([]*containerApi.NotebookList, 0)
 	// http addr request
 	requestUrl := mainURL + "/v1/developmanage/notebook/" + req.Id
 	if req.Id == "" {
-		requestUrl = mainURL + "/v1/developmanage/notebook"
+		requestUrl = mainURL + "/v1/developmanage/notebook" + "?pageSize=" + strconv.FormatInt(req.PageSize, 10) + "&pageIndex=" + strconv.FormatInt(req.PageIndex, 10)
 		jsonData := map[string]interface{}{
 			"pageSize":  req.PageSize,
 			"pageIndex": req.PageIndex,
@@ -171,7 +262,7 @@ func (s *NoteBookService) QueryNotebookByCondition(ctx context.Context, req *con
 
 		type Payload struct {
 			TotalSize int64      `json:"totalSize"`
-			Notebooks []Notebook `json:"notebook"`
+			Notebooks []Notebook `json:"notebooks"`
 		}
 		var response struct {
 			Success bool        `json:"success"`
@@ -183,7 +274,22 @@ func (s *NoteBookService) QueryNotebookByCondition(ctx context.Context, req *con
 			reply := &containerApi.QueryNotebookByConditionReply{NoteBookList: list}
 			return reply, err
 		}
+
 		fmt.Println(string(resp))
+		switch errObj := response.Error.(type) {
+		case map[string]interface{}:
+			// 转换为 map 类型成功，可以提取目标字段的值
+			message, ok := errObj["message"].(string)
+			reply := &containerApi.QueryNotebookByConditionReply{NoteBookList: list}
+			if !ok {
+				return reply, errors.New("error message not found")
+			} else {
+				return reply, errors.New(message)
+			}
+		default:
+
+		}
+
 		for _, item := range response.Payload.Notebooks {
 			list = append(list, &containerApi.NotebookList{
 				ContainerId:   item.ID,
