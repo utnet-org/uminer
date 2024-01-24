@@ -14,6 +14,7 @@ import (
 type Service struct {
 	ChipService     chipApi.ChipServiceServer
 	ChainService    chainApi.ChainServiceServer
+	ImageService    containerApi.ImageServiceServer
 	NotebookService containerApi.NotebookServiceServer
 }
 
@@ -26,6 +27,7 @@ func NewMinerService(ctx context.Context, conf *serverConf.Bootstrap, logger log
 	}
 
 	service.ChainService = types.NewChainService(conf, logger, data)
+	service.ImageService = types.NewImageService(conf, logger, data)
 	service.NotebookService = types.NewRentalService(conf, logger, data)
 
 	return service, nil

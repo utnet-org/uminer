@@ -41,6 +41,7 @@ func NewMinerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server {
 
 	gs := grpc.NewServer(opts...)
 	chainApi.RegisterChainServiceServer(gs, s.ChainService)
+	containerApi.RegisterImageServiceServer(gs, s.ImageService)
 	containerApi.RegisterNotebookServiceServer(gs, s.NotebookService)
 	return gs
 }

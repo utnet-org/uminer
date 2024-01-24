@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package minerserver.api.rentApi;
+package minerserver.containerApi;
 
-option go_package = "uminer/miner_server/rentApi/rpc;rentApi";
+option go_package = "uminer/miner_server/containerApi";
 
 
 service NotebookService {

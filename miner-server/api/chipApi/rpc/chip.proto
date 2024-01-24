@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package minerserver.api.v1;
+package minerserver.chipApi;
 
 option go_package = "uminer/miner_server/chipApi/rpc;chipApi";
 
