@@ -8,6 +8,7 @@ import (
 	"uminer/common/graceful"
 	"uminer/common/log"
 	"uminer/miner-server/api/chipApi/rpc"
+	"uminer/miner-server/cmd"
 	"uminer/miner-server/server"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
@@ -34,13 +35,13 @@ func main() {
 	// activate miner server
 	httpServer := &serverConf.Server_HTTP{
 		Network: "tcp",
-		Addr:    "127.0.0.1:8001",
+		Addr:    cmd.ServerIP + ":8001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
 	grpcServer := &serverConf.Server_GRPC{
 		Network: "tcp",
-		Addr:    "192.168.10.71:9001",
+		Addr:    cmd.ServerIP + ":9001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 

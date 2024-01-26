@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package minerserver.chainApi;
+package chainApi;
 
-option go_package = "uminer/miner_server/chainApi/rpc;chainApi";
+option go_package = "../../chainApi/rpc";
 
 
 service ChainService {
@@ -28,9 +28,11 @@ message ReportChainsStatusRequest{
 }
 message ReportChainsStatusReply{
   string computation = 1;
-  string rewards = 2;
-  string blockHeight = 3;
-  string NumberOfMiners = 4;
+  string NumberOfMiners = 2;
+  string rewards = 3;
+  string latestBlockHeight = 4;
+  string latestBlockHash = 5;
+  string latestBlockTime = 6;
 }
 
 // miner information

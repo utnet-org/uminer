@@ -1,11 +1,15 @@
 package types
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/tidwall/gjson"
+	"net/http"
+
 	//"github.com/ethereum/go-ethereum/rpc"
 	"strconv"
 	"time"
@@ -14,6 +18,7 @@ import (
 	"uminer/miner-server/api/chipApi"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
+	"uminer/miner-server/util"
 )
 
 type ChainService struct {
@@ -32,28 +37,50 @@ func NewChainService(conf *serverConf.Bootstrap, logger log.Logger, data *data.D
 }
 
 // UpdateChainsStatus get basic info of blockchain
-func (s *ChipService) UpdateChainsStatus(ctx context.Context, req *rpc.ReportChainsStatusRequest) (*rpc.ReportChainsStatusReply, error) {
+func (s *ChainService) UpdateChainsStatus(ctx context.Context, req *rpc.ReportChainsStatusRequest) (*rpc.ReportChainsStatusReply, error) {
 
-	//client, err := rpc.Dial("http://node-url")
-	//if err != nil {
-	//	return nil, err
-	//}
+	jsonData := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "dontcare",
+		"method":  "status",
+		"params":  make([]interface{}, 0),
+	}
+	jsonStr, _ := json.Marshal(jsonData)
 
-	//blockHeight, err := getBlockHeight(client)
-	//if err != nil {
-	//	return nil, err
-	//}
+	// POST request
+	r, err := http.NewRequestWithContext(ctx, http.MethodPost, nodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		return &rpc.ReportChainsStatusReply{}, err
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(r)
+	if err != nil {
+		return &rpc.ReportChainsStatusReply{}, err
+	}
+	defer resp.Body.Close()
+	gzipBytes := util.GzipApi(resp)
+
+	res := gjson.Get(string(gzipBytes), "result").String()
+	sync := gjson.Get(res, "sync_info").String()
+	latestHash := gjson.Get(sync, "latest_block_hash").String()
+	latestHeight := gjson.Get(sync, "latest_block_height").Int()
+	latestTime := gjson.Get(sync, "latest_block_time").String()
 
 	return &rpc.ReportChainsStatusReply{
-		Computation:    "",
-		Rewards:        "",
-		BlockHeight:    "blockHeight",
-		NumberOfMiners: "",
+		Computation:       "",
+		Rewards:           "",
+		LatestBlockHash:   latestHash,
+		LatestBlockHeight: strconv.FormatInt(latestHeight, 10),
+		LatestBlockTime:   latestTime,
+		NumberOfMiners:    "",
 	}, nil
 }
 
 // UpdateMinerStatus get basic info of every miner
-func (s *ChipService) UpdateMinerStatus(ctx context.Context, req *rpc.ReportMinerStatusRequest) (*rpc.ReportMinerStatusReply, error) {
+func (s *ChainService) UpdateMinerStatus(ctx context.Context, req *rpc.ReportMinerStatusRequest) (*rpc.ReportMinerStatusReply, error) {
 
 	//client, err := rpc.Dial("http://node-url")
 	//if err != nil {
@@ -119,7 +146,7 @@ func (s *ChipService) ClaimComputation(ctx context.Context, req *rpc.ClaimComput
 }
 
 // ChallengeComputation accept challenge by the blockchain to sign chips
-func (s *ChipService) ChallengeComputation(ctx context.Context, req *rpc.ChallengeComputationRequest) (*rpc.ChallengeComputationReply, error) {
+func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.ChallengeComputationRequest) (*rpc.ChallengeComputationReply, error) {
 
 	signatures := make([]*rpc.SignatureSets, 0)
 

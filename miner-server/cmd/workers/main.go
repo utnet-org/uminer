@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/ptypes/duration"
 	"time"
 	"uminer/common/graceful"
+	"uminer/miner-server/cmd"
 
 	"uminer/common/log"
 	"uminer/miner-server/serverConf"
@@ -22,14 +23,14 @@ func main() {
 
 	httpServer := &serverConf.Server_HTTP{
 		Network: "tcp",
-		Addr:    "0.0.0.0:8001",
+		Addr:    cmd.ServerIP + ":8001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
 	// 创建 Server_GRPC 对象并设置相关字段
 	grpcServer := &serverConf.Server_GRPC{
 		Network: "tcp",
-		Addr:    "192.168.10.49:9001",
+		Addr:    cmd.ServerIP + ":8001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 

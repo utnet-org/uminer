@@ -15,6 +15,7 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/prometheus/common v0.46.0
 	github.com/sony/sonyflake v1.0.0
+	github.com/tidwall/gjson v1.17.0
 	golang.org/x/crypto v0.18.0
 	golang.org/x/oauth2 v0.16.0
 	golang.org/x/text v0.14.0
@@ -62,6 +63,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	go.opentelemetry.io/otel v1.10.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.10.0 // indirect
 	go.opentelemetry.io/otel/trace v1.10.0 // indirect
