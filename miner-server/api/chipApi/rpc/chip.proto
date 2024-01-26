@@ -46,8 +46,9 @@ message CardItem {
 
 
 message ChipsRequest {
-  string serialNum = 1;
-  string busId = 2;
+  string url = 1;
+  string serialNum = 2;
+  string busId = 3;
 }
 
 // start/burn/gen chip

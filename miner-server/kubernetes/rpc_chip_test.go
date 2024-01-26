@@ -16,6 +16,7 @@ func TestQueryAllChipsGRPC(t *testing.T) {
 
 	// Prepare the request
 	request := &chipApi.ChipsRequest{
+		Url:       "http://119.120.92.239:30345",
 		SerialNum: "",
 		BusId:     "",
 	}

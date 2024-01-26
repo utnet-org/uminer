@@ -1,5 +1,15 @@
 package types
 
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"github.com/tidwall/gjson"
+	"net/http"
+	"time"
+	"uminer/miner-server/util"
+)
+
 type transaction struct {
 	Address   string
 	From      string
@@ -34,4 +44,35 @@ type RentalOrder struct {
 	Duration      int64
 	Fee           float64
 	CreateTime    string
+}
+
+func sendTransactionAsync(ctx context.Context, signature string) (string, error) {
+
+	jsonData := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "dontcare",
+		"method":  "broadcast_tx_async",
+		"params":  []interface{}{signature},
+	}
+
+	jsonStr, _ := json.Marshal(jsonData)
+
+	// POST request
+	r, err := http.NewRequestWithContext(ctx, http.MethodPost, nodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		return "", err
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(r)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	gzipBytes := util.GzipApi(resp)
+
+	res := gjson.Get(string(gzipBytes), "result").String()
+	return res, nil
 }

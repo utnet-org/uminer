@@ -58,15 +58,16 @@ message ClaimComputationRequest {
   int64 power = 4;
 }
 message ClaimComputationReply {
-  int64 blockHeight = 1;
-  string containerId = 2;
-  repeated int64 rangeSet = 3;
+  string txHash = 1;
+//  string containerId = 2;
+//  repeated int64 rangeSet = 3;
 
 }
 
 message ChallengeComputationRequest {
-  int64 segment = 1;
-  string message = 2;
+  string url = 1;
+  int64 segment = 2;
+  string message = 3;
 }
 message signatureSets {
   string serialNumber = 1;

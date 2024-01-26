@@ -32,7 +32,7 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 	cards := make([]*rpc.CardItem, 0)
 
 	//cardLists := chipApi.BMChipsInfos("../../api/chipApi/bm_smi.txt")
-	cardLists := chipApi.RemoteGetChipInfo()
+	cardLists := chipApi.RemoteGetChipInfo(req.Url)
 	listLen := 0
 
 	for _, card := range cardLists {
@@ -190,7 +190,7 @@ func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (
 		}, errors.New("no chip is selected")
 	}
 
-	sign := chipApi.SignMinerChips(req.SerialNum, req.BusId, devId, req.P2, req.PublicKey, int(req.P2Size), int(req.PublicKeySize), req.Msg)
+	sign := chipApi.SignMinerChips(devId, req.P2, req.PublicKey, int(req.P2Size), int(req.PublicKeySize), req.Msg)
 	if sign.Signature == "" {
 		return &rpc.SignChipsReply{
 			Signature: sign.Signature,

@@ -50,9 +50,8 @@ type BMChips struct {
 }
 
 // RemoteGetChipInfo information from "curl 10.0.3.178:9100"
-func RemoteGetChipInfo() []TPUCards {
+func RemoteGetChipInfo(url string) []TPUCards {
 
-	url := "http://119.120.92.239:30345"
 	response, err := http.Get(url)
 	if err != nil {
 		fmt.Println("HTTP请求失败:", err)

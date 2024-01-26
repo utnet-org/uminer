@@ -134,13 +134,17 @@ func (s *ChipService) ClaimComputation(ctx context.Context, req *rpc.ClaimComput
 		Hash:      string(result),
 	}
 
+	// use chip to sign
+	txStr := fmt.Sprintf("%+v", newTx)
+	sign := chipApi.SignMinerChips(1, "P2", "PublicKey", 1, 1, txStr)
 	// packed as transaction, upload to the chain
-	fmt.Println(newTx)
+	txhash, err := sendTransactionAsync(ctx, sign.Signature)
+	if err != nil {
+		return &rpc.ClaimComputationReply{}, err
+	}
 
 	return &rpc.ClaimComputationReply{
-		BlockHeight: 0,
-		ContainerId: "",
-		RangeSet:    []int64{1000, 1001},
+		TxHash: txhash,
 	}, nil
 
 }
@@ -162,7 +166,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 	}
 
 	// obtain the devId of the chip
-	cardLists := chipApi.BMChipsInfos("../../api/chipApi/bm_smi.txt")
+	cardLists := chipApi.RemoteGetChipInfo(req.Url)
 	for _, item := range requiredChips {
 		devId := -1
 		for _, card := range cardLists {
@@ -184,7 +188,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			}, errors.New("no chip is selected")
 		}
 
-		sign := chipApi.SignMinerChips(item.SN, item.BusID, devId, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
+		sign := chipApi.SignMinerChips(devId, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
 		signatures = append(signatures, &rpc.SignatureSets{
 			SerialNumber: item.SN,
 			BusID:        item.BusID,
