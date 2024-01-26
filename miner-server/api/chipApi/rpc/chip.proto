@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package minerserver.chipApi;
+package chipApi;
 
-option go_package = "uminer/miner_server/chipApi/rpc;chipApi";
+option go_package = "../../chipApi/rpc";
 
 
 service ChipService {
@@ -37,10 +37,11 @@ message CardItem {
   string atx = 5;
   string maxP = 6;
   string boardP = 7;
-  string minclk = 8;
-  string maxclk = 9;
-  string claimStatus = 10;
-  repeated ChipItem chips = 11;
+  string boardT = 8;
+  string minclk = 9;
+  string maxclk = 10;
+  string claimStatus = 11;
+  repeated ChipItem chips = 12;
 }
 
 

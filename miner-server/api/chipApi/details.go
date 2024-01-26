@@ -3,8 +3,12 @@ package chipApi
 import (
 	"bufio"
 	"fmt"
+	"github.com/prometheus/common/expfmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -16,6 +20,7 @@ type TPUCards struct {
 	SerialNum string
 	ATX       string
 	MaxP      string
+	BoardT    string
 	BoardP    string
 	Minclk    string
 	Maxclk    string
@@ -25,12 +30,12 @@ type TPUCards struct {
 
 // BMChips struct of bmchip parameter
 type BMChips struct {
-	DevId string
-	BusId string
-	// forms like 178MB/10694MB
-	Memory string
-	//percentage of usage(%)
-	TPUUti string
+	DevId       string
+	BusId       string
+	Memory      string // forms like 178MB/10694MB
+	UsedMemory  string
+	TotalMemory string
+	TPUUti      string //percentage of usage(%)
 	// temperature
 	BoardT string
 	ChipT  string
@@ -42,6 +47,154 @@ type BMChips struct {
 	TPUC    string
 	Currclk string
 	Status  string
+}
+
+// RemoteGetChipInfo information from "curl 10.0.3.178:9100"
+func RemoteGetChipInfo() []TPUCards {
+
+	url := "http://119.120.92.239:30345"
+	response, err := http.Get(url)
+	if err != nil {
+		fmt.Println("HTTP请求失败:", err)
+	}
+	defer response.Body.Close()
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("读取响应失败:", err)
+	}
+	parser := &expfmt.TextParser{}
+	metricFamilies, err := parser.TextToMetricFamilies(strings.NewReader(string(body)))
+	if err != nil {
+		fmt.Println("解析失败:", err)
+	}
+
+	// card and chip structure
+	cardLists := make([]TPUCards, 0)
+	for _, mf := range metricFamilies {
+		if mf.GetName() == "bitmain_board_chip_start_index" {
+			for i, m := range mf.Metric {
+				chip := make([]BMChips, 0)
+				coreNum, _ := strconv.ParseInt(m.Label[0].GetValue(), 10, 64)
+				sliceLength := len(m.Label[3].GetValue())
+				// busid for every chip, form like 000:0a:00.0
+				for n := 0; n < int(coreNum); n++ {
+					chip = append(chip, BMChips{
+						BusId:  m.Label[3].GetValue()[:sliceLength-1] + strconv.Itoa(n),
+						Status: "Active",
+					})
+				}
+				cardLists = append(cardLists, TPUCards{
+					CardID:    strconv.Itoa(i),
+					Name:      m.Label[7].GetValue(),
+					Mode:      "PCIE",
+					SerialNum: m.Label[8].GetValue(),
+					ATX:       "ATX",
+					MaxP:      "",
+					BoardP:    "",
+					Minclk:    "",
+					Maxclk:    "",
+					Chips:     chip,
+				})
+			}
+		}
+		//for _, m := range mf.Metric {
+		//	fmt.Printf("  Metric: %v\n", m)
+		//	for _, label := range m.Label {
+		//		fmt.Printf("    Label: %s=%s\n", label.GetName(), label.GetValue())
+		//	}
+		//	fmt.Printf("    Value: %s\n", m.GetGauge().GetValue())
+		//}
+	}
+	// card params
+	for _, mf := range metricFamilies {
+		//fmt.Printf("Metric Family: %s\n", mf.GetName())
+		if mf.GetName() == "bitmain_board_max_power" {
+			for i, m := range mf.Metric {
+				cardLists[i].MaxP = strconv.FormatFloat(m.GetGauge().GetValue(), 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_board_current_power" {
+			for i, m := range mf.Metric {
+				cardLists[i].BoardP = strconv.FormatFloat(m.GetGauge().GetValue(), 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_board_temperature_celsius" {
+			for i, m := range mf.Metric {
+				cardLists[i].BoardT = strconv.FormatFloat(m.GetGauge().GetValue(), 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_board_tpu_max_clock" {
+			for i, m := range mf.Metric {
+				cardLists[i].Maxclk = strconv.FormatFloat(m.GetGauge().GetValue(), 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_board_tpu_min_clock" {
+			for i, m := range mf.Metric {
+				cardLists[i].Minclk = strconv.FormatFloat(m.GetGauge().GetValue(), 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_board_current_atx12v" {
+			for i, m := range mf.Metric {
+				cardLists[i].ATX = strconv.FormatFloat(m.GetGauge().GetValue(), 'f', -1, 64)
+			}
+		}
+
+	}
+	// chip params
+	for _, mf := range metricFamilies {
+		if mf.GetName() == "bitmain_chip_memory_used_bytes" {
+			for i, m := range mf.Metric {
+				cardId, _ := strconv.ParseInt(m.Label[0].GetValue(), 10, 64)
+				coreNum := len(cardLists[cardId].Chips)
+				cardLists[cardId].Chips[i%coreNum].UsedMemory = strconv.FormatFloat(m.GetGauge().GetValue()/(1), 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_chip_memory_total_bytes" {
+			for i, m := range mf.Metric {
+				cardId, _ := strconv.ParseInt(m.Label[0].GetValue(), 10, 64)
+				coreNum := len(cardLists[cardId].Chips)
+				cardLists[cardId].Chips[i%coreNum].TotalMemory = strconv.FormatFloat(m.GetGauge().GetValue()/(1), 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_chip_tpu_utilization" {
+			for i, m := range mf.Metric {
+				cardId, _ := strconv.ParseInt(m.Label[0].GetValue(), 10, 64)
+				coreNum := len(cardLists[cardId].Chips)
+				cardLists[cardId].Chips[i%coreNum].TPUUti = strconv.FormatFloat(m.GetGauge().GetValue(), 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_chip_tpu_power" {
+			for i, m := range mf.Metric {
+				cardId, _ := strconv.ParseInt(m.Label[0].GetValue(), 10, 64)
+				coreNum := len(cardLists[cardId].Chips)
+				cardLists[cardId].Chips[i%coreNum].TPUP = strconv.FormatFloat(m.GetGauge().GetValue(), 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_chip_tpu_voltage" {
+			for i, m := range mf.Metric {
+				cardId, _ := strconv.ParseInt(m.Label[0].GetValue(), 10, 64)
+				coreNum := len(cardLists[cardId].Chips)
+				cardLists[cardId].Chips[i%coreNum].TPUV = strconv.FormatFloat(m.GetGauge().GetValue(), 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_chip_tpu_current" {
+			for i, m := range mf.Metric {
+				cardId, _ := strconv.ParseInt(m.Label[0].GetValue(), 10, 64)
+				coreNum := len(cardLists[cardId].Chips)
+				cardLists[cardId].Chips[i%coreNum].TPUC = strconv.FormatFloat(m.GetGauge().GetValue()/1000, 'f', -1, 64)
+			}
+		}
+		if mf.GetName() == "bitmain_chip_tpu_curr_clock" {
+			for i, m := range mf.Metric {
+				cardId, _ := strconv.ParseInt(m.Label[0].GetValue(), 10, 64)
+				coreNum := len(cardLists[cardId].Chips)
+				cardLists[cardId].Chips[i%coreNum].Currclk = strconv.FormatFloat(m.GetGauge().GetValue(), 'f', -1, 64)
+			}
+		}
+	}
+
+	return cardLists
+
 }
 
 // BMChipsInfos reading data from txt written from bm-smi

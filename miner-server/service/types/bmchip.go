@@ -31,25 +31,26 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 
 	cards := make([]*rpc.CardItem, 0)
 
-	cardLists := chipApi.BMChipsInfos("../../api/chipApi/bm_smi.txt")
+	//cardLists := chipApi.BMChipsInfos("../../api/chipApi/bm_smi.txt")
+	cardLists := chipApi.RemoteGetChipInfo()
 	listLen := 0
 
 	for _, card := range cardLists {
 		tpus := make([]*rpc.ChipItem, 0)
-		if card.SerialNum != "" && card.SerialNum != req.SerialNum {
+		if req.SerialNum != "" && card.SerialNum != req.SerialNum {
 			continue
 		}
 		// tpu chips
 		for _, chip := range card.Chips {
-			if chip.BusId != "" && chip.BusId != req.BusId {
+			if req.BusId != "" && chip.BusId != req.BusId {
 				continue
 			}
 			tpus = append(tpus, &rpc.ChipItem{
-				DevId:   chip.DevId,
-				BusId:   chip.BusId,
-				Memory:  chip.Memory,
-				Tpuuti:  chip.TPUUti,
-				BoardT:  chip.BoardT,
+				DevId:  chip.DevId,
+				BusId:  chip.BusId,
+				Memory: chip.UsedMemory + "/" + chip.TotalMemory,
+				Tpuuti: chip.TPUUti,
+				//BoardT:  chip.BoardT,
 				ChipT:   chip.ChipT,
 				TpuP:    chip.TPUP,
 				TpuV:    chip.TPUV,
@@ -71,6 +72,7 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 			Atx:         card.ATX,
 			MaxP:        card.MaxP,
 			BoardP:      card.BoardP,
+			BoardT:      card.BoardT,
 			Minclk:      card.Minclk,
 			Maxclk:      card.Maxclk,
 			Chips:       tpus,
