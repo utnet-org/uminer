@@ -30,7 +30,7 @@ func main() {
 	// 创建 Server_GRPC 对象并设置相关字段
 	grpcServer := &serverConf.Server_GRPC{
 		Network: "tcp",
-		Addr:    cmd.ServerIP + ":8001",
+		Addr:    cmd.ServerIP + ":9001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 

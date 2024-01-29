@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package containerApi;
 
-option go_package = "../../containerApi";
+option go_package = "../containerApi";
 
 
 service NotebookService {
