@@ -292,7 +292,7 @@ func (s *NoteBookService) QueryNotebookByCondition(ctx context.Context, req *con
 
 		for _, item := range response.Payload.Notebooks {
 			list = append(list, &containerApi.NotebookList{
-				ContainerId:   item.ID,
+				NotebookId:    item.ID,
 				UserId:        item.UserID,
 				NotebookJobId: item.NotebookJobID,
 				NotebookUrl:   item.Tasks[0].URL,
@@ -326,7 +326,7 @@ func (s *NoteBookService) QueryNotebookByCondition(ctx context.Context, req *con
 	}
 
 	list = append(list, &containerApi.NotebookList{
-		ContainerId:   response.Payload.Notebooks.ID,
+		NotebookId:    response.Payload.Notebooks.ID,
 		UserId:        response.Payload.Notebooks.UserID,
 		NotebookJobId: response.Payload.Notebooks.NotebookJobID,
 		NotebookUrl:   response.Payload.Notebooks.Tasks[0].URL,

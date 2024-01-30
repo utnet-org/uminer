@@ -52,7 +52,7 @@ message QueryNotebookByConditionRequest {
   int64 pageIndex= 4;
 }
 message NotebookList {
-  string containerId  = 1;
+  string notebookId  = 1;
   string userId = 2;
   string notebookJobId = 3;
   string notebookUrl = 4;

@@ -1,16 +1,20 @@
 package server
 
 import (
+	"context"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
+	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	grpc2 "google.golang.org/grpc"
+	"log"
 	"uminer/common/middleware/ctxcopy"
 	"uminer/common/middleware/logging"
 	"uminer/common/middleware/validate"
 	chainApi "uminer/miner-server/api/chainApi/rpc"
 	chipApi "uminer/miner-server/api/chipApi/rpc"
-	containerApi "uminer/miner-server/api/containerApi"
+	"uminer/miner-server/api/containerApi"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
 )
@@ -58,8 +62,13 @@ func NewWorkerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server 
 				tracing.Server(),
 				logging.Server(),
 				validate.Server(),
+				MiddlewareCors(),
 			),
 		),
+		grpc.UnaryInterceptor(func(ctx context.Context, req interface{}, info *grpc2.UnaryServerInfo, handler grpc2.UnaryHandler) (resp interface{}, err error) {
+			return handler(ctx, req)
+		}),
+		grpc.Options(grpc2.InitialConnWindowSize(0)),
 	}
 	if c.Grpc.Network != "" {
 		opts = append(opts, grpc.Network(c.Grpc.Network))
@@ -71,7 +80,28 @@ func NewWorkerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server 
 		opts = append(opts, grpc.Timeout(c.Grpc.Timeout.AsDuration()))
 	}
 
+	opts = append(opts, grpc.Middleware(MiddlewareCors()))
 	gs := grpc.NewServer(opts...)
 	chipApi.RegisterChipServiceServer(gs, s.ChipService)
 	return gs
+}
+
+// MiddlewareCors kratos框架跨域中间件
+func MiddlewareCors() middleware.Middleware {
+	return func(handler middleware.Handler) middleware.Handler {
+		return func(ctx context.Context, req interface{}) (interface{}, error) {
+			log.Println("logging: rpc ok1")
+			if ts, ok := transport.FromServerContext(ctx); ok {
+				log.Println("logging: rpc ok2")
+				if ts.ReplyHeader() != nil {
+					ts.ReplyHeader().Set("Access-Control-Allow-Origin", "*")
+					ts.ReplyHeader().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,PATCH,DELETE")
+					ts.ReplyHeader().Set("Access-Control-Allow-Credentials", "true")
+					ts.ReplyHeader().Set("Access-Control-Allow-Headers", "Content-Type,"+
+						"X-Requested-With,Access-Control-Allow-Credentials,User-Agent,Content-Length,Authorization")
+				}
+			}
+			return handler(ctx, req)
+		}
+	}
 }
