@@ -274,8 +274,8 @@ func (s *NoteBookService) QueryNotebookByCondition(ctx context.Context, req *con
 			reply := &containerApi.QueryNotebookByConditionReply{NoteBookList: list}
 			return reply, err
 		}
-
 		fmt.Println(string(resp))
+
 		switch errObj := response.Error.(type) {
 		case map[string]interface{}:
 			// 转换为 map 类型成功，可以提取目标字段的值

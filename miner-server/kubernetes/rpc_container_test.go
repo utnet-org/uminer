@@ -9,9 +9,10 @@ import (
 	"uminer/miner-server/cmd"
 )
 
-const token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlM2IxYzE0ZDBiM2M0NGZkYWU2NzEyZGRjYjE3NjU0MyIsImNyZWF0ZWRBdCI6MTcwNjA3NzU2OSwiZXhwIjoxNzA2MTYzOTY5LCJpYXQiOjE3MDYwNzc1Njl9.ckvouI6ZlNcGURJA1-YVdHwcWgeCOTu6Da3uelLpzXc"
+const token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlM2IxYzE0ZDBiM2M0NGZkYWU2NzEyZGRjYjE3NjU0MyIsImNyZWF0ZWRBdCI6MTcwNjUyOTMyNCwiZXhwIjoxNzA2NjE1NzI0LCJpYXQiOjE3MDY1MjkzMjR9.q5C2Sm6aZwgf7-lE9sKGSnUk-xSdEP-FP9WR9LkNniM"
 
 /* exemplaire */
+/* image */
 
 func TestCreateImageGRPC(t *testing.T) {
 	// Connect to the RPC server
@@ -64,6 +65,34 @@ func TestDeleteImageGRPC(t *testing.T) {
 	// 处理响应
 	fmt.Println("gRPC Response: ", response)
 }
+
+func TestQueryImageGRPC(t *testing.T) {
+	// Connect to the RPC server
+	conn := cmd.ConnectRPCServer()
+	defer conn.Close()
+
+	// Prepare the request
+	request := &containerApi.QueryImageByConditionRequest{
+		Token:     token,
+		Id:        "e6805f27a79a43f793d93757ba70d03a",
+		PageSize:  10,
+		PageIndex: 1,
+	}
+	client := containerApi.NewImageServiceClient(conn)
+
+	// Call the RPC method
+	var response *containerApi.QueryImageByConditionReply
+	response, err := client.QueryImageByCondition(context.Background(), request, grpc.WaitForReady(true))
+	if err != nil {
+		fmt.Println("调用 gRPC 方法失败:", err)
+		return
+	}
+
+	// 处理响应
+	fmt.Println("gRPC Response: ", response)
+}
+
+/* notebook */
 
 func TestCreateNoteBookGRPC(t *testing.T) {
 	// Connect to the RPC server

@@ -8,6 +8,7 @@ option go_package = "../containerApi";
 service ImageService {
   rpc CreateImage (CreateImageRequest) returns (CreateImageReply);
   rpc DeleteImage (DeleteImageRequest) returns (DeleteImageReply);
+  rpc QueryImageByCondition (QueryImageByConditionRequest) returns (QueryImageByConditionReply);
 }
 
 
@@ -32,4 +33,28 @@ message DeleteImageRequest {
 message DeleteImageReply {
   int64 deletedAt = 1;
   bool status = 2;
+}
+
+message QueryImageByConditionRequest {
+  string token = 1;
+  string id = 2;
+  int64 pageSize= 3;
+  int64 pageIndex= 4;
+}
+message ImageList {
+  string userName  = 1;
+  string userId = 2;
+  string imageId = 3;
+  string imageAddr = 4;
+  string imageDesc = 5;
+  string imageName = 6;
+  string imageVersion = 7;
+  int64  imageStatus = 8;
+  int64  sourceType = 9;
+  string spaceId = 10;
+  int64  createdAt = 11;
+  int64  updatedAt = 12;
+}
+message QueryImageByConditionReply {
+  repeated ImageList ImageList = 1;
 }

@@ -26,6 +26,7 @@ func NewMinerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server {
 				tracing.Server(),
 				logging.Server(),
 				validate.Server(),
+				MiddlewareCors(),
 			),
 		),
 	}
