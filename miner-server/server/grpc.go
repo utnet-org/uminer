@@ -13,7 +13,6 @@ import (
 	"uminer/common/middleware/logging"
 	"uminer/common/middleware/validate"
 	chainApi "uminer/miner-server/api/chainApi/rpc"
-	chipApi "uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/api/containerApi"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
@@ -82,7 +81,7 @@ func NewWorkerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server 
 
 	opts = append(opts, grpc.Middleware(MiddlewareCors()))
 	gs := grpc.NewServer(opts...)
-	chipApi.RegisterChipServiceServer(gs, s.ChipService)
+	//chipApi.RegisterChipServiceServer(gs, s.ChipService)
 	return gs
 }
 

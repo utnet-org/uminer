@@ -101,7 +101,7 @@ func (s *ChainService) UpdateMinerStatus(ctx context.Context, req *rpc.ReportMin
 }
 
 // ClaimComputation claim server/chips to the chain, binding miner address, obtain container cloud connection
-func (s *ChipService) ClaimComputation(ctx context.Context, req *rpc.ClaimComputationRequest) (*rpc.ClaimComputationReply, error) {
+func (s *ChainService) ClaimComputation(ctx context.Context, req *rpc.ClaimComputationRequest) (*rpc.ClaimComputationReply, error) {
 
 	bmchips := make([]MinerChip, 0)
 	for _, item := range req.ChipSets {

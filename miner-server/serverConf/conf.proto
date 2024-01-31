@@ -1,7 +1,7 @@
 syntax = "proto3";
 package minerserver.serverConf;
 
-option go_package = "/serverConf;conf";
+option go_package = "../serverConf";
 
 import "google/protobuf/duration.proto";
 

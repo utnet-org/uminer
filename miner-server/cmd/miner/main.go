@@ -7,7 +7,6 @@ import (
 	"time"
 	"uminer/common/graceful"
 	"uminer/common/log"
-	"uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/cmd"
 	"uminer/miner-server/server"
 	"uminer/miner-server/serverConf"
@@ -94,7 +93,7 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 	// new miner grpc
 	grpcServer := server.NewMinerGRPCServer(bc.Server, newService)
 	// connect worker grpc
-	var workerGrpcConnArr []rpc.ChipServiceServer //*workerGrpc.ClientConn
+	var workerGrpcConnArr []*types.ChipServiceHTTP //*workerGrpc.ClientConn
 	for _, addr := range workerAddresses {
 		workerHServer := &serverConf.Server_HTTP{
 			Network: "tcp",
@@ -115,7 +114,7 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 			Data:    &serverConf.Data{},
 			Storage: []byte("my_storage_data"), // 设置 Storage 字段
 		}
-		client := types.NewChipService(bs, logger, nil)
+		client := types.NewChipServiceHTTP(bs, logger, nil)
 		workerGrpcConnArr = append(workerGrpcConnArr, client)
 
 		//grpcConn, err := workerGrpc.Dial(addr.GrpcServer, workerGrpc.WithInsecure())
