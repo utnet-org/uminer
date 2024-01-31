@@ -24,7 +24,7 @@ type ChipItem struct {
 }
 
 type CardItem struct {
-	CardID      string      `json:"CardID"`
+	CardID      string      `json:"cardID"`
 	Name        string      `json:"name"`
 	Mode        string      `json:"mode"`
 	SerialNum   string      `json:"serialNum"`
@@ -39,9 +39,9 @@ type CardItem struct {
 }
 
 type ChipsRequest struct {
-	Url       string `json:"url"`
-	SerialNum string `json:"serialNum"`
-	BusId     string `json:"busId"`
+	Url       []string `json:"url"`
+	SerialNum string   `json:"serialNum"`
+	BusId     string   `json:"busId"`
 }
 
 // start/burn/gen chip
@@ -50,8 +50,14 @@ type ChipStatusReply struct {
 }
 
 // details information
-type ListChipsReply struct {
+type ListWorkersReply struct {
+	NumOfWorkers int64       `json:"numOfWorkers"`
+	Workers      []ListCards `json:"workers"`
+}
+
+type ListCards struct {
 	TotalSize int64       `json:"totalSize"`
+	Addr      string      `json:"address"`
 	Cards     []*CardItem `json:"cards"`
 }
 

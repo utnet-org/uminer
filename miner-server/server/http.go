@@ -8,6 +8,7 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"log"
 	http2 "net/http"
+	"strings"
 	"uminer/common/middleware/logging"
 	"uminer/miner-server/api/chipApi/HTTP"
 	"uminer/miner-server/serverConf"
@@ -25,11 +26,11 @@ func deployRouters(s *http.Server, service *service.Service) {
 		// 解析参数
 		query := r.URL.Query()
 		req := &HTTP.ChipsRequest{
-			Url:       query.Get("url"),
+			Url:       strings.Split(query.Get("url"), ","),
 			SerialNum: query.Get("serialNum"),
 			BusId:     query.Get("busId"),
 		}
-		resp, err := service.ChipService.ListAllChipsHTTP(r.Context(), req)
+		resp, err := service.ChipServiceH.ListAllChipsHTTP(r.Context(), req)
 		if err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 			return

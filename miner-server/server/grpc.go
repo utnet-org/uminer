@@ -13,6 +13,7 @@ import (
 	"uminer/common/middleware/logging"
 	"uminer/common/middleware/validate"
 	chainApi "uminer/miner-server/api/chainApi/rpc"
+	chipApi "uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/api/containerApi"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
@@ -81,7 +82,7 @@ func NewWorkerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server 
 
 	opts = append(opts, grpc.Middleware(MiddlewareCors()))
 	gs := grpc.NewServer(opts...)
-	//chipApi.RegisterChipServiceServer(gs, s.ChipService)
+	chipApi.RegisterChipServiceServer(gs, s.ChipServiceG)
 	return gs
 }
 
@@ -89,9 +90,8 @@ func NewWorkerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server 
 func MiddlewareCors() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			log.Println("logging: rpc ok1")
 			if ts, ok := transport.FromServerContext(ctx); ok {
-				log.Println("logging: rpc ok2")
+				log.Println("logging: rpc call")
 				if ts.ReplyHeader() != nil {
 					ts.ReplyHeader().Set("Access-Control-Allow-Origin", "*")
 					ts.ReplyHeader().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,PATCH,DELETE")

@@ -3,11 +3,13 @@ package types
 import (
 	"context"
 	"errors"
+	"fmt"
+	"google.golang.org/grpc"
 	"strconv"
 	"uminer/common/log"
 	"uminer/miner-server/api/chipApi"
 	"uminer/miner-server/api/chipApi/HTTP"
-	"uminer/miner-server/api/chipApi/rpc"
+	chipRPC "uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
 )
@@ -27,63 +29,99 @@ func NewChipServiceHTTP(conf *serverConf.Bootstrap, logger log.Logger, data *dat
 }
 
 // show details of all chips
-func (s *ChipServiceHTTP) ListAllChipsHTTP(ctx context.Context, req *HTTP.ChipsRequest) (*HTTP.ListChipsReply, error) {
-
-	cards := make([]*HTTP.CardItem, 0)
+func (s *ChipServiceHTTP) ListAllChipsHTTP(ctx context.Context, req *HTTP.ChipsRequest) (*HTTP.ListWorkersReply, error) {
 
 	//cardLists := chipApi.BMChipsInfos("../../api/chipApi/bm_smi.txt")
-	cardLists := chipApi.RemoteGetChipInfo(req.Url)
-	listLen := 0
+	//cardLists := chipApi.RemoteGetChipInfo(each + ":30345")
 
-	for _, card := range cardLists {
-		tpus := make([]*HTTP.ChipItem, 0)
-		if req.SerialNum != "" && card.SerialNum != req.SerialNum {
-			continue
+	workers := &HTTP.ListWorkersReply{Workers: make([]HTTP.ListCards, 0)}
+
+	for _, each := range req.Url {
+
+		cardLists := make([]*chipRPC.CardItem, 0)
+
+		// connect to each worker
+		conn, err := grpc.Dial(each+":7001", grpc.WithInsecure())
+		if err != nil {
+			fmt.Println("Error connecting to RPC server:", err)
+			return workers, err
 		}
-		// tpu chips
-		for _, chip := range card.Chips {
-			if req.BusId != "" && chip.BusId != req.BusId {
+
+		// Prepare the request
+		request := &chipRPC.ChipsRequest{
+			Url:       "http://119.120.92.239" + ":30345",
+			SerialNum: "",
+			BusId:     "",
+		}
+		client := chipRPC.NewChipServiceClient(conn)
+
+		// Call the RPC method
+		var response *chipRPC.ListChipsReply
+		response, err = client.ListAllChips(context.Background(), request, grpc.WaitForReady(true))
+		if err != nil {
+			return workers, err
+		}
+
+		// 处理响应
+		cardLists = response.Cards
+		listLen := 0
+		cards := make([]*HTTP.CardItem, 0)
+
+		conn.Close()
+		for _, card := range cardLists {
+			tpus := make([]*HTTP.ChipItem, 0)
+			if req.SerialNum != "" && card.SerialNum != req.SerialNum {
 				continue
 			}
-			tpus = append(tpus, &HTTP.ChipItem{
-				DevId:  chip.DevId,
-				BusId:  chip.BusId,
-				Memory: chip.UsedMemory + "/" + chip.TotalMemory,
-				Tpuuti: chip.TPUUti,
-				//BoardT:  chip.BoardT,
-				ChipT:   chip.ChipT,
-				TpuP:    chip.TPUP,
-				TpuV:    chip.TPUV,
-				TpuC:    chip.TPUC,
-				Currclk: chip.Currclk,
-				Status:  chip.Status,
+			// tpu chips
+			for _, chip := range card.Chips {
+				if req.BusId != "" && chip.BusId != req.BusId {
+					continue
+				}
+				tpus = append(tpus, &HTTP.ChipItem{
+					DevId:  chip.DevId,
+					BusId:  chip.BusId,
+					Memory: chip.Memory,
+					Tpuuti: chip.Tpuuti,
+					//BoardT:  chip.BoardT,
+					ChipT:   chip.ChipT,
+					TpuP:    chip.TpuP,
+					TpuV:    chip.TpuV,
+					TpuC:    chip.TpuC,
+					Currclk: chip.Currclk,
+					Status:  chip.Status,
+				})
+				listLen += 1
+			}
+			// all card infos
+			// get claim status
+			claimStatus := "unclaimed"
+			// claimStatus := getStatusOfCard(card.SerialNum)
+			cards = append(cards, &HTTP.CardItem{
+				CardID:      card.CardID,
+				Name:        card.Name,
+				Mode:        card.Mode,
+				SerialNum:   card.SerialNum,
+				Atx:         card.Atx,
+				MaxP:        card.MaxP,
+				BoardP:      card.BoardP,
+				BoardT:      card.BoardT,
+				Minclk:      card.Minclk,
+				Maxclk:      card.Maxclk,
+				Chips:       tpus,
+				ClaimStatus: claimStatus,
 			})
-			listLen += 1
 		}
-		// all card infos
-		// get claim status
-		claimStatus := "unclaimed"
-		// claimStatus := getStatusOfCard(card.SerialNum)
-		cards = append(cards, &HTTP.CardItem{
-			CardID:      card.CardID,
-			Name:        card.Name,
-			Mode:        card.Mode,
-			SerialNum:   card.SerialNum,
-			Atx:         card.ATX,
-			MaxP:        card.MaxP,
-			BoardP:      card.BoardP,
-			BoardT:      card.BoardT,
-			Minclk:      card.Minclk,
-			Maxclk:      card.Maxclk,
-			Chips:       tpus,
-			ClaimStatus: claimStatus,
-		})
-	}
 
-	return &HTTP.ListChipsReply{
-		TotalSize: int64(listLen),
-		Cards:     cards,
-	}, nil
+		workers.Workers = append(workers.Workers, HTTP.ListCards{
+			TotalSize: int64(listLen),
+			Addr:      each,
+			Cards:     cards,
+		})
+		workers.NumOfWorkers += 1
+
+	}
+	return workers, nil
 
 }
 
@@ -136,7 +174,7 @@ func (s *ChipServiceHTTP) GenerateChipKeyPairsHTTP(ctx context.Context, req *HTT
 }
 
 // read stored files to get p2 + pubkey at chip
-func (s *ChipServiceHTTP) ObtainChipKeyPairsHTTP(ctx context.Context, req *rpc.ChipsRequest) (*HTTP.ReadChipReply, error) {
+func (s *ChipServiceHTTP) ObtainChipKeyPairsHTTP(ctx context.Context, req *HTTP.ChipsRequest) (*HTTP.ReadChipReply, error) {
 
 	busId, _ := strconv.ParseInt(req.BusId, 10, 64)
 	keyPairs := chipApi.ReadChipKeyPairs(req.SerialNum, req.BusId, int(busId))

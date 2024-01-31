@@ -78,7 +78,7 @@ func RemoteGetChipInfo(url string) []TPUCards {
 				// busid for every chip, form like 000:0a:00.0
 				for n := 0; n < int(coreNum); n++ {
 					chip = append(chip, BMChips{
-						BusId:  m.Label[3].GetValue()[:sliceLength-1] + strconv.Itoa(n),
+						BusId:  m.Label[3].GetValue()[:sliceLength-1], // + strconv.Itoa(n),
 						Status: "Active",
 					})
 				}
@@ -96,6 +96,7 @@ func RemoteGetChipInfo(url string) []TPUCards {
 				})
 			}
 		}
+		//fmt.Println(mf.GetName())
 		//for _, m := range mf.Metric {
 		//	fmt.Printf("  Metric: %v\n", m)
 		//	for _, label := range m.Label {
@@ -145,6 +146,9 @@ func RemoteGetChipInfo(url string) []TPUCards {
 			for i, m := range mf.Metric {
 				cardId, _ := strconv.ParseInt(m.Label[0].GetValue(), 10, 64)
 				coreNum := len(cardLists[cardId].Chips)
+				cardLists[cardId].Chips[i%coreNum].DevId = m.Label[6].GetValue()
+				lens := len(m.Label[11].GetValue())
+				cardLists[cardId].Chips[i%coreNum].BusId = cardLists[cardId].Chips[i%coreNum].BusId + string(m.Label[11].GetValue()[lens-1])
 				cardLists[cardId].Chips[i%coreNum].UsedMemory = strconv.FormatFloat(m.GetGauge().GetValue()/(1), 'f', -1, 64)
 			}
 		}
