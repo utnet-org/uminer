@@ -93,7 +93,7 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 	// new miner grpc
 	grpcServer := server.NewMinerGRPCServer(bc.Server, newService)
 	// connect worker grpc
-	var workerGrpcConnArr []*types.ChipServiceHTTP //*workerGrpc.ClientConn
+	var workerGrpcConnArr []*types.MinerUIServiceHTTP //*workerGrpc.ClientConn
 	for _, addr := range workerAddresses {
 		workerHServer := &serverConf.Server_HTTP{
 			Network: "tcp",

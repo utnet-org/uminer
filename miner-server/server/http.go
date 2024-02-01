@@ -1,16 +1,13 @@
 package server
 
 import (
-	"encoding/json"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"log"
 	http2 "net/http"
-	"strings"
 	"uminer/common/middleware/logging"
-	"uminer/miner-server/api/chipApi/HTTP"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
 )
@@ -18,27 +15,7 @@ import (
 // router
 func deployRouters(s *http.Server, service *service.Service) {
 	s.HandleFunc("/chipApi.ChipService/ListAllChips", func(w http.ResponseWriter, r *http.Request) {
-		// 确认HTTP方法是GET
-		if r.Method != http2.MethodGet {
-			http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
-			return
-		}
-		// 解析参数
-		query := r.URL.Query()
-		req := &HTTP.ChipsRequest{
-			Url:       strings.Split(query.Get("url"), ","),
-			SerialNum: query.Get("serialNum"),
-			BusId:     query.Get("busId"),
-		}
-		resp, err := service.ChipServiceH.ListAllChipsHTTP(r.Context(), req)
-		if err != nil {
-			http2.Error(w, err.Error(), http2.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
-			http2.Error(w, err.Error(), http2.StatusInternalServerError)
-		}
+		service.MinerUIServiceH.ListAllChipsHTTPHandler(w, r)
 	})
 	s.HandleFunc("/chipApi.ChipService/StartChipCPU", func(w http.ResponseWriter, r *http.Request) {
 

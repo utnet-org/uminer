@@ -12,7 +12,7 @@ import (
 )
 
 type Service struct {
-	ChipServiceH    types.ChipServiceHTTP
+	MinerUIServiceH types.MinerUIServiceHTTP
 	ChipServiceG    chipApi.ChipServiceServer
 	ChainService    chainApi.ChainServiceServer
 	ImageService    containerApi.ImageServiceServer
@@ -27,7 +27,7 @@ func NewMinerService(ctx context.Context, conf *serverConf.Bootstrap, logger log
 		return nil, err
 	}
 
-	service.ChipServiceH = *types.NewChipServiceHTTP(conf, logger, data)
+	service.MinerUIServiceH = *types.NewChipServiceHTTP(conf, logger, data)
 	service.ChainService = types.NewChainService(conf, logger, data)
 	service.ImageService = types.NewImageService(conf, logger, data)
 	service.NotebookService = types.NewRentalService(conf, logger, data)

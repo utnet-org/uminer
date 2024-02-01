@@ -49,6 +49,7 @@ message ChipsRequest {
   string url = 1;
   string serialNum = 2;
   string busId = 3;
+  string devId = 4;
 }
 
 // start/burn/gen chip
@@ -72,13 +73,14 @@ message ReadChipReply {
 
 //sign
 message SignChipsRequest {
-  string serialNum = 1;
-  string busId = 2;
-  string p2 = 3;
-  string publicKey = 4;
-  int64 p2Size = 5;
-  int64 publicKeySize = 6;
-  string msg = 7;
+  string url = 1;
+  string serialNum = 2;
+  string busId = 3;
+  string p2 = 4;
+  string publicKey = 5;
+  int64 p2Size = 6;
+  int64 publicKeySize = 7;
+  string msg = 8;
 }
 message SignChipsReply {
   string signature = 1;

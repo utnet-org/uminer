@@ -38,10 +38,14 @@ type CardItem struct {
 	Chips       []*ChipItem `json:"chips"`
 }
 
-type ChipsRequest struct {
-	Url       []string `json:"url"`
+type ListChipsRequest struct {
+	Addr      []string `json:"addr"`
 	SerialNum string   `json:"serialNum"`
 	BusId     string   `json:"busId"`
+}
+type StartChipsRequest struct {
+	Addr  string `json:"addr"`
+	DevId string `json:"busId"`
 }
 
 // start/burn/gen chip

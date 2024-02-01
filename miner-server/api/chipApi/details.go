@@ -51,24 +51,27 @@ type BMChips struct {
 
 // RemoteGetChipInfo information from "curl 10.0.3.178:9100"
 func RemoteGetChipInfo(url string) []TPUCards {
+	cardLists := make([]TPUCards, 0)
 
 	response, err := http.Get(url)
 	if err != nil {
 		fmt.Println("HTTP请求失败:", err)
+		return cardLists
 	}
 	defer response.Body.Close()
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		fmt.Println("读取响应失败:", err)
+		return cardLists
 	}
 	parser := &expfmt.TextParser{}
 	metricFamilies, err := parser.TextToMetricFamilies(strings.NewReader(string(body)))
 	if err != nil {
 		fmt.Println("解析失败:", err)
+		return cardLists
 	}
 
 	// card and chip structure
-	cardLists := make([]TPUCards, 0)
 	for _, mf := range metricFamilies {
 		if mf.GetName() == "bitmain_board_chip_start_index" {
 			for i, m := range mf.Metric {

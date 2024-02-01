@@ -92,9 +92,9 @@ func (s *ChipService) StartChipCPU(ctx context.Context, req *rpc.ChipsRequest) (
 
 	fipBin := "../../../bm_chip/src/fip.bin"
 	rambootRootfs := "../../../bm_chip/src/ramboot_rootfs.itb"
-	busId, _ := strconv.ParseInt(req.BusId, 10, 64)
+	chipId, _ := strconv.ParseInt(req.DevId, 10, 64)
 
-	res := chipApi.StartChips(int(busId), fipBin, rambootRootfs)
+	res := chipApi.StartChips(int(chipId), fipBin, rambootRootfs)
 	if res {
 		return &rpc.ChipStatusReply{
 			Status: true,
@@ -108,8 +108,8 @@ func (s *ChipService) StartChipCPU(ctx context.Context, req *rpc.ChipsRequest) (
 // burn chip at efuse
 func (s *ChipService) BurnChipEfuse(ctx context.Context, req *rpc.ChipsRequest) (*rpc.ChipStatusReply, error) {
 
-	busId, _ := strconv.ParseInt(req.BusId, 10, 64)
-	res := chipApi.BurnChips(req.SerialNum, req.BusId, int(busId))
+	chipId, _ := strconv.ParseInt(req.DevId, 10, 64)
+	res := chipApi.BurnChips(req.SerialNum, req.BusId, int(chipId))
 	if res {
 		return &rpc.ChipStatusReply{
 			Status: true,
@@ -123,8 +123,8 @@ func (s *ChipService) BurnChipEfuse(ctx context.Context, req *rpc.ChipsRequest) 
 // generate p2 + pubkey at chip and store them into files
 func (s *ChipService) GenerateChipKeyPairs(ctx context.Context, req *rpc.ChipsRequest) (*rpc.ChipStatusReply, error) {
 
-	busId, _ := strconv.ParseInt(req.BusId, 10, 64)
-	res := chipApi.GenChipsKeyPairs(req.SerialNum, req.BusId, int(busId))
+	chipId, _ := strconv.ParseInt(req.DevId, 10, 64)
+	res := chipApi.GenChipsKeyPairs(req.SerialNum, req.BusId, int(chipId))
 	if res {
 		return &rpc.ChipStatusReply{
 			Status: true,
@@ -138,8 +138,8 @@ func (s *ChipService) GenerateChipKeyPairs(ctx context.Context, req *rpc.ChipsRe
 // read stored files to get p2 + pubkey at chip
 func (s *ChipService) ObtainChipKeyPairs(ctx context.Context, req *rpc.ChipsRequest) (*rpc.ReadChipReply, error) {
 
-	busId, _ := strconv.ParseInt(req.BusId, 10, 64)
-	keyPairs := chipApi.ReadChipKeyPairs(req.SerialNum, req.BusId, int(busId))
+	chipId, _ := strconv.ParseInt(req.DevId, 10, 64)
+	keyPairs := chipApi.ReadChipKeyPairs(req.SerialNum, req.BusId, int(chipId))
 	if keyPairs.P2 == "" {
 		return &rpc.ReadChipReply{
 			SerialNumber: req.SerialNum,
@@ -171,7 +171,7 @@ func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (
 
 	// obtain the devId of the chip
 	devId := -1
-	cardLists := chipApi.BMChipsInfos("../../api/chipApi/bm_smi.txt")
+	cardLists := chipApi.RemoteGetChipInfo(req.Url)
 	for _, card := range cardLists {
 		if card.SerialNum == req.SerialNum {
 			for _, chip := range card.Chips {
