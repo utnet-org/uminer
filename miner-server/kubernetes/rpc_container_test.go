@@ -16,7 +16,7 @@ const token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlM2IxY
 
 func TestCreateImageGRPC(t *testing.T) {
 	// Connect to the RPC server
-	conn := cmd.ConnectRPCServer()
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
 	defer conn.Close()
 
 	// Prepare the request
@@ -44,7 +44,7 @@ func TestCreateImageGRPC(t *testing.T) {
 
 func TestDeleteImageGRPC(t *testing.T) {
 	// Connect to the RPC server
-	conn := cmd.ConnectRPCServer()
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
 	defer conn.Close()
 
 	// Prepare the request
@@ -68,7 +68,7 @@ func TestDeleteImageGRPC(t *testing.T) {
 
 func TestQueryImageGRPC(t *testing.T) {
 	// Connect to the RPC server
-	conn := cmd.ConnectRPCServer()
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
 	defer conn.Close()
 
 	// Prepare the request
@@ -96,7 +96,7 @@ func TestQueryImageGRPC(t *testing.T) {
 
 func TestCreateNoteBookGRPC(t *testing.T) {
 	// Connect to the RPC server
-	conn := cmd.ConnectRPCServer()
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
 	defer conn.Close()
 
 	// Prepare the request
@@ -124,7 +124,7 @@ func TestCreateNoteBookGRPC(t *testing.T) {
 
 func TestDeleteNoteBookGRPC(t *testing.T) {
 	// Connect to the RPC server
-	conn := cmd.ConnectRPCServer()
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
 	defer conn.Close()
 
 	// Prepare the request
@@ -148,7 +148,7 @@ func TestDeleteNoteBookGRPC(t *testing.T) {
 
 func TestStartStopNoteBookGRPC(t *testing.T) {
 	// Connect to the RPC server
-	conn := cmd.ConnectRPCServer()
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
 	defer conn.Close()
 
 	// Prepare the request
@@ -172,7 +172,7 @@ func TestStartStopNoteBookGRPC(t *testing.T) {
 
 func TestQueryNoteBookGRPC(t *testing.T) {
 	// Connect to the RPC server
-	conn := cmd.ConnectRPCServer()
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
 	defer conn.Close()
 
 	// Prepare the request

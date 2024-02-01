@@ -97,12 +97,14 @@ func (s *ChipService) StartChipCPU(ctx context.Context, req *rpc.ChipsRequest) (
 	res := chipApi.StartChips(int(chipId), fipBin, rambootRootfs)
 	if res {
 		return &rpc.ChipStatusReply{
-			Status: true,
+			Status: "1",
+			Msg:    "start chip cpu success",
 		}, nil
 	}
 	return &rpc.ChipStatusReply{
-		Status: false,
-	}, errors.New("unable to start chip cpu")
+		Status: "0",
+		Msg:    "unable to start chip cpu",
+	}, nil
 }
 
 // burn chip at efuse
@@ -112,12 +114,14 @@ func (s *ChipService) BurnChipEfuse(ctx context.Context, req *rpc.ChipsRequest) 
 	res := chipApi.BurnChips(req.SerialNum, req.BusId, int(chipId))
 	if res {
 		return &rpc.ChipStatusReply{
-			Status: true,
+			Status: "1",
+			Msg:    "burn aes key at efuse success",
 		}, nil
 	}
 	return &rpc.ChipStatusReply{
-		Status: false,
-	}, errors.New("unable to burn aes key at efuse")
+		Status: "1",
+		Msg:    "unable to burn aes key at efuse",
+	}, nil
 }
 
 // generate p2 + pubkey at chip and store them into files
@@ -127,12 +131,14 @@ func (s *ChipService) GenerateChipKeyPairs(ctx context.Context, req *rpc.ChipsRe
 	res := chipApi.GenChipsKeyPairs(req.SerialNum, req.BusId, int(chipId))
 	if res {
 		return &rpc.ChipStatusReply{
-			Status: true,
+			Status: "1",
+			Msg:    "generate key pairs success",
 		}, nil
 	}
 	return &rpc.ChipStatusReply{
-		Status: false,
-	}, errors.New("unable to generate key pairs")
+		Status: "1",
+		Msg:    "unable to generate key pairs",
+	}, nil
 }
 
 // read stored files to get p2 + pubkey at chip

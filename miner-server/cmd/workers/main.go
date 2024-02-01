@@ -23,14 +23,14 @@ func main() {
 
 	httpServer := &serverConf.Server_HTTP{
 		Network: "tcp",
-		Addr:    cmd.ServerIP + ":6001",
+		Addr:    cmd.WorkerServerIP + ":6001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
 	// 创建 Server_GRPC 对象并设置相关字段
 	grpcServer := &serverConf.Server_GRPC{
 		Network: "tcp",
-		Addr:    cmd.ServerIP + ":7001",
+		Addr:    cmd.WorkerServerIP + ":7001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 

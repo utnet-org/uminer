@@ -54,7 +54,8 @@ message ChipsRequest {
 
 // start/burn/gen chip
 message ChipStatusReply{
-  bool status = 1;
+  string status = 1;
+  string msg = 2;
 }
 
 // details information

@@ -3,7 +3,6 @@ package types
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"google.golang.org/grpc"
@@ -30,7 +29,7 @@ func NewChipServiceHTTP(conf *serverConf.Bootstrap, logger log.Logger, data *dat
 	}
 }
 
-// show details of all chips
+// ListAllChipsHTTPHandler show details of all chips
 func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *http.Request) {
 	// method GET
 	if r.Method != http2.MethodGet {
@@ -153,11 +152,11 @@ func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *h
 
 }
 
-// start chip CPU
+// StartChipCPUHandler start chip CPU before asking chips to perform their task
 func (s *MinerUIServiceHTTP) StartChipCPUHandler(w http.ResponseWriter, r *http.Request) {
 
 	// method Post
-	if r.Method != http2.MethodGet {
+	if r.Method != http2.MethodPost {
 		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
 		return
 	}
@@ -181,13 +180,11 @@ func (s *MinerUIServiceHTTP) StartChipCPUHandler(w http.ResponseWriter, r *http.
 	client := chipRPC.NewChipServiceClient(conn)
 	// Call the RPC method
 	var response *chipRPC.ChipStatusReply
+	fmt.Println("worker", req.Addr, ": start chip", req.DevId)
 	response, err = client.StartChipCPU(context.Background(), request, grpc.WaitForReady(true))
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)
-	}
-	if response.Status == false {
-		http2.Error(w, errors.New("unable to start chip cpu").Error(), http2.StatusInternalServerError)
 	}
 
 }

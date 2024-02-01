@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-kratos/kratos/v2"
+	minerGprc "github.com/go-kratos/kratos/v2/transport/grpc"
+	minerHttp "github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/golang/protobuf/ptypes/duration"
 	"time"
 	"uminer/common/graceful"
@@ -11,11 +14,6 @@ import (
 	"uminer/miner-server/server"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
-	"uminer/miner-server/service/types"
-
-	"context"
-	minerGprc "github.com/go-kratos/kratos/v2/transport/grpc"
-	minerHttp "github.com/go-kratos/kratos/v2/transport/http"
 )
 
 type ServerAddr struct {
@@ -34,13 +32,13 @@ func main() {
 	// activate miner server
 	httpServer := &serverConf.Server_HTTP{
 		Network: "tcp",
-		Addr:    cmd.ServerIP + ":8001",
+		Addr:    cmd.MinerServerIP + ":8001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
 	grpcServer := &serverConf.Server_GRPC{
 		Network: "tcp",
-		Addr:    cmd.ServerIP + ":9001",
+		Addr:    cmd.MinerServerIP + ":9001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
@@ -93,38 +91,6 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 	// new miner grpc
 	grpcServer := server.NewMinerGRPCServer(bc.Server, newService)
 	// connect worker grpc
-	var workerGrpcConnArr []*types.MinerUIServiceHTTP //*workerGrpc.ClientConn
-	for _, addr := range workerAddresses {
-		workerHServer := &serverConf.Server_HTTP{
-			Network: "tcp",
-			Addr:    addr.HttpServer,
-			Timeout: &duration.Duration{Seconds: 60},
-		}
-		workerGServer := &serverConf.Server_GRPC{
-			Network: "tcp",
-			Addr:    addr.GrpcServer,
-			Timeout: &duration.Duration{Seconds: 60},
-		}
-		bs := &serverConf.Bootstrap{
-			App: &serverConf.App{},
-			Server: &serverConf.Server{
-				Http: workerHServer,
-				Grpc: workerGServer,
-			},
-			Data:    &serverConf.Data{},
-			Storage: []byte("my_storage_data"), // 设置 Storage 字段
-		}
-		client := types.NewChipServiceHTTP(bs, logger, nil)
-		workerGrpcConnArr = append(workerGrpcConnArr, client)
-
-		//grpcConn, err := workerGrpc.Dial(addr.GrpcServer, workerGrpc.WithInsecure())
-		//if err != nil {
-		//	fmt.Println("failed to connect to worker: ", err)
-		//}
-		//defer grpcConn.Close()
-		//workerGrpcConnArr = append(workerGrpcConnArr, grpcConn)
-
-	}
 
 	httpServer := server.NewHTTPServer(bc.Server, newService)
 	app := newApp(ctx, logger, httpServer, grpcServer)

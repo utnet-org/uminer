@@ -11,7 +11,7 @@ import (
 
 func TestUpateChainStatusGRPC(t *testing.T) {
 	// Connect to the RPC server
-	conn := cmd.ConnectRPCServer()
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
 	defer conn.Close()
 
 	// Prepare the request

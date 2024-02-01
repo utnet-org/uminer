@@ -91,7 +91,7 @@ func MiddlewareCors() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			if ts, ok := transport.FromServerContext(ctx); ok {
-				log.Println("logging: rpc call")
+				log.Println("logging: rpc", ts.Operation())
 				if ts.ReplyHeader() != nil {
 					ts.ReplyHeader().Set("Access-Control-Allow-Origin", "*")
 					ts.ReplyHeader().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,PATCH,DELETE")

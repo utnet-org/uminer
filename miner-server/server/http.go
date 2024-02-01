@@ -18,7 +18,7 @@ func deployRouters(s *http.Server, service *service.Service) {
 		service.MinerUIServiceH.ListAllChipsHTTPHandler(w, r)
 	})
 	s.HandleFunc("/chipApi.ChipService/StartChipCPU", func(w http.ResponseWriter, r *http.Request) {
-
+		service.MinerUIServiceH.StartChipCPUHandler(w, r)
 	})
 
 }

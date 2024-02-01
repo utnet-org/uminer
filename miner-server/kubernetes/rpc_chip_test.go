@@ -11,7 +11,7 @@ import (
 
 func TestQueryAllChipsGRPC(t *testing.T) {
 	// Connect to the RPC server
-	conn := cmd.ConnectRPCServer()
+	conn := cmd.ConnectRPCServer(cmd.WorkerServerIP, "7001")
 	defer conn.Close()
 
 	// Prepare the request
