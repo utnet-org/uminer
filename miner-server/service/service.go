@@ -12,10 +12,15 @@ import (
 )
 
 type Service struct {
+	// http miner service for miner UI software call
 	MinerUIServiceH types.MinerUIServiceHTTP
-	ChipServiceG    chipApi.ChipServiceServer
-	ChainService    chainApi.ChainServiceServer
-	ImageService    containerApi.ImageServiceServer
+	// grpc Chip service for calling chip using bm-sophon driver: start/burn/generate key pairs/sign message
+	ChipServiceG chipApi.ChipServiceServer
+	// grpc chain service for communicating with blockchain nodes, asking for status, get informed of burst block or get transaction to pack on blocks
+	ChainService chainApi.ChainServiceServer
+	// grpc image service for communicating with container cloud server based on k8s framework, miner will manage or coordinate AI task based on images provided by users
+	ImageService containerApi.ImageServiceServer
+	// grpc notebook service for communicating with container cloud server based on k8s framework, miner will manage or offer notebooks to users, who can do AI coding online conveniently
 	NotebookService containerApi.NotebookServiceServer
 }
 

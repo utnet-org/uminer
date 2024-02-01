@@ -91,6 +91,31 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 	// new miner grpc
 	grpcServer := server.NewMinerGRPCServer(bc.Server, newService)
 	// connect worker grpc
+	//var workerGrpcConnArr []rpc.ChipServiceServer
+	//for _, addr := range workerAddresses {
+	//	workerHServer := &serverConf.Server_HTTP{
+	//		Network: "tcp",
+	//		Addr:    addr.HttpServer,
+	//		Timeout: &duration.Duration{Seconds: 60},
+	//	}
+	//	workerGServer := &serverConf.Server_GRPC{
+	//		Network: "tcp",
+	//		Addr:    addr.GrpcServer,
+	//		Timeout: &duration.Duration{Seconds: 60},
+	//	}
+	//	bs := &serverConf.Bootstrap{
+	//		App: &serverConf.App{},
+	//		Server: &serverConf.Server{
+	//			Http: workerHServer,
+	//			Grpc: workerGServer,
+	//		},
+	//		Data:    &serverConf.Data{},
+	//		Storage: []byte("my_storage_data"), // 设置 Storage 字段
+	//	}
+	//	client := types.NewChipService(bs, logger, nil)
+	//	workerGrpcConnArr = append(workerGrpcConnArr, client)
+	//
+	//}
 
 	httpServer := server.NewHTTPServer(bc.Server, newService)
 	app := newApp(ctx, logger, httpServer, grpcServer)

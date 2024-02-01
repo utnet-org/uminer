@@ -63,6 +63,7 @@ type ListCards struct {
 	TotalSize int64       `json:"totalSize"`
 	Addr      string      `json:"address"`
 	Cards     []*CardItem `json:"cards"`
+	Status    string      `json:"status"` // Connected/Disconnected
 }
 
 // read keys

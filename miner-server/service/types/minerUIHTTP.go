@@ -1,18 +1,23 @@
 package types
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
 	http2 "net/http"
+	"strconv"
 	"strings"
+	"time"
 	"uminer/common/log"
-	"uminer/miner-server/api/chipApi/HTTP"
+	"uminer/miner-server/api/HTTP"
 	chipRPC "uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
+	"uminer/miner-server/util"
 )
 
 type MinerUIServiceHTTP struct {
@@ -27,6 +32,65 @@ func NewChipServiceHTTP(conf *serverConf.Bootstrap, logger log.Logger, data *dat
 		log:  log.NewHelper("ChipService", logger),
 		data: data,
 	}
+}
+
+// GetNodesStatusHandler get the latest information about node and about miner himself as well
+func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *http.Request) {
+
+	// method Post
+	if r.Method != http2.MethodPost {
+		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
+		return
+	}
+	// get params
+	jsonData := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "dontcare",
+		"method":  "status",
+		"params":  make([]interface{}, 0),
+	}
+	jsonStr, _ := json.Marshal(jsonData)
+
+	// POST request
+	r, err := http2.NewRequestWithContext(context.Background(), http2.MethodPost, nodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client := &http2.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(r)
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+	gzipBytes := util.GzipApi(resp)
+
+	res := gjson.Get(string(gzipBytes), "result").String()
+	sync := gjson.Get(res, "sync_info").String()
+	latestHeight := gjson.Get(sync, "latest_block_height").Int()
+	//latestHash := gjson.Get(sync, "latest_block_hash").String()
+	//latestTime := gjson.Get(sync, "latest_block_time").String()
+
+	response := HTTP.ReportNodesStatusReply{
+		Computation:       "1000",
+		NumberOfMiners:    "100",
+		Rewards:           "10",
+		LatestBlockHeight: strconv.FormatInt(latestHeight, 10),
+		MyComputation:     "10",
+		MyRewards:         "0.1",
+		MyBlocks:          "1",
+		MyWorkerNum:       "1",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+	}
+
 }
 
 // ListAllChipsHTTPHandler show details of all chips
@@ -58,6 +122,7 @@ func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *h
 				TotalSize: 0,
 				Addr:      each,
 				Cards:     cards,
+				Status:    "Disconnected",
 			})
 			workers.NumOfWorkers += 1
 			continue
@@ -78,6 +143,7 @@ func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *h
 				TotalSize: 0,
 				Addr:      each,
 				Cards:     cards,
+				Status:    "Disconnected",
 			})
 			workers.NumOfWorkers += 1
 			continue
@@ -136,6 +202,7 @@ func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *h
 			TotalSize: int64(listLen),
 			Addr:      each,
 			Cards:     cards,
+			Status:    "Connected",
 		})
 		workers.NumOfWorkers += 1
 

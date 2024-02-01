@@ -12,13 +12,16 @@ import (
 	"uminer/miner-server/service"
 )
 
-// router
+// http router for different methods
 func deployRouters(s *http.Server, service *service.Service) {
-	s.HandleFunc("/chipApi.ChipService/ListAllChips", func(w http.ResponseWriter, r *http.Request) {
+	s.HandleFunc("/chipService/ListAllChips", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.ListAllChipsHTTPHandler(w, r)
 	})
-	s.HandleFunc("/chipApi.ChipService/StartChipCPU", func(w http.ResponseWriter, r *http.Request) {
+	s.HandleFunc("/chipService/StartChipCPU", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.StartChipCPUHandler(w, r)
+	})
+	s.HandleFunc("/chainService/GetNodesStatus", func(w http.ResponseWriter, r *http.Request) {
+		service.MinerUIServiceH.GetNodesStatusHandler(w, r)
 	})
 
 }
