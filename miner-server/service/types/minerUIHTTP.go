@@ -42,7 +42,7 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
 		return
 	}
-	// get params
+	// get status
 	jsonData := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"id":      "dontcare",
@@ -50,7 +50,6 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 		"params":  make([]interface{}, 0),
 	}
 	jsonStr, _ := json.Marshal(jsonData)
-
 	// POST request
 	r, err := http2.NewRequestWithContext(context.Background(), http2.MethodPost, nodeURL, bytes.NewReader(jsonStr))
 	if err != nil {
@@ -75,11 +74,37 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 	//latestHash := gjson.Get(sync, "latest_block_hash").String()
 	//latestTime := gjson.Get(sync, "latest_block_time").String()
 
+	// get gas fee
+	jsonData = map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "dontcare",
+		"method":  "gas_price",
+		"params":  []int{int(latestHeight)},
+	}
+	jsonStr, _ = json.Marshal(jsonData)
+	r, err = http2.NewRequestWithContext(context.Background(), http2.MethodPost, nodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+	client = &http2.Client{Timeout: 5 * time.Second}
+	resp, err = client.Do(r)
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+	res = gjson.Get(string(util.GzipApi(resp)), "result").String()
+	gas := gjson.Get(res, "gas_price").String()
+
 	response := HTTP.ReportNodesStatusReply{
 		Computation:       "1000",
 		NumberOfMiners:    "100",
 		Rewards:           "10",
 		LatestBlockHeight: strconv.FormatInt(latestHeight, 10),
+		GasFee:            gas,
 		MyComputation:     "10",
 		MyRewards:         "0.1",
 		MyBlocks:          "1",
