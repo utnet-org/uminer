@@ -34,6 +34,36 @@ func NewChipServiceHTTP(conf *serverConf.Bootstrap, logger log.Logger, data *dat
 	}
 }
 
+// MapWorkersAddrHandler get all worker address of a miner
+func (s *MinerUIServiceHTTP) MapWorkersAddrHandler(w http.ResponseWriter, r *http.Request) {
+
+	// method Post
+	if r.Method != http2.MethodGet {
+		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
+		return
+	}
+	// get params
+	query := r.URL.Query()
+	req := &HTTP.MapWorkersAddressRequest{
+		MinerAddr: query.Get("minerAddr"),
+	}
+
+	// get mapping
+	workers := make([]string, 0)
+	workers = append(workers, "192.168.10.49")
+	workers = append(workers, "192.168.10.50")
+	response := HTTP.MapWorkersAddressReply{
+		MinerAddr:  req.MinerAddr,
+		WorkerAddr: workers,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+	}
+
+}
+
 // GetNodesStatusHandler get the latest information about node and about miner himself as well
 func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *http.Request) {
 

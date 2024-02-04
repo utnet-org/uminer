@@ -23,6 +23,9 @@ func deployRouters(s *http.Server, service *service.Service) {
 	s.HandleFunc("/chainService/GetNodesStatus", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.GetNodesStatusHandler(w, r)
 	})
+	s.HandleFunc("/chainService/MapWorkersAddr", func(w http.ResponseWriter, r *http.Request) {
+		service.MinerUIServiceH.MapWorkersAddrHandler(w, r)
+	})
 
 }
 
