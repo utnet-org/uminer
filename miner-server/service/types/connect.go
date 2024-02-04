@@ -14,6 +14,9 @@ const mainURL = "https://console.utlab.io/openaiserver"
 // node
 const nodeURL = "http://43.198.88.81:3030"
 
+// delay
+const delay = 4
+
 func HTTPRequest(method string, url string, data interface{}, contentType string, authToken string) []byte {
 	client := &http.Client{Timeout: 5 * time.Second}
 	jsonStr, _ := json.Marshal(data)

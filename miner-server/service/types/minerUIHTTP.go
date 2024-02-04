@@ -51,7 +51,10 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 	}
 	jsonStr, _ := json.Marshal(jsonData)
 	// POST request
-	r, err := http2.NewRequestWithContext(context.Background(), http2.MethodPost, nodeURL, bytes.NewReader(jsonStr))
+	clientDeadline := time.Now().Add(time.Duration(delay * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+	r, err := http2.NewRequestWithContext(ctx, http2.MethodPost, nodeURL, bytes.NewReader(jsonStr))
 	if err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		return
@@ -82,7 +85,7 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 		"params":  []int{int(latestHeight)},
 	}
 	jsonStr, _ = json.Marshal(jsonData)
-	r, err = http2.NewRequestWithContext(context.Background(), http2.MethodPost, nodeURL, bytes.NewReader(jsonStr))
+	r, err = http2.NewRequestWithContext(ctx, http2.MethodPost, nodeURL, bytes.NewReader(jsonStr))
 	if err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		return
@@ -133,6 +136,9 @@ func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *h
 		BusId:     query.Get("busId"),
 	}
 
+	clientDeadline := time.Now().Add(time.Duration(delay * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
 	workers := &HTTP.ListWorkersReply{Workers: make([]HTTP.ListCards, 0)}
 	for _, each := range req.Addr {
 
@@ -140,7 +146,7 @@ func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *h
 		cards := make([]*HTTP.CardItem, 0)
 
 		// connect to each worker
-		conn, err := grpc.Dial(each+":7001", grpc.WithInsecure())
+		conn, err := grpc.DialContext(ctx, each+":7001", grpc.WithInsecure())
 		if err != nil {
 			fmt.Println("Error connecting to RPC server:", err)
 			workers.Workers = append(workers.Workers, HTTP.ListCards{
@@ -161,7 +167,7 @@ func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *h
 		client := chipRPC.NewChipServiceClient(conn)
 		// Call the RPC method
 		var response *chipRPC.ListChipsReply
-		response, err = client.ListAllChips(context.Background(), request, grpc.WaitForReady(true))
+		response, err = client.ListAllChips(ctx, request, grpc.WaitForReady(true))
 		if err != nil {
 			fmt.Println("Error query chip information:", err)
 			workers.Workers = append(workers.Workers, HTTP.ListCards{
@@ -260,7 +266,10 @@ func (s *MinerUIServiceHTTP) StartChipCPUHandler(w http.ResponseWriter, r *http.
 	}
 
 	// connect to worker
-	conn, err := grpc.Dial(req.Addr+":7001", grpc.WithInsecure())
+	clientDeadline := time.Now().Add(time.Duration(15 * time.Second)) // for the first time to start a chip, it can take up to 10s
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+	conn, err := grpc.DialContext(ctx, req.Addr+":7001", grpc.WithInsecure())
 	if err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		return
@@ -273,7 +282,11 @@ func (s *MinerUIServiceHTTP) StartChipCPUHandler(w http.ResponseWriter, r *http.
 	// Call the RPC method
 	var response *chipRPC.ChipStatusReply
 	fmt.Println("worker", req.Addr, ": start chip", req.DevId)
-	response, err = client.StartChipCPU(context.Background(), request, grpc.WaitForReady(true))
+	response, err = client.StartChipCPU(ctx, request, grpc.WaitForReady(true))
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)
