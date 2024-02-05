@@ -5,6 +5,7 @@ type MapWorkersAddressRequest struct {
 }
 type MapWorkersAddressReply struct {
 	MinerAddr  string   `json:"minerAddr"`
+	AuthToken  string   `json:"authToken"`
 	WorkerAddr []string `json:"workerAddr"`
 }
 
@@ -20,4 +21,18 @@ type ReportNodesStatusReply struct {
 	MyRewards     string `json:"myRewards"`
 	MyBlocks      string `json:"myBlocks"`
 	MyWorkerNum   string `json:"myWorkerNum"`
+}
+
+type GetRentalOrderListReply struct {
+	RentalOrders []RentalOrderDetails `json:"rentalOrders"`
+}
+type RentalOrderDetails struct {
+	ID         string `json:"id"`
+	HASH       string `json:"hash"`
+	MinerAddr  string `json:"minerAddr"`
+	RentalAddr string `json:"rentalAddr"`
+	Resource   string `json:"resource"`
+	Power      string `json:"power"`
+	StartTime  string `json:"startTime"`
+	EndTime    string `json:"endTime"`
 }

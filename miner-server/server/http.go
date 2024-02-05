@@ -27,6 +27,13 @@ func deployRouters(s *http.Server, service *service.Service) {
 		service.MinerUIServiceH.MapWorkersAddrHandler(w, r)
 	})
 
+	s.HandleFunc("/chainService/GetRentalOrderList", func(w http.ResponseWriter, r *http.Request) {
+		service.MinerUIServiceH.GetRentalOrderListHandler(w, r)
+	})
+	s.HandleFunc("/notebookService/GetNotebookList", func(w http.ResponseWriter, r *http.Request) {
+		service.MinerUIServiceH.GetNotebookListHandler(w, r)
+	})
+
 }
 
 // NewHTTPServer new a HTTP server.
