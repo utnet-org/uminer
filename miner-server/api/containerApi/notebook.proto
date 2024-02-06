@@ -11,6 +11,8 @@ service NotebookService {
   rpc StartNotebook (StartStopNotebookRequest) returns (StartStopNotebookReply);
   rpc StopNotebook (StartStopNotebookRequest) returns (StartStopNotebookReply);
   rpc QueryNotebookByCondition (QueryNotebookByConditionRequest) returns (QueryNotebookByConditionReply);
+  rpc QueryNotebookEventRecord (QueryNotebookEventRecordRequest) returns (QueryNotebookEventRecordReply);
+  rpc ObtainNotebookEvent (ObtainNotebookEventRequest) returns (ObtainNotebookEventReply);
 }
 
 
@@ -61,4 +63,38 @@ message NotebookList {
 }
 message QueryNotebookByConditionReply {
     repeated NotebookList NoteBookList = 1;
+}
+
+message QueryNotebookEventRecordRequest{
+  string token = 1;
+  string notebookId = 2;
+  int64 pageSize= 3;
+  int64 pageIndex= 4;
+}
+message NotebookEventRecord {
+   string notebookId = 1;
+   string remark = 2;
+   string time = 3;
+   string types = 4;
+}
+message QueryNotebookEventRecordReply {
+  repeated NotebookEventRecord NotebookEventRecords = 1;
+}
+
+message ObtainNotebookEventRequest{
+  string token = 1;
+  string notebookJobId = 2;
+  int64 pageSize= 3;
+  int64 pageIndex= 4;
+  int64 taskIndex = 5;
+  int64 replicaIndex = 6;
+}
+message NotebookEvent {
+  string message = 1;
+  string name = 2;
+  string reason = 3;
+  string timestamp = 4;
+}
+message ObtainNotebookEventReply {
+  repeated NotebookEvent NotebookEvents = 1;
 }

@@ -9,7 +9,7 @@ import (
 	"uminer/miner-server/cmd"
 )
 
-const token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlM2IxYzE0ZDBiM2M0NGZkYWU2NzEyZGRjYjE3NjU0MyIsImNyZWF0ZWRBdCI6MTcwNjUyOTMyNCwiZXhwIjoxNzA2NjE1NzI0LCJpYXQiOjE3MDY1MjkzMjR9.q5C2Sm6aZwgf7-lE9sKGSnUk-xSdEP-FP9WR9LkNniM"
+const token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlM2IxYzE0ZDBiM2M0NGZkYWU2NzEyZGRjYjE3NjU0MyIsImNyZWF0ZWRBdCI6MTcwNzIxMjMyMCwiZXhwIjoxNzA3Mjk4NzIwLCJpYXQiOjE3MDcyMTIzMjB9.gDRURqM5jgFDxFePkOw_YET5hDWzOi1FWzg-3yH6Mt8"
 
 /* exemplaire */
 /* image */
@@ -187,6 +187,60 @@ func TestQueryNoteBookGRPC(t *testing.T) {
 	// Call the RPC method
 	var response *containerApi.QueryNotebookByConditionReply
 	response, err := client.QueryNotebookByCondition(context.Background(), request, grpc.WaitForReady(true))
+	if err != nil {
+		fmt.Println("调用 gRPC 方法失败:", err)
+		return
+	}
+
+	// 处理响应
+	fmt.Println("gRPC Response: ", response)
+}
+
+func TestQueryNotebookEventRecord(t *testing.T) {
+	// Connect to the RPC server
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
+	defer conn.Close()
+
+	// Prepare the request
+	request := &containerApi.QueryNotebookEventRecordRequest{
+		Token:      token,
+		NotebookId: "ge7b4a7225464d81a240eed8d38a8b53",
+		PageSize:   10,
+		PageIndex:  1,
+	}
+	client := containerApi.NewNotebookServiceClient(conn)
+
+	// Call the RPC method
+	var response *containerApi.QueryNotebookEventRecordReply
+	response, err := client.QueryNotebookEventRecord(context.Background(), request, grpc.WaitForReady(true))
+	if err != nil {
+		fmt.Println("调用 gRPC 方法失败:", err)
+		return
+	}
+
+	// 处理响应
+	fmt.Println("gRPC Response: ", response)
+}
+
+func TestObtainNotebookEvents(t *testing.T) {
+	// Connect to the RPC server
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
+	defer conn.Close()
+
+	// Prepare the request
+	request := &containerApi.ObtainNotebookEventRequest{
+		Token:         token,
+		NotebookJobId: "fb15ec98802d4858ad3a1a197b3bb262",
+		PageSize:      10,
+		PageIndex:     1,
+		TaskIndex:     1,
+		ReplicaIndex:  1,
+	}
+	client := containerApi.NewNotebookServiceClient(conn)
+
+	// Call the RPC method
+	var response *containerApi.ObtainNotebookEventReply
+	response, err := client.ObtainNotebookEvent(context.Background(), request, grpc.WaitForReady(true))
 	if err != nil {
 		fmt.Println("调用 gRPC 方法失败:", err)
 		return
