@@ -14,22 +14,27 @@ import (
 
 // http router for different methods
 func deployRouters(s *http.Server, service *service.Service) {
+	s.HandleFunc("/chainService/Login", func(w http.ResponseWriter, r *http.Request) {
+		service.MinerUIServiceH.LoginHandler(w, r)
+	})
+	s.HandleFunc("/chainService/GetMinderInfo", func(w http.ResponseWriter, r *http.Request) {
+		service.MinerUIServiceH.GetMinderInfoHandler(w, r)
+	})
+
 	s.HandleFunc("/chipService/ListAllChips", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.ListAllChipsHTTPHandler(w, r)
 	})
 	s.HandleFunc("/chipService/StartChipCPU", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.StartChipCPUHandler(w, r)
 	})
+
 	s.HandleFunc("/chainService/GetNodesStatus", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.GetNodesStatusHandler(w, r)
 	})
-	s.HandleFunc("/chainService/MapWorkersAddr", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerUIServiceH.MapWorkersAddrHandler(w, r)
-	})
-
 	s.HandleFunc("/chainService/GetRentalOrderList", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.GetRentalOrderListHandler(w, r)
 	})
+
 	s.HandleFunc("/notebookService/GetNotebookList", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.GetNotebookListHandler(w, r)
 	})

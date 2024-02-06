@@ -29,7 +29,7 @@ func HTTPRequest(method string, url string, data interface{}, contentType string
 
 	// 设置请求头
 	req.Header.Set("Content-Type", contentType)
-	req.Header.Set("Authorization", authToken)
+	req.Header.Set("Authorization", "Bearer "+authToken)
 
 	// 发送请求
 	resp, err := client.Do(req)

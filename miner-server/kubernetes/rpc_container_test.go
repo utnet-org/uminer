@@ -9,7 +9,7 @@ import (
 	"uminer/miner-server/cmd"
 )
 
-const token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlM2IxYzE0ZDBiM2M0NGZkYWU2NzEyZGRjYjE3NjU0MyIsImNyZWF0ZWRBdCI6MTcwNzIxMjMyMCwiZXhwIjoxNzA3Mjk4NzIwLCJpYXQiOjE3MDcyMTIzMjB9.gDRURqM5jgFDxFePkOw_YET5hDWzOi1FWzg-3yH6Mt8"
+const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlM2IxYzE0ZDBiM2M0NGZkYWU2NzEyZGRjYjE3NjU0MyIsImNyZWF0ZWRBdCI6MTcwNzIxMjMyMCwiZXhwIjoxNzA3Mjk4NzIwLCJpYXQiOjE3MDcyMTIzMjB9.gDRURqM5jgFDxFePkOw_YET5hDWzOi1FWzg-3yH6Mt8"
 
 /* exemplaire */
 /* image */

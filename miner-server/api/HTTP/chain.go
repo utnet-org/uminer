@@ -2,11 +2,16 @@ package HTTP
 
 type MapWorkersAddressRequest struct {
 	MinerAddr string `json:"minerAddr"`
+	UserName  string `json:"username"`
+	Password  string `json:"password"`
 }
 type MapWorkersAddressReply struct {
 	MinerAddr  string   `json:"minerAddr"`
 	AuthToken  string   `json:"authToken"`
 	WorkerAddr []string `json:"workerAddr"`
+}
+type GetMinerIdReply struct {
+	MinerId string `json:"minerId"`
 }
 
 type ReportNodesStatusReply struct {
