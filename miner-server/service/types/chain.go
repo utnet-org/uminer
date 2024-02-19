@@ -3,12 +3,13 @@ package types
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
+	"io/ioutil"
 	"net/http"
+	"os"
 
 	//"github.com/ethereum/go-ethereum/rpc"
 	"strconv"
@@ -100,45 +101,71 @@ func (s *ChainService) UpdateMinerStatus(ctx context.Context, req *rpc.ReportMin
 	}, nil
 }
 
+// GetMinerKeys generate miner pri/pubK pairs
+func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRequest) (*rpc.GetMinerKeysReply, error) {
+	// first check if there is stored key pairs
+	_, pubErr := os.Stat("public.pem")
+	_, privErr := os.Stat("private.pem")
+
+	var privKey, pubKey string
+	if pubErr == nil && privErr == nil {
+		// Read the key files
+		pubKeyBytes, err := ioutil.ReadFile("public.pem")
+		if err != nil {
+			return nil, err
+		}
+		privKeyBytes, err := ioutil.ReadFile("private.pem")
+		if err != nil {
+			return nil, err
+		}
+		pubKey = string(pubKeyBytes)
+		privKey = string(privKeyBytes)
+	} else {
+		// Generate new key pair
+		pubKey, privKey = util.ED25519KeysGeneration()
+		// Save the newly generated key pair
+		err := ioutil.WriteFile("public.pem", []byte(pubKey), 0644)
+		if err != nil {
+			return nil, err
+		}
+		// Save the private key securely, you might want to handle this differently
+		err = ioutil.WriteFile("private.pem", []byte(privKey), 0644)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &rpc.GetMinerKeysReply{
+		PrivateKey: privKey,
+		PubKey:     pubKey,
+	}, nil
+
+}
+
 // ClaimComputation claim server/chips to the chain, binding miner address, obtain container cloud connection
 func (s *ChainService) ClaimComputation(ctx context.Context, req *rpc.ClaimComputationRequest) (*rpc.ClaimComputationReply, error) {
 
-	bmchips := make([]MinerChip, 0)
-	for _, item := range req.ChipSets {
-		bmchips = append(bmchips, MinerChip{
-			SN:    item.SerialNumber,
-			BusID: item.BusID,
-		})
-	}
-	reportData := reportMinerComputation{
-		Address:    req.Address,
-		ServerIP:   req.ServerIP,
-		BMChips:    bmchips,
-		totalPower: 10,
-	}
+	//bmchips := make([]MinerChip, 0)
+	//for _, item := range req.ChipSets {
+	//	bmchips = append(bmchips, MinerChip{
+	//		SN:    item.SerialNumber,
+	//		BusID: item.BusID,
+	//	})
+	//}
 
-	jsonData, _ := json.Marshal(reportData)
+	// miner signature
 	timeNow := strconv.FormatInt(time.Now().Unix(), 10)
-	joinnData := req.Address + string(jsonData) + timeNow
-	hash := sha256.New()
-	hash.Write([]byte(joinnData))
-	result := hash.Sum(nil)
-	newTx := transaction{
-		Address:   req.Address,
-		From:      "",
-		To:        "",
-		Amount:    0,
-		txData:    string(jsonData),
-		TimeStamp: timeNow,
-		GasFee:    0,
-		Hash:      string(result),
+	joinData := req.ChipPubK + req.MinerKey + timeNow
+	txStr := fmt.Sprintf("%+v", joinData)
+	privKeyBytes, err := ioutil.ReadFile("private.pem")
+	if err != nil {
+		return nil, err
 	}
+	privKey := string(privKeyBytes)
+	_ = util.MinerSignTx(privKey, txStr)
 
-	// use chip to sign
-	txStr := fmt.Sprintf("%+v", newTx)
-	sign := chipApi.SignMinerChips(1, "P2", "PublicKey", 1, 1, txStr)
 	// packed as transaction, upload to the chain
-	txhash, err := sendTransactionAsync(ctx, sign.Signature)
+	txhash, err := sendTransactionAsync(ctx, req.Signature)
 	if err != nil {
 		return &rpc.ClaimComputationReply{}, err
 	}

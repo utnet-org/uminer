@@ -14,27 +14,31 @@ import (
 
 // http router for different methods
 func deployRouters(s *http.Server, service *service.Service) {
+	// miner login to get token by username and password
 	s.HandleFunc("/chainService/Login", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.LoginHandler(w, r)
 	})
+	// get userid by token
 	s.HandleFunc("/chainService/GetMinderInfo", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.GetMinderInfoHandler(w, r)
 	})
-
+	// list all workers' bm-chip information
 	s.HandleFunc("/chipService/ListAllChips", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.ListAllChipsHTTPHandler(w, r)
 	})
+	// activate the chip manually before using it as cryptological tool
 	s.HandleFunc("/chipService/StartChipCPU", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.StartChipCPUHandler(w, r)
 	})
-
+	// update the latest information of the node
 	s.HandleFunc("/chainService/GetNodesStatus", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.GetNodesStatusHandler(w, r)
 	})
+	// list all rental orders related to the miner with their details
 	s.HandleFunc("/chainService/GetRentalOrderList", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.GetRentalOrderListHandler(w, r)
 	})
-
+	// list all notebooks related to the miner with their details
 	s.HandleFunc("/notebookService/GetNotebookList", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.GetNotebookListHandler(w, r)
 	})

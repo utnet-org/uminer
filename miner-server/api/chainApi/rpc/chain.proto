@@ -8,20 +8,20 @@ option go_package = "../../chainApi/rpc";
 service ChainService {
   rpc UpdateChainsStatus (ReportChainsStatusRequest) returns (ReportChainsStatusReply);
   rpc UpdateMinerStatus (ReportMinerStatusRequest) returns (ReportMinerStatusReply);
+  rpc GetMinerKeys (GetMinerKeysRequest) returns (GetMinerKeysReply);
   rpc ClaimComputation (ClaimComputationRequest) returns (ClaimComputationReply);
   rpc ChallengeComputation (ChallengeComputationRequest) returns (ChallengeComputationReply);
 
 }
 
-//message ClaimServerRequest {
-//  string address = 1;
-//  string serverIP = 2;
-//}
-//message ClaimServerReply {
-//  int64 blockHeight = 1;
-//  string containerId = 2;
-//  bool status = 3;
-//}
+// generate the miner key pairs (challenge keys)
+message GetMinerKeysRequest {
+  string accessKeys = 1;
+}
+message GetMinerKeysReply {
+  string privateKey = 1;
+  string pubKey = 2;
+}
 
 // chain information
 message ReportChainsStatusRequest{
@@ -52,10 +52,14 @@ message chipSets {
   string busID = 2;
 }
 message ClaimComputationRequest {
-  string address = 1;
-  string serverIP = 2;
-  repeated chipSets chipSets = 3;
-  int64 power = 4;
+//  string address = 1;
+//  string serverIP = 2;
+//  repeated chipSets chipSets = 3;
+//  int64 power = 4;
+  string minerKey = 1;
+  string chipPubK = 2;
+  string chipP2K = 3;
+  string signature = 4;
 }
 message ClaimComputationReply {
   string txHash = 1;
