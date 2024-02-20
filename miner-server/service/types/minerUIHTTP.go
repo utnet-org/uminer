@@ -110,10 +110,12 @@ func (s *MinerUIServiceHTTP) GetMinderInfoHandler(w http.ResponseWriter, r *http
 	// get params
 	query := r.URL.Query()
 	token := query.Get("token")
+	ownerAddress := query.Get("ownerAddress")
 	requestUrl := mainURL + "/v1/usermanage/user?token=" + token
 	jsonData := map[string]interface{}{
 		"token": token,
 	}
+	// get userid
 	resp := HTTPRequest("GET", requestUrl, jsonData, "application/json", token)
 	type User struct {
 		ID            string   `json:"id"`
@@ -149,11 +151,14 @@ func (s *MinerUIServiceHTTP) GetMinderInfoHandler(w http.ResponseWriter, r *http
 			http2.Error(w, message, http2.StatusInternalServerError)
 		}
 	default:
-
 	}
 
+	// get minerId(publicKey) by owner address
+	fmt.Println("owner is: ", ownerAddress)
+
 	finalResponse := HTTP.GetMinerIdReply{
-		MinerId: response.Payload.User.ID,
+		MinerId: "C9EeJy2GcFBEFfcrz1Dp4nLVyRWYUyGwthRGDmUjuk4q",
+		UserId:  response.Payload.User.ID,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(finalResponse); err != nil {
@@ -182,7 +187,7 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 	clientDeadline := time.Now().Add(time.Duration(delay * time.Second))
 	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
 	defer cancel()
-	r, err := http2.NewRequestWithContext(ctx, http2.MethodPost, nodeURL, bytes.NewReader(jsonStr))
+	r, err := http2.NewRequestWithContext(ctx, http2.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
 	if err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		return
@@ -213,7 +218,7 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 		"params":  []int{int(latestHeight)},
 	}
 	jsonStr, _ = json.Marshal(jsonData)
-	r, err = http2.NewRequestWithContext(ctx, http2.MethodPost, nodeURL, bytes.NewReader(jsonStr))
+	r, err = http2.NewRequestWithContext(ctx, http2.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
 	if err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		return

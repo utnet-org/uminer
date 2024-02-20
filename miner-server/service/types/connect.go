@@ -11,9 +11,6 @@ import (
 // container cloud
 const mainURL = "https://console.utlab.io/openaiserver"
 
-// node
-const nodeURL = "http://43.198.88.81:3030"
-
 // delay
 const delay = 4
 

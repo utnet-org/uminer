@@ -7,6 +7,7 @@ import (
 	"github.com/tidwall/gjson"
 	"net/http"
 	"time"
+	"uminer/miner-server/cmd"
 	"uminer/miner-server/util"
 )
 
@@ -58,7 +59,7 @@ func sendTransactionAsync(ctx context.Context, signature string) (string, error)
 	jsonStr, _ := json.Marshal(jsonData)
 
 	// POST request
-	r, err := http.NewRequestWithContext(ctx, http.MethodPost, nodeURL, bytes.NewReader(jsonStr))
+	r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
 	if err != nil {
 		return "", err
 	}

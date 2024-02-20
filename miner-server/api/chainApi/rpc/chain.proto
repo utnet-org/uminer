@@ -9,7 +9,7 @@ service ChainService {
   rpc UpdateChainsStatus (ReportChainsStatusRequest) returns (ReportChainsStatusReply);
   rpc UpdateMinerStatus (ReportMinerStatusRequest) returns (ReportMinerStatusReply);
   rpc GetMinerKeys (GetMinerKeysRequest) returns (GetMinerKeysReply);
-  rpc ClaimComputation (ClaimComputationRequest) returns (ClaimComputationReply);
+  rpc ClaimChipComputation (ClaimChipComputationRequest) returns (ClaimChipComputationReply);
   rpc ChallengeComputation (ChallengeComputationRequest) returns (ChallengeComputationReply);
 
 }
@@ -47,11 +47,12 @@ message ReportMinerStatusReply{
   string NumberOfWorkers = 5;
 }
 
+// miner claim computation
 message chipSets {
   string serialNumber = 1;
   string busID = 2;
 }
-message ClaimComputationRequest {
+message ClaimChipComputationRequest {
 //  string address = 1;
 //  string serverIP = 2;
 //  repeated chipSets chipSets = 3;
@@ -61,17 +62,19 @@ message ClaimComputationRequest {
   string chipP2K = 3;
   string signature = 4;
 }
-message ClaimComputationReply {
+message ClaimChipComputationReply {
   string txHash = 1;
 //  string containerId = 2;
 //  repeated int64 rangeSet = 3;
 
 }
 
+// challenge miner when mining
 message ChallengeComputationRequest {
-  string url = 1;
-  int64 segment = 2;
-  string message = 3;
+  string challengeKey = 1;
+  string blockHash = 2;
+  repeated string url = 3;
+  string message = 4;
 }
 message signatureSets {
   string serialNumber = 1;
@@ -79,7 +82,7 @@ message signatureSets {
   string signature = 3;
 }
 message ChallengeComputationReply {
-  string   containerID = 1;
-  repeated signatureSets signatureSets = 2;
-  bool     status = 3;
+//  string   containerID = 1;
+  repeated signatureSets signatureSets = 1;
+  bool     status = 2;
 }

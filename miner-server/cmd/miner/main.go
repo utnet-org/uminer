@@ -1,19 +1,28 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-kratos/kratos/v2"
 	minerGprc "github.com/go-kratos/kratos/v2/transport/grpc"
 	minerHttp "github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/golang/protobuf/ptypes/duration"
+	"github.com/tidwall/gjson"
+	"google.golang.org/grpc"
+	"io/ioutil"
+	"net/http"
+	"os"
 	"time"
 	"uminer/common/graceful"
 	"uminer/common/log"
+	chainApi "uminer/miner-server/api/chainApi/rpc"
 	"uminer/miner-server/cmd"
 	"uminer/miner-server/server"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
+	"uminer/miner-server/util"
 )
 
 type ServerAddr struct {
@@ -88,6 +97,9 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 		return nil, nil, err
 	}
 
+	// listen to the nodes for bursting a block
+	go listenBurst(ctx, bc.Server.Grpc.Addr)
+
 	// new miner grpc
 	grpcServer := server.NewMinerGRPCServer(bc.Server, newService)
 	// connect worker grpc
@@ -133,4 +145,138 @@ func newApp(ctx context.Context, logger log.Logger, hs *minerHttp.Server, gs *mi
 			gs,
 		),
 	)
+}
+
+// listenBurst listen to the node, preparing for burst
+func listenBurst(ctx context.Context, address string) {
+
+	// get pubkey
+	_, pubErr := os.Stat("public.pem")
+	if pubErr != nil {
+		fmt.Println("no pubkey file is found")
+		return
+	}
+	var pubKey string
+	pubKeyBytes, err := ioutil.ReadFile("public.pem")
+	if err != nil {
+		fmt.Println("no pubkey is read")
+		return
+	}
+	pubKey = string(pubKeyBytes)
+	// dial local grpc for challenge computation
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	if err != nil {
+		fmt.Println("fail to dial miner RPC ", address)
+		return
+	}
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+
+		request := &chainApi.ChallengeComputationRequest{
+			ChallengeKey: pubKey,
+			Url:          []string{"192.158.10.1", "192.158.10.2"},
+			Message:      "test",
+		}
+
+		/* listening to the node to be informed if being chosen as miner to burst the block */
+		// get the latest hash
+		jsonData := map[string]interface{}{
+			"jsonrpc": "2.0",
+			"id":      "dontcare",
+			"method":  "status",
+			"params":  make([]interface{}, 0),
+		}
+		jsonStr, _ := json.Marshal(jsonData)
+		clientDeadline := time.Now().Add(time.Duration(4 * time.Second))
+		ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+		defer cancel()
+		r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+		if err != nil {
+			fmt.Println("Error connecting to node RPC: ", err.Error())
+			continue
+		}
+		r.Header.Add("Content-Type", "application/json; charset=utf-8")
+		r.Header.Add("accept-encoding", "gzip,deflate")
+
+		client := &http.Client{Timeout: 5 * time.Second}
+		resp, err := client.Do(r)
+		if err != nil {
+			fmt.Println("fail to get node RPC response: ", err.Error())
+			continue
+		}
+		defer resp.Body.Close()
+		gzipBytes := util.GzipApi(resp)
+
+		res := gjson.Get(string(gzipBytes), "result").String()
+		sync := gjson.Get(res, "sync_info").String()
+		latestBlockHash := gjson.Get(sync, "latest_block_hash").String()
+
+		// get the mining provider
+		jsonData = map[string]interface{}{
+			"jsonrpc": "2.0",
+			"id":      "dontcare",
+			"method":  "provider",
+			"params": map[string]interface{}{
+				"block_hash": latestBlockHash,
+			},
+		}
+		jsonStr, _ = json.Marshal(jsonData)
+		r, err = http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+		if err != nil {
+			fmt.Println("Error connecting to node RPC: ", err.Error())
+			continue
+		}
+		r.Header.Add("Content-Type", "application/json; charset=utf-8")
+		r.Header.Add("accept-encoding", "gzip,deflate")
+
+		cli := &http.Client{Timeout: 5 * time.Second}
+		resp, err = cli.Do(r)
+		if err != nil {
+			fmt.Println("fail to get node RPC response: ", err.Error())
+			continue
+		}
+		defer resp.Body.Close()
+		gzipBytes = util.GzipApi(resp)
+
+		provider := gjson.Get(string(gzipBytes), "provider_account").String()
+		if provider != request.ChallengeKey {
+			continue
+		}
+
+		// wait for real burst
+		fmt.Println("block candidate is selected!")
+		waitingBurstLoop(ctx, conn, request, time.Now().Unix()+10)
+
+	}
+
+}
+func waitingBurstLoop(ctx context.Context, connect *grpc.ClientConn, request *chainApi.ChallengeComputationRequest, burstTime int64) {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+		// get the right burst timing
+		if time.Now().Unix() >= burstTime {
+			client := chainApi.NewChainServiceClient(connect)
+			response, err := client.ChallengeComputation(ctx, request)
+			if err != nil {
+				fmt.Println("Error calling ChallengeComputation:", err)
+			} else {
+				fmt.Println("ChallengeComputation response: ", response)
+			}
+			fmt.Println("block is burst and broadcast !")
+			return
+		}
+	}
 }

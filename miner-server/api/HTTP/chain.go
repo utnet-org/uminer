@@ -12,6 +12,7 @@ type MapWorkersAddressReply struct {
 }
 type GetMinerIdReply struct {
 	MinerId string `json:"minerId"`
+	UserId  string `json:"userId"`
 }
 
 type ReportNodesStatusReply struct {

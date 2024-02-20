@@ -7,9 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
+	"google.golang.org/grpc"
 	"io/ioutil"
 	"net/http"
 	"os"
+	chipRPC "uminer/miner-server/api/chipApi/rpc"
+	"uminer/miner-server/cmd"
 
 	//"github.com/ethereum/go-ethereum/rpc"
 	"strconv"
@@ -49,7 +52,7 @@ func (s *ChainService) UpdateChainsStatus(ctx context.Context, req *rpc.ReportCh
 	jsonStr, _ := json.Marshal(jsonData)
 
 	// POST request
-	r, err := http.NewRequestWithContext(ctx, http.MethodPost, nodeURL, bytes.NewReader(jsonStr))
+	r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
 	if err != nil {
 		return &rpc.ReportChainsStatusReply{}, err
 	}
@@ -142,8 +145,8 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 
 }
 
-// ClaimComputation claim server/chips to the chain, binding miner address, obtain container cloud connection
-func (s *ChainService) ClaimComputation(ctx context.Context, req *rpc.ClaimComputationRequest) (*rpc.ClaimComputationReply, error) {
+// ClaimChipComputation claim server/chips to the chain, binding miner address, obtain container cloud connection
+func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimChipComputationRequest) (*rpc.ClaimChipComputationReply, error) {
 
 	//bmchips := make([]MinerChip, 0)
 	//for _, item := range req.ChipSets {
@@ -167,10 +170,10 @@ func (s *ChainService) ClaimComputation(ctx context.Context, req *rpc.ClaimCompu
 	// packed as transaction, upload to the chain
 	txhash, err := sendTransactionAsync(ctx, req.Signature)
 	if err != nil {
-		return &rpc.ClaimComputationReply{}, err
+		return &rpc.ClaimChipComputationReply{}, err
 	}
 
-	return &rpc.ClaimComputationReply{
+	return &rpc.ClaimChipComputationReply{
 		TxHash: txhash,
 	}, nil
 
@@ -179,53 +182,72 @@ func (s *ChainService) ClaimComputation(ctx context.Context, req *rpc.ClaimCompu
 // ChallengeComputation accept challenge by the blockchain to sign chips
 func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.ChallengeComputationRequest) (*rpc.ChallengeComputationReply, error) {
 
-	signatures := make([]*rpc.SignatureSets, 0)
-
 	// read data from chains db ...
+	signatures := make([]*rpc.SignatureSets, 0)
 	requiredChips := make([]MinerChip, 0)
-	containerID := ""
 	if len(requiredChips) == 0 {
 		return &rpc.ChallengeComputationReply{
-			ContainerID:   containerID,
 			SignatureSets: signatures,
 			Status:        false,
 		}, errors.New("no chip is selected")
 	}
+	// call rpc of every worker and sign the chips
+	for _, each := range req.Url {
 
-	// obtain the devId of the chip
-	cardLists := chipApi.RemoteGetChipInfo(req.Url)
-	for _, item := range requiredChips {
-		devId := -1
-		for _, card := range cardLists {
-			if card.SerialNum == item.SN {
-				for _, chip := range card.Chips {
-					if chip.BusId == item.BusID {
-						id, _ := strconv.ParseInt(chip.DevId, 10, 64)
-						devId = int(id)
+		conn, err := grpc.DialContext(ctx, each+":7001", grpc.WithInsecure())
+		if err != nil {
+			fmt.Println("Error connecting to RPC server:", err)
+			continue
+		}
+		request := &chipRPC.ChipsRequest{
+			Url:       "http://119.120.92.239" + ":30345",
+			SerialNum: "",
+			BusId:     "",
+		}
+		client := chipRPC.NewChipServiceClient(conn)
+		var response *chipRPC.ListChipsReply
+		response, err = client.ListAllChips(ctx, request, grpc.WaitForReady(true))
+		if err != nil {
+			fmt.Println("Error query chip information:", err)
+			continue
+		}
+
+		cardLists := response.Cards
+		conn.Close()
+		for _, item := range requiredChips {
+			devId := -1
+			for _, card := range cardLists {
+				if card.SerialNum == item.SN {
+					for _, chip := range card.Chips {
+						if chip.BusId == item.BusID {
+							id, _ := strconv.ParseInt(chip.DevId, 10, 64)
+							devId = int(id)
+						}
 					}
 				}
+
+			}
+			if devId == -1 {
+				return &rpc.ChallengeComputationReply{
+					SignatureSets: signatures,
+					Status:        false,
+				}, errors.New("no chip is selected")
 			}
 
+			sign := chipApi.SignMinerChips(devId, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
+			signatures = append(signatures, &rpc.SignatureSets{
+				SerialNumber: item.SN,
+				BusID:        item.BusID,
+				Signature:    sign.Signature,
+			})
 		}
-		if devId == -1 {
-			return &rpc.ChallengeComputationReply{
-				ContainerID:   containerID,
-				SignatureSets: signatures,
-				Status:        false,
-			}, errors.New("no chip is selected")
-		}
-
-		sign := chipApi.SignMinerChips(devId, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
-		signatures = append(signatures, &rpc.SignatureSets{
-			SerialNumber: item.SN,
-			BusID:        item.BusID,
-			Signature:    sign.Signature,
-		})
 	}
 
+	// broadcast to nodes
+
 	return &rpc.ChallengeComputationReply{
-		ContainerID:   containerID,
 		SignatureSets: signatures,
 		Status:        true,
 	}, nil
+
 }
