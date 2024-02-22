@@ -26,7 +26,13 @@ type ReportNodesStatusReply struct {
 	MyComputation string `json:"myComputation"`
 	MyRewards     string `json:"myRewards"`
 	MyBlocks      string `json:"myBlocks"`
-	MyWorkerNum   string `json:"myWorkerNum"`
+	//MyWorkerNum   string `json:"myWorkerNum"`
+}
+
+type ViewAccountReply struct {
+	Total   string `json:"total"`
+	Rewards string `json:"rewards"`
+	Slashed string `json:"slashed"`
 }
 
 type GetRentalOrderListReply struct {

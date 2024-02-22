@@ -86,6 +86,7 @@ func (s *MinerUIServiceHTTP) LoginHandler(w http.ResponseWriter, r *http.Request
 	workers := make([]string, 0)
 	workers = append(workers, "192.168.10.49")
 	workers = append(workers, "192.168.10.50")
+	workers = append(workers, "192.168.10.51")
 	token := response.Payload.Token
 	finalResponse := HTTP.MapWorkersAddressReply{
 		MinerAddr:  req.MinerAddr,
@@ -100,8 +101,8 @@ func (s *MinerUIServiceHTTP) LoginHandler(w http.ResponseWriter, r *http.Request
 
 }
 
-// GetMinderInfoHandler get minerInfo(userId) from token
-func (s *MinerUIServiceHTTP) GetMinderInfoHandler(w http.ResponseWriter, r *http.Request) {
+// GetMinerInfoHandler get minerInfo(userId) from token
+func (s *MinerUIServiceHTTP) GetMinerInfoHandler(w http.ResponseWriter, r *http.Request) {
 	// method Get
 	if r.Method != http2.MethodGet {
 		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
@@ -244,7 +245,6 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 		MyComputation:     "10",
 		MyRewards:         "0.1",
 		MyBlocks:          "1",
-		MyWorkerNum:       "1",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -420,6 +420,65 @@ func (s *MinerUIServiceHTTP) StartChipCPUHandler(w http.ResponseWriter, r *http.
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+	}
+
+}
+
+// ViewAccountHandler get the latest information about account of miner and balance
+func (s *MinerUIServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *http.Request) {
+
+	// method Get
+	if r.Method != http2.MethodGet {
+		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
+		return
+	}
+	// get params
+	query := r.URL.Query()
+	accountId := query.Get("accountId")
+
+	// get status
+	jsonData := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "czROwmnXE",
+		"method":  "query",
+		"params":  map[string]interface{}{"account_id": accountId, "finality": "final", "request_type": "view_account"},
+	}
+	jsonStr, _ := json.Marshal(jsonData)
+	// POST request
+	clientDeadline := time.Now().Add(time.Duration(delay * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+	r, err := http2.NewRequestWithContext(ctx, http2.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client := &http2.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(r)
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+	gzipBytes := util.GzipApi(resp)
+	res := gjson.Get(string(gzipBytes), "result").String()
+	amount := gjson.Get(res, "amount").String()
+	if amount == "" {
+		amount = "--"
+	}
+
+	response := HTTP.ViewAccountReply{
+		Total:   amount,
+		Rewards: "1",
+		Slashed: "-1",
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)

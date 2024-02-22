@@ -19,8 +19,8 @@ func deployRouters(s *http.Server, service *service.Service) {
 		service.MinerUIServiceH.LoginHandler(w, r)
 	})
 	// get userid by token
-	s.HandleFunc("/chainService/GetMinderInfo", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerUIServiceH.GetMinderInfoHandler(w, r)
+	s.HandleFunc("/chainService/GetMinerInfo", func(w http.ResponseWriter, r *http.Request) {
+		service.MinerUIServiceH.GetMinerInfoHandler(w, r)
 	})
 	// list all workers' bm-chip information
 	s.HandleFunc("/chipService/ListAllChips", func(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +33,10 @@ func deployRouters(s *http.Server, service *service.Service) {
 	// update the latest information of the node
 	s.HandleFunc("/chainService/GetNodesStatus", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerUIServiceH.GetNodesStatusHandler(w, r)
+	})
+	// view account
+	s.HandleFunc("/chainService/ViewAccount", func(w http.ResponseWriter, r *http.Request) {
+		service.MinerUIServiceH.ViewAccountHandler(w, r)
 	})
 	// list all rental orders related to the miner with their details
 	s.HandleFunc("/chainService/GetRentalOrderList", func(w http.ResponseWriter, r *http.Request) {

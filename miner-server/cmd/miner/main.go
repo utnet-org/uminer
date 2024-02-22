@@ -199,7 +199,7 @@ func listenBurst(ctx context.Context, address string) {
 		defer cancel()
 		r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
 		if err != nil {
-			fmt.Println("Error connecting to node RPC: ", err.Error())
+			fmt.Println("Error connecting to query latest blockHash RPC: ", err.Error())
 			continue
 		}
 		r.Header.Add("Content-Type", "application/json; charset=utf-8")
@@ -208,17 +208,20 @@ func listenBurst(ctx context.Context, address string) {
 		client := &http.Client{Timeout: 5 * time.Second}
 		resp, err := client.Do(r)
 		if err != nil {
-			fmt.Println("fail to get node RPC response: ", err.Error())
+			fmt.Println("fail to get query latest blockHash RPC response: ", err.Error())
 			continue
 		}
 		defer resp.Body.Close()
 		gzipBytes := util.GzipApi(resp)
-
 		res := gjson.Get(string(gzipBytes), "result").String()
 		sync := gjson.Get(res, "sync_info").String()
 		latestBlockHash := gjson.Get(sync, "latest_block_hash").String()
+		if cmd.LatestBlockHash == latestBlockHash {
+			continue
+		}
 
 		// get the mining provider
+		cmd.LatestBlockHash = latestBlockHash
 		jsonData = map[string]interface{}{
 			"jsonrpc": "2.0",
 			"id":      "dontcare",
@@ -230,7 +233,7 @@ func listenBurst(ctx context.Context, address string) {
 		jsonStr, _ = json.Marshal(jsonData)
 		r, err = http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
 		if err != nil {
-			fmt.Println("Error connecting to node RPC: ", err.Error())
+			fmt.Println("Error connecting to query miner provider RPC: ", err.Error())
 			continue
 		}
 		r.Header.Add("Content-Type", "application/json; charset=utf-8")
@@ -239,14 +242,15 @@ func listenBurst(ctx context.Context, address string) {
 		cli := &http.Client{Timeout: 5 * time.Second}
 		resp, err = cli.Do(r)
 		if err != nil {
-			fmt.Println("fail to get node RPC response: ", err.Error())
+			fmt.Println("fail to get query miner provider RPC response: ", err.Error())
 			continue
 		}
 		defer resp.Body.Close()
 		gzipBytes = util.GzipApi(resp)
-
 		provider := gjson.Get(string(gzipBytes), "provider_account").String()
+		// check if the provider candidate is yourself
 		if provider != request.ChallengeKey {
+			//fmt.Println("not chosen : ", request.ChallengeKey, resp)
 			continue
 		}
 
