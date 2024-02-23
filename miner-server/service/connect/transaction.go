@@ -1,4 +1,4 @@
-package types
+package connect
 
 import (
 	"bytes"
@@ -47,7 +47,7 @@ type RentalOrder struct {
 	CreateTime    string
 }
 
-func sendTransactionAsync(ctx context.Context, signature string) (string, error) {
+func SendTransactionAsync(ctx context.Context, signature string) (string, error) {
 
 	jsonData := map[string]interface{}{
 		"jsonrpc": "2.0",

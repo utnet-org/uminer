@@ -10,6 +10,7 @@ import (
 	"uminer/miner-server/api/containerApi"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
+	"uminer/miner-server/service/connect"
 )
 
 type Task struct {
@@ -66,7 +67,7 @@ func (s *NoteBookService) CreateNotebook(ctx context.Context, req *containerApi.
 	}
 
 	// http addr request
-	requestUrl := mainURL + "/v1/developmanage/notebook"
+	requestUrl := connect.MainURL + "/v1/developmanage/notebook"
 	jsonData := map[string]interface{}{
 		"algorithmId":      req.AlgorithmId,
 		"algorithmVersion": "V1",
@@ -80,7 +81,7 @@ func (s *NoteBookService) CreateNotebook(ctx context.Context, req *containerApi.
 		"resourceSpecId":   req.ResourceSpecId,
 		"taskNumber":       1,
 	}
-	resp := HTTPRequest("POST", requestUrl, jsonData, "application/json", req.Token)
+	resp := connect.HTTPRequest("POST", requestUrl, jsonData, "application/json", req.Token)
 
 	var response struct {
 		Success bool `json:"success"`
@@ -121,11 +122,11 @@ func (s *NoteBookService) DeleteNotebook(ctx context.Context, req *containerApi.
 	}
 
 	// http addr request
-	requestUrl := mainURL + "/v1/developmanage/notebook/" + req.Id
+	requestUrl := connect.MainURL + "/v1/developmanage/notebook/" + req.Id
 	jsonData := map[string]interface{}{
 		"id": req.Id,
 	}
-	resp := HTTPRequest("DELETE", requestUrl, jsonData, "application/json", req.Token)
+	resp := connect.HTTPRequest("DELETE", requestUrl, jsonData, "application/json", req.Token)
 
 	var response struct {
 		Success bool `json:"success"`
@@ -166,11 +167,11 @@ func (s *NoteBookService) StartNotebook(ctx context.Context, req *containerApi.S
 	}
 
 	// http addr request
-	requestUrl := mainURL + "/v1/developmanage/notebook/" + req.Id + "/start"
+	requestUrl := connect.MainURL + "/v1/developmanage/notebook/" + req.Id + "/start"
 	jsonData := map[string]interface{}{
 		"id": req.Id,
 	}
-	resp := HTTPRequest("POST", requestUrl, jsonData, "application/json", req.Token)
+	resp := connect.HTTPRequest("POST", requestUrl, jsonData, "application/json", req.Token)
 
 	var response struct {
 		Success bool `json:"success"`
@@ -211,11 +212,11 @@ func (s *NoteBookService) StopNotebook(ctx context.Context, req *containerApi.St
 	}
 
 	// http addr request
-	requestUrl := mainURL + "/v1/developmanage/notebook/" + req.Id + "/stop"
+	requestUrl := connect.MainURL + "/v1/developmanage/notebook/" + req.Id + "/stop"
 	jsonData := map[string]interface{}{
 		"id": req.Id,
 	}
-	resp := HTTPRequest("POST", requestUrl, jsonData, "application/json", req.Token)
+	resp := connect.HTTPRequest("POST", requestUrl, jsonData, "application/json", req.Token)
 
 	var response struct {
 		Success bool `json:"success"`
@@ -253,14 +254,14 @@ func (s *NoteBookService) QueryNotebookByCondition(ctx context.Context, req *con
 	list := make([]*containerApi.NotebookList, 0)
 
 	// http addr request
-	requestUrl := mainURL + "/v1/developmanage/notebook/" + req.Id
+	requestUrl := connect.MainURL + "/v1/developmanage/notebook/" + req.Id
 	if req.Id == "" {
-		requestUrl = mainURL + "/v1/developmanage/notebook" + "?pageSize=" + strconv.FormatInt(req.PageSize, 10) + "&pageIndex=" + strconv.FormatInt(req.PageIndex, 10)
+		requestUrl = connect.MainURL + "/v1/developmanage/notebook" + "?pageSize=" + strconv.FormatInt(req.PageSize, 10) + "&pageIndex=" + strconv.FormatInt(req.PageIndex, 10)
 		jsonData := map[string]interface{}{
 			"pageSize":  req.PageSize,
 			"pageIndex": req.PageIndex,
 		}
-		resp := HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
+		resp := connect.HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
 
 		type Payload struct {
 			TotalSize int64      `json:"totalSize"`
@@ -311,7 +312,7 @@ func (s *NoteBookService) QueryNotebookByCondition(ctx context.Context, req *con
 	jsonData := map[string]interface{}{
 		"id": req.Id,
 	}
-	resp := HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
+	resp := connect.HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
 
 	type Payload struct {
 		Notebooks Notebook `json:"notebook"`
@@ -346,13 +347,13 @@ func (s *NoteBookService) QueryNotebookEventRecord(ctx context.Context, req *con
 	list := make([]*containerApi.NotebookEventRecord, 0)
 
 	// http addr request
-	requestUrl := mainURL + "/v1/developmanage/notebook/" + req.NotebookId + "/eventrecord" + "?pageSize=" + strconv.FormatInt(req.PageSize, 10) + "&pageIndex=" + strconv.FormatInt(req.PageIndex, 10)
+	requestUrl := connect.MainURL + "/v1/developmanage/notebook/" + req.NotebookId + "/eventrecord" + "?pageSize=" + strconv.FormatInt(req.PageSize, 10) + "&pageIndex=" + strconv.FormatInt(req.PageIndex, 10)
 	jsonData := map[string]interface{}{
 		"notebookId": req.NotebookId,
 		"pageSize":   req.PageSize,
 		"pageIndex":  req.PageIndex,
 	}
-	resp := HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
+	resp := connect.HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
 
 	type NotebookEventRecord struct {
 		NotebookId string `json:"notebookId"`
@@ -410,7 +411,7 @@ func (s *NoteBookService) ObtainNotebookEvent(ctx context.Context, req *containe
 	list := make([]*containerApi.NotebookEvent, 0)
 
 	// http addr request
-	requestUrl := mainURL + "/v1/developmanage/notebookevent" + "?id=" + req.NotebookJobId + "&pageSize=" + strconv.FormatInt(req.PageSize, 10) + "&pageIndex=" + strconv.FormatInt(req.PageIndex, 10) +
+	requestUrl := connect.MainURL + "/v1/developmanage/notebookevent" + "?id=" + req.NotebookJobId + "&pageSize=" + strconv.FormatInt(req.PageSize, 10) + "&pageIndex=" + strconv.FormatInt(req.PageIndex, 10) +
 		"&taskIndex=" + strconv.FormatInt(req.TaskIndex, 10) + "&replicaIndex=" + strconv.FormatInt(req.ReplicaIndex, 10)
 	jsonData := map[string]interface{}{
 		"id":           req.NotebookJobId,
@@ -419,7 +420,7 @@ func (s *NoteBookService) ObtainNotebookEvent(ctx context.Context, req *containe
 		"taskIndex":    req.TaskIndex,
 		"replicaIndex": req.ReplicaIndex,
 	}
-	resp := HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
+	resp := connect.HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
 
 	type NotebookEvent struct {
 		Message   string `json:"message"`

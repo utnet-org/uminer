@@ -1,4 +1,4 @@
-package types
+package connect
 
 import (
 	"bytes"
@@ -9,10 +9,10 @@ import (
 )
 
 // container cloud
-const mainURL = "https://console.utlab.io/openaiserver"
+const MainURL = "https://console.utlab.io/openaiserver"
 
-// delay
-const delay = 4
+// Delay
+const Delay = 4
 
 func HTTPRequest(method string, url string, data interface{}, contentType string, authToken string) []byte {
 	client := &http.Client{Timeout: 5 * time.Second}

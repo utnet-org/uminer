@@ -9,7 +9,7 @@ const WorkerServerIP = "192.168.10.56"
 const MinerServerIP = "192.168.10.56"
 
 // NodeURL nodeURL
-const NodeURL = "http://43.198.88.81:3030"
+const NodeURL = "http://43.198.88.81:3031"
 
 // LatestBlockHash latest BlockHash
 var LatestBlockHash string

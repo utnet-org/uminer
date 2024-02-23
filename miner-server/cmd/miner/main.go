@@ -97,9 +97,6 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 		return nil, nil, err
 	}
 
-	// listen to the nodes for bursting a block
-	go listenBurst(ctx, bc.Server.Grpc.Addr)
-
 	// new miner grpc
 	grpcServer := server.NewMinerGRPCServer(bc.Server, newService)
 	// connect worker grpc
@@ -130,6 +127,10 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 	//}
 
 	httpServer := server.NewHTTPServer(bc.Server, newService)
+
+	// listen to the nodes for bursting a block
+	go listenBurst(ctx, bc.Server.Grpc.Addr)
+
 	app := newApp(ctx, logger, httpServer, grpcServer)
 
 	return app, nil, nil
@@ -247,10 +248,11 @@ func listenBurst(ctx context.Context, address string) {
 		}
 		defer resp.Body.Close()
 		gzipBytes = util.GzipApi(resp)
-		provider := gjson.Get(string(gzipBytes), "provider_account").String()
+		res = gjson.Get(string(gzipBytes), "result").String()
+		provider := gjson.Get(res, "provider_account").String()
 		// check if the provider candidate is yourself
 		if provider != request.ChallengeKey {
-			//fmt.Println("not chosen : ", request.ChallengeKey, resp)
+			//fmt.Println("chosen : ", provider, ", my account is", request.ChallengeKey)
 			continue
 		}
 

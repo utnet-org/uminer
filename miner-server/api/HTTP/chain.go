@@ -23,9 +23,9 @@ type ReportNodesStatusReply struct {
 	GasFee            string `json:"gasFee"`
 	//LatestBlockHash   string `son:"latestBlockHash"`
 	//LatestBlockTime   string `json:"latestBlockTime"`
-	MyComputation string `json:"myComputation"`
-	MyRewards     string `json:"myRewards"`
-	MyBlocks      string `json:"myBlocks"`
+	//MyComputation string `json:"myComputation"`
+	//MyRewards     string `json:"myRewards"`
+	//MyBlocks      string `json:"myBlocks"`
 	//MyWorkerNum   string `json:"myWorkerNum"`
 }
 
@@ -33,6 +33,7 @@ type ViewAccountReply struct {
 	Total   string `json:"total"`
 	Rewards string `json:"rewards"`
 	Slashed string `json:"slashed"`
+	Power   string `json:"power"`
 }
 
 type GetRentalOrderListReply struct {

@@ -126,6 +126,18 @@ func ED25519KeysGeneration() (string, string) {
 	fmt.Println("公钥(Base58编码):", publicKeyBase58)
 	fmt.Println("公钥(十六进制):", publicKeyHex)
 
+	// 假设要签名的消息是 "Hello, world!"
+	message := []byte("Hello, world!")
+
+	// 将私钥的 Base58 编码解码为字节切片
+	decodedPrivateKey := base58.Decode(privateKeyBase58)
+	// 使用私钥进行签名
+	signature := ed25519.Sign(decodedPrivateKey, message)
+
+	// 验证签名
+	verified := ed25519.Verify(base58.Decode(publicKeyBase58), message, signature)
+	fmt.Println("签名验证结果:", verified)
+
 	return publicKeyBase58, privateKeyBase58
 }
 

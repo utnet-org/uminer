@@ -8,6 +8,7 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
+	"math/big"
 	http2 "net/http"
 	"strconv"
 	"strings"
@@ -15,161 +16,29 @@ import (
 	"uminer/common/log"
 	"uminer/miner-server/api/HTTP"
 	chipRPC "uminer/miner-server/api/chipApi/rpc"
-	"uminer/miner-server/api/containerApi"
 	"uminer/miner-server/cmd"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
+	"uminer/miner-server/service/connect"
 	"uminer/miner-server/util"
 )
 
-type MinerUIServiceHTTP struct {
+type MinerStatusServiceHTTP struct {
 	conf *serverConf.Bootstrap
 	log  *log.Helper
 	data *data.Data
 }
 
-func NewChipServiceHTTP(conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) *MinerUIServiceHTTP {
-	return &MinerUIServiceHTTP{
+func NewMinerStatusServiceHTTP(conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) *MinerStatusServiceHTTP {
+	return &MinerStatusServiceHTTP{
 		conf: conf,
-		log:  log.NewHelper("ChipService", logger),
+		log:  log.NewHelper("MinerStatusService", logger),
 		data: data,
 	}
 }
 
-// LoginHandler get login token and all worker address of a miner
-func (s *MinerUIServiceHTTP) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	// method Get
-	if r.Method != http2.MethodGet {
-		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
-		return
-	}
-	// get params
-	requestUrl := mainURL + "/v1/authmanage/token"
-	query := r.URL.Query()
-	req := &HTTP.MapWorkersAddressRequest{
-		MinerAddr: query.Get("minerAddr"),
-		UserName:  query.Get("username"),
-		Password:  query.Get("password"),
-	}
-	jsonData := map[string]interface{}{
-		"username": req.UserName,
-		"password": req.Password,
-	}
-	resp := HTTPRequest("POST", requestUrl, jsonData, "application/json", "")
-	var response struct {
-		Success bool `json:"success"`
-		Payload struct {
-			Token      string `json:"token"`
-			Expiration int    `json:"expiration"`
-		} `json:"payload"`
-		Error interface{} `json:"error"`
-	}
-	err := json.Unmarshal(resp, &response)
-	if err != nil {
-		http2.Error(w, err.Error(), http2.StatusInternalServerError)
-	}
-
-	switch errObj := response.Error.(type) {
-	case map[string]interface{}:
-		// 转换为 map 类型成功，可以提取目标字段的值
-		message, ok := errObj["message"].(string)
-		if !ok {
-			http2.Error(w, err.Error(), http2.StatusInternalServerError)
-		} else {
-			http2.Error(w, message, http2.StatusInternalServerError)
-		}
-	default:
-
-	}
-
-	// get mapping
-	workers := make([]string, 0)
-	workers = append(workers, "192.168.10.49")
-	workers = append(workers, "192.168.10.50")
-	workers = append(workers, "192.168.10.51")
-	token := response.Payload.Token
-	finalResponse := HTTP.MapWorkersAddressReply{
-		MinerAddr:  req.MinerAddr,
-		AuthToken:  token,
-		WorkerAddr: workers,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(finalResponse); err != nil {
-		http2.Error(w, err.Error(), http2.StatusInternalServerError)
-	}
-
-}
-
-// GetMinerInfoHandler get minerInfo(userId) from token
-func (s *MinerUIServiceHTTP) GetMinerInfoHandler(w http.ResponseWriter, r *http.Request) {
-	// method Get
-	if r.Method != http2.MethodGet {
-		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
-		return
-	}
-	// get params
-	query := r.URL.Query()
-	token := query.Get("token")
-	ownerAddress := query.Get("ownerAddress")
-	requestUrl := mainURL + "/v1/usermanage/user?token=" + token
-	jsonData := map[string]interface{}{
-		"token": token,
-	}
-	// get userid
-	resp := HTTPRequest("GET", requestUrl, jsonData, "application/json", token)
-	type User struct {
-		ID            string   `json:"id"`
-		CreatedAt     int64    `json:"createdAt"`
-		UpdatedAt     int64    `json:"updatedAt"`
-		FullName      string   `json:"fullName"`
-		Email         string   `json:"email"`
-		Phone         string   `json:"phone"`
-		Gender        int      `json:"gender"`
-		Status        int      `json:"status"`
-		FTPUserName   string   `json:"ftpUserName"`
-		ResourcePools []string `json:"resourcePools"`
-	}
-	var response struct {
-		Success bool `json:"success"`
-		Payload struct {
-			User User `json:"user"`
-		} `json:"payload"`
-		Error interface{} `json:"error"`
-	}
-	err := json.Unmarshal(resp, &response)
-	if err != nil {
-		http2.Error(w, err.Error(), http2.StatusInternalServerError)
-	}
-
-	switch errObj := response.Error.(type) {
-	case map[string]interface{}:
-		// 转换为 map 类型成功，可以提取目标字段的值
-		message, ok := errObj["message"].(string)
-		if !ok {
-			http2.Error(w, err.Error(), http2.StatusInternalServerError)
-		} else {
-			http2.Error(w, message, http2.StatusInternalServerError)
-		}
-	default:
-	}
-
-	// get minerId(publicKey) by owner address
-	fmt.Println("owner is: ", ownerAddress)
-
-	finalResponse := HTTP.GetMinerIdReply{
-		MinerId: "C9EeJy2GcFBEFfcrz1Dp4nLVyRWYUyGwthRGDmUjuk4q",
-		UserId:  response.Payload.User.ID,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(finalResponse); err != nil {
-		http2.Error(w, err.Error(), http2.StatusInternalServerError)
-	}
-
-}
-
 // GetNodesStatusHandler get the latest information about node and about miner himself as well
-func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *http.Request) {
+func (s *MinerStatusServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *http.Request) {
 
 	// method Post
 	if r.Method != http2.MethodPost {
@@ -185,7 +54,7 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 	}
 	jsonStr, _ := json.Marshal(jsonData)
 	// POST request
-	clientDeadline := time.Now().Add(time.Duration(delay * time.Second))
+	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
 	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
 	defer cancel()
 	r, err := http2.NewRequestWithContext(ctx, http2.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
@@ -242,9 +111,6 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 		Rewards:           "10",
 		LatestBlockHeight: strconv.FormatInt(latestHeight, 10),
 		GasFee:            gas,
-		MyComputation:     "10",
-		MyRewards:         "0.1",
-		MyBlocks:          "1",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -255,7 +121,7 @@ func (s *MinerUIServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r *htt
 }
 
 // ListAllChipsHTTPHandler show details of all chips
-func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *http.Request) {
+func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *http.Request) {
 	// method GET
 	if r.Method != http2.MethodGet {
 		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
@@ -269,7 +135,7 @@ func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *h
 		BusId:     query.Get("busId"),
 	}
 
-	clientDeadline := time.Now().Add(time.Duration(delay * time.Second))
+	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
 	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
 	defer cancel()
 	workers := &HTTP.ListWorkersReply{Workers: make([]HTTP.ListCards, 0)}
@@ -384,7 +250,7 @@ func (s *MinerUIServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, r *h
 }
 
 // StartChipCPUHandler start chip CPU before asking chips to perform their task
-func (s *MinerUIServiceHTTP) StartChipCPUHandler(w http.ResponseWriter, r *http.Request) {
+func (s *MinerStatusServiceHTTP) StartChipCPUHandler(w http.ResponseWriter, r *http.Request) {
 
 	// method Post
 	if r.Method != http2.MethodPost {
@@ -428,7 +294,7 @@ func (s *MinerUIServiceHTTP) StartChipCPUHandler(w http.ResponseWriter, r *http.
 }
 
 // ViewAccountHandler get the latest information about account of miner and balance
-func (s *MinerUIServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *http.Request) {
+func (s *MinerStatusServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *http.Request) {
 
 	// method Get
 	if r.Method != http2.MethodGet {
@@ -448,7 +314,7 @@ func (s *MinerUIServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *http.R
 	}
 	jsonStr, _ := json.Marshal(jsonData)
 	// POST request
-	clientDeadline := time.Now().Add(time.Duration(delay * time.Second))
+	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
 	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
 	defer cancel()
 	r, err := http2.NewRequestWithContext(ctx, http2.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
@@ -468,8 +334,16 @@ func (s *MinerUIServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *http.R
 	defer resp.Body.Close()
 	gzipBytes := util.GzipApi(resp)
 	res := gjson.Get(string(gzipBytes), "result").String()
-	amount := gjson.Get(res, "amount").String()
-	if amount == "" {
+	power := gjson.Get(res, "power").String()
+	balance := gjson.Get(res, "amount").String()
+
+	num := new(big.Float)
+	num.SetString(balance)
+	divisor := new(big.Int)
+	divisor.SetString("1000000000000000000000000", 10)
+	amount := new(big.Float).Quo(num, new(big.Float).SetInt(divisor)).String()
+
+	if gjson.Get(string(gzipBytes), "error").String() != "" {
 		amount = "--"
 	}
 
@@ -477,92 +351,9 @@ func (s *MinerUIServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *http.R
 		Total:   amount,
 		Rewards: "1",
 		Slashed: "-1",
+		Power:   power,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http2.Error(w, err.Error(), http2.StatusInternalServerError)
-	}
-
-}
-
-// GetRentalOrderListHandler get all rental order list
-func (s *MinerUIServiceHTTP) GetRentalOrderListHandler(w http.ResponseWriter, r *http.Request) {
-
-	// method Get
-	if r.Method != http2.MethodGet {
-		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
-		return
-	}
-	// get params
-	query := r.URL.Query()
-	Addr := query.Get("address")
-
-	// connect to node rpc methods
-
-	// get response
-	rental := make([]HTTP.RentalOrderDetails, 0)
-	rentallist := make([]HTTP.RentalOrderDetails, 3)
-	for i, _ := range rentallist {
-		rental = append(rental, HTTP.RentalOrderDetails{
-			ID:         strconv.FormatInt(int64(i), 10),
-			HASH:       util.RandomString(32),
-			MinerAddr:  Addr,
-			RentalAddr: util.RandomString(11),
-			Resource:   "1684x",
-			Power:      "10",
-			StartTime:  time.Now().Format("2006-01-02 15:04"),
-			EndTime:    time.Now().Add(180 * 24 * time.Hour).Format("2006-01-02 15:04"),
-		})
-	}
-	response := HTTP.GetRentalOrderListReply{
-		RentalOrders: rental,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http2.Error(w, err.Error(), http2.StatusInternalServerError)
-	}
-
-}
-
-// GetNotebookListHandler get all notebook list
-func (s *MinerUIServiceHTTP) GetNotebookListHandler(w http.ResponseWriter, r *http.Request) {
-
-	// method Get
-	if r.Method != http2.MethodGet {
-		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
-		return
-	}
-	// get params
-	query := r.URL.Query()
-	token := query.Get("token")
-	notebookId := query.Get("notebookId")
-
-	// connect to worker
-	clientDeadline := time.Now().Add(time.Duration(delay * time.Second))
-	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	defer cancel()
-	conn, err := grpc.DialContext(ctx, cmd.MinerServerIP+":9001", grpc.WithInsecure())
-	if err != nil {
-		http2.Error(w, err.Error(), http2.StatusInternalServerError)
-		return
-	}
-	// Prepare the request
-	request := &containerApi.QueryNotebookByConditionRequest{
-		Token:     token,
-		Id:        notebookId,
-		PageSize:  10,
-		PageIndex: 1,
-	}
-	client := containerApi.NewNotebookServiceClient(conn)
-	// Call the RPC method
-	var response *containerApi.QueryNotebookByConditionReply
-	response, err = client.QueryNotebookByCondition(ctx, request, grpc.WaitForReady(true))
-	if err != nil {
-		http2.Error(w, err.Error(), http2.StatusInternalServerError)
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)

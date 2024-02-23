@@ -16,35 +16,35 @@ import (
 func deployRouters(s *http.Server, service *service.Service) {
 	// miner login to get token by username and password
 	s.HandleFunc("/chainService/Login", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerUIServiceH.LoginHandler(w, r)
+		service.MinerLoginServiceH.LoginHandler(w, r)
 	})
 	// get userid by token
 	s.HandleFunc("/chainService/GetMinerInfo", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerUIServiceH.GetMinerInfoHandler(w, r)
+		service.MinerLoginServiceH.GetMinerInfoHandler(w, r)
 	})
 	// list all workers' bm-chip information
 	s.HandleFunc("/chipService/ListAllChips", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerUIServiceH.ListAllChipsHTTPHandler(w, r)
+		service.MinerStatusServiceH.ListAllChipsHTTPHandler(w, r)
 	})
 	// activate the chip manually before using it as cryptological tool
 	s.HandleFunc("/chipService/StartChipCPU", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerUIServiceH.StartChipCPUHandler(w, r)
+		service.MinerStatusServiceH.StartChipCPUHandler(w, r)
 	})
 	// update the latest information of the node
 	s.HandleFunc("/chainService/GetNodesStatus", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerUIServiceH.GetNodesStatusHandler(w, r)
+		service.MinerStatusServiceH.GetNodesStatusHandler(w, r)
 	})
 	// view account
 	s.HandleFunc("/chainService/ViewAccount", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerUIServiceH.ViewAccountHandler(w, r)
+		service.MinerStatusServiceH.ViewAccountHandler(w, r)
 	})
 	// list all rental orders related to the miner with their details
 	s.HandleFunc("/chainService/GetRentalOrderList", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerUIServiceH.GetRentalOrderListHandler(w, r)
+		service.MinerContainerServiceH.GetRentalOrderListHandler(w, r)
 	})
 	// list all notebooks related to the miner with their details
 	s.HandleFunc("/notebookService/GetNotebookList", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerUIServiceH.GetNotebookListHandler(w, r)
+		service.MinerContainerServiceH.GetNotebookListHandler(w, r)
 	})
 
 }

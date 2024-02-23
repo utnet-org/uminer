@@ -13,7 +13,9 @@ import (
 
 type Service struct {
 	// http miner service for miner UI software call
-	MinerUIServiceH types.MinerUIServiceHTTP
+	MinerLoginServiceH     types.MinerLoginServiceHTTP
+	MinerStatusServiceH    types.MinerStatusServiceHTTP
+	MinerContainerServiceH types.ContainerServiceHTTP
 	// grpc Chip service for calling chip using bm-sophon driver: start/burn/generate key pairs/sign message
 	ChipServiceG chipApi.ChipServiceServer
 	// grpc chain service for communicating with blockchain nodes, asking for status, get informed of burst block or get transaction to pack on blocks
@@ -32,7 +34,9 @@ func NewMinerService(ctx context.Context, conf *serverConf.Bootstrap, logger log
 		return nil, err
 	}
 
-	service.MinerUIServiceH = *types.NewChipServiceHTTP(conf, logger, data)
+	service.MinerLoginServiceH = *types.NewMinerLoginServiceHTTP(conf, logger, data)
+	service.MinerStatusServiceH = *types.NewMinerStatusServiceHTTP(conf, logger, data)
+	service.MinerContainerServiceH = *types.NewMinerContainerServiceHTTP(conf, logger, data)
 	service.ChainService = types.NewChainService(conf, logger, data)
 	service.ImageService = types.NewImageService(conf, logger, data)
 	service.NotebookService = types.NewRentalService(conf, logger, data)

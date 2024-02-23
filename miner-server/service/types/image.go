@@ -9,6 +9,7 @@ import (
 	"uminer/miner-server/api/containerApi"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
+	"uminer/miner-server/service/connect"
 )
 
 type Image struct {
@@ -52,7 +53,7 @@ func (s *ImageService) CreateImage(ctx context.Context, req *containerApi.Create
 	}
 
 	// http addr request
-	requestUrl := mainURL + "/v1/imagemanage/image"
+	requestUrl := connect.MainURL + "/v1/imagemanage/image"
 	jsonData := map[string]interface{}{
 		"imageAddr":    req.ImageAddr,
 		"imageDesc":    req.ImageDesc,
@@ -60,7 +61,7 @@ func (s *ImageService) CreateImage(ctx context.Context, req *containerApi.Create
 		"imageVersion": req.ImageVersion,
 		"sourceType":   req.SourceType,
 	}
-	resp := HTTPRequest("POST", requestUrl, jsonData, "application/json", req.Token)
+	resp := connect.HTTPRequest("POST", requestUrl, jsonData, "application/json", req.Token)
 
 	var response struct {
 		Success bool `json:"success"`
@@ -103,9 +104,9 @@ func (s *ImageService) DeleteImage(ctx context.Context, req *containerApi.Delete
 	}
 
 	// http addr request
-	requestUrl := mainURL + "/v1/imagemanage/image/" + req.ImageId
+	requestUrl := connect.MainURL + "/v1/imagemanage/image/" + req.ImageId
 	jsonData := map[string]interface{}{}
-	resp := HTTPRequest("DELETE", requestUrl, jsonData, "application/json", req.Token)
+	resp := connect.HTTPRequest("DELETE", requestUrl, jsonData, "application/json", req.Token)
 
 	var response struct {
 		Success bool `json:"success"`
@@ -141,14 +142,14 @@ func (s *ImageService) DeleteImage(ctx context.Context, req *containerApi.Delete
 func (s *ImageService) QueryImageByCondition(ctx context.Context, req *containerApi.QueryImageByConditionRequest) (*containerApi.QueryImageByConditionReply, error) {
 	list := make([]*containerApi.ImageList, 0)
 	// http addr request
-	requestUrl := mainURL + "/v1/imagemanage/image/" + req.Id
+	requestUrl := connect.MainURL + "/v1/imagemanage/image/" + req.Id
 	if req.Id == "" {
-		requestUrl = mainURL + "/v1/imagemanage/userimage" + "?pageSize=" + strconv.FormatInt(req.PageSize, 10) + "&pageIndex=" + strconv.FormatInt(req.PageIndex, 10)
+		requestUrl = connect.MainURL + "/v1/imagemanage/userimage" + "?pageSize=" + strconv.FormatInt(req.PageSize, 10) + "&pageIndex=" + strconv.FormatInt(req.PageIndex, 10)
 		jsonData := map[string]interface{}{
 			"pageSize":  req.PageSize,
 			"pageIndex": req.PageIndex,
 		}
-		resp := HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
+		resp := connect.HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
 
 		type imageStru struct {
 			Image    Image `json:"image"`
@@ -209,7 +210,7 @@ func (s *ImageService) QueryImageByCondition(ctx context.Context, req *container
 	jsonData := map[string]interface{}{
 		"id": req.Id,
 	}
-	resp := HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
+	resp := connect.HTTPRequest("GET", requestUrl, jsonData, "application/json", req.Token)
 
 	type Payload struct {
 		Image Image `json:"image"`

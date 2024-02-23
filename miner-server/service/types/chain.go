@@ -13,6 +13,7 @@ import (
 	"os"
 	chipRPC "uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/cmd"
+	"uminer/miner-server/service/connect"
 
 	//"github.com/ethereum/go-ethereum/rpc"
 	"strconv"
@@ -168,7 +169,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	_ = util.MinerSignTx(privKey, txStr)
 
 	// packed as transaction, upload to the chain
-	txhash, err := sendTransactionAsync(ctx, req.Signature)
+	txhash, err := connect.SendTransactionAsync(ctx, req.Signature)
 	if err != nil {
 		return &rpc.ClaimChipComputationReply{}, err
 	}
@@ -184,7 +185,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 
 	// read data from chains db ...
 	signatures := make([]*rpc.SignatureSets, 0)
-	requiredChips := make([]MinerChip, 0)
+	requiredChips := make([]connect.MinerChip, 0)
 	if len(requiredChips) == 0 {
 		return &rpc.ChallengeComputationReply{
 			SignatureSets: signatures,
