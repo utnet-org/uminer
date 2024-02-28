@@ -138,7 +138,7 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 			return nil, err
 		}
 	}
-
+	/* obtain pubKey and fill it into the ' "challenge_key": "ed25519..." ' of miner_key.json */
 	return &rpc.GetMinerKeysReply{
 		PrivateKey: privKey,
 		PubKey:     pubKey,
@@ -157,9 +157,39 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	//	})
 	//}
 
+	// check if miner account exist
+	jsonData := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "czROwmnXE",
+		"method":  "query",
+		"params":  map[string]interface{}{"account_id": req.AccountId, "finality": "final", "request_type": "view_account"},
+	}
+	jsonStr, _ := json.Marshal(jsonData)
+	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+	r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		return nil, err
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	gzipBytes := util.GzipApi(resp)
+	// no such account
+	if gjson.Get(string(gzipBytes), "error").String() != "" {
+		return &rpc.ClaimChipComputationReply{}, errors.New("miner account is not registered yet")
+	}
+
 	// miner signature
 	timeNow := strconv.FormatInt(time.Now().Unix(), 10)
-	joinData := req.ChipPubK + req.MinerKey + timeNow
+	joinData := req.AccountId + req.ChipPubK + timeNow
 	txStr := fmt.Sprintf("%+v", joinData)
 	privKeyBytes, err := ioutil.ReadFile("private.pem")
 	if err != nil {
@@ -189,7 +219,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 	if len(requiredChips) == 0 {
 		return &rpc.ChallengeComputationReply{
 			SignatureSets: signatures,
-			Status:        false,
+			TxHash:        "",
 		}, errors.New("no chip is selected")
 	}
 	// call rpc of every worker and sign the chips
@@ -231,7 +261,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			if devId == -1 {
 				return &rpc.ChallengeComputationReply{
 					SignatureSets: signatures,
-					Status:        false,
+					TxHash:        "",
 				}, errors.New("no chip is selected")
 			}
 
@@ -245,10 +275,21 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 	}
 
 	// broadcast to nodes
+	privKeyBytes, err := ioutil.ReadFile("private.pem")
+	if err != nil {
+		return nil, err
+	}
+	privKey := string(privKeyBytes)
+	txStr := fmt.Sprintf("%+v", signatures)
+	sign := util.MinerSignTx(privKey, txStr)
+	txhash, err := connect.SendTransactionAsync(ctx, sign)
+	if err != nil {
+		return nil, err
+	}
 
 	return &rpc.ChallengeComputationReply{
 		SignatureSets: signatures,
-		Status:        true,
+		TxHash:        txhash,
 	}, nil
 
 }

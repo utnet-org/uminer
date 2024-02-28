@@ -57,7 +57,7 @@ message ClaimChipComputationRequest {
 //  string serverIP = 2;
 //  repeated chipSets chipSets = 3;
 //  int64 power = 4;
-  string minerKey = 1;
+  string accountId = 1;
   string chipPubK = 2;
   string chipP2K = 3;
   string signature = 4;
@@ -84,5 +84,5 @@ message signatureSets {
 message ChallengeComputationReply {
 //  string   containerID = 1;
   repeated signatureSets signatureSets = 1;
-  bool     status = 2;
+  string   txHash = 2;
 }

@@ -2,8 +2,14 @@ package types
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/hex"
+	"encoding/pem"
 	"errors"
+	"fmt"
+	"github.com/btcsuite/btcutil/base58"
 	"strconv"
+	"strings"
 	"uminer/common/log"
 	"uminer/miner-server/api/chipApi"
 	"uminer/miner-server/api/chipApi/rpc"
@@ -155,13 +161,23 @@ func (s *ChipService) ObtainChipKeyPairs(ctx context.Context, req *rpc.ChipsRequ
 		}, errors.New("unable to read key pairs")
 	}
 
-	// packed as transaction, upload to the chain
+	// encode it with base58 encoding
+	block, _ := pem.Decode([]byte(keyPairs.PubKey))
+	pubKeyBase58 := base58.Encode(block.Bytes)
+	paddingLength := 402 - len(pubKeyBase58)
+	paddedPubKeyBase58 := pubKeyBase58 + strings.Repeat("u", paddingLength)
+
+	P2Bytes, _ := hex.DecodeString(keyPairs.P2)
+	p2KeyBase58 := base58.Encode(P2Bytes)
+
+	/* obtain paddedPubKeyBase58 and fill it into the ' "public_key":rsa2048:..." ' of miner_key.json */
 
 	return &rpc.ReadChipReply{
 		SerialNumber: req.SerialNum,
 		BusId:        req.BusId,
-		P2:           keyPairs.P2,
-		PublicKey:    keyPairs.PubKey,
+		DevId:        req.DevId,
+		P2:           p2KeyBase58,
+		PublicKey:    paddedPubKeyBase58,
 	}, nil
 }
 
@@ -190,13 +206,38 @@ func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (
 
 	}
 	if devId == -1 {
+		//return &rpc.SignChipsReply{
+		//	Signature: "",
+		//	Status:    false,
+		//}, errors.New("no chip is selected")
+	}
+
+	// recover the p2 and pubKey by base58 decode
+	originalPubKeyBase58 := strings.TrimSuffix(req.PublicKey, strings.Repeat("u", 33))
+	pubKeyBytes := base58.Decode(originalPubKeyBase58)
+	// use x509.ParsePKCS1PublicKey parse the bytes
+	pubKey, err := x509.ParsePKCS1PublicKey(pubKeyBytes)
+	if err != nil {
 		return &rpc.SignChipsReply{
 			Signature: "",
 			Status:    false,
-		}, errors.New("no chip is selected")
+		}, err
 	}
+	serializedPubKey := x509.MarshalPKCS1PublicKey(pubKey)
+	pemBlock := &pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: serializedPubKey,
+	}
+	PubKeyBytes := pem.EncodeToMemory(pemBlock)
+	fmt.Println("recovered pubKey is")
+	fmt.Println(string(PubKeyBytes))
+	// use hex.EncodeToString encode the bytes
+	P2Bytes := base58.Decode(req.P2)
+	P2Key := hex.EncodeToString(P2Bytes)
+	fmt.Println("recovered p2Key is")
+	fmt.Println(P2Key)
 
-	sign := chipApi.SignMinerChips(devId, req.P2, req.PublicKey, int(req.P2Size), int(req.PublicKeySize), req.Msg)
+	sign := chipApi.SignMinerChips(devId, P2Key, string(PubKeyBytes), int(req.P2Size), int(req.PublicKeySize), req.Msg)
 	if sign.Signature == "" {
 		return &rpc.SignChipsReply{
 			Signature: sign.Signature,

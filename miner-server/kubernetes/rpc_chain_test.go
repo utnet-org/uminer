@@ -51,3 +51,30 @@ func TestGenerateMinerKeys(t *testing.T) {
 	fmt.Println("gRPC Response: ", response)
 
 }
+
+func TestClaimChipComputation(t *testing.T) {
+	// Connect to the RPC server
+	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
+	defer conn.Close()
+
+	// Prepare the request
+	request := &chainApi.ClaimChipComputationRequest{
+		AccountId: "test",
+		ChipPubK:  "",
+		ChipP2K:   "",
+		Signature: "",
+	}
+	client := chainApi.NewChainServiceClient(conn)
+
+	// Call the RPC method
+	var response *chainApi.ClaimChipComputationReply
+	response, err := client.ClaimChipComputation(context.Background(), request, grpc.WaitForReady(true))
+	if err != nil {
+		fmt.Println("调用 gRPC 方法失败:", err)
+		return
+	}
+
+	// 处理响应
+	fmt.Println("gRPC Response: ", response)
+
+}

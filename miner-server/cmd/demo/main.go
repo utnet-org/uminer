@@ -26,6 +26,15 @@ func chipGenKeyPairs(devId int) {
 
 func readKeyPairs(devId int) {
 	chipApi2.ReadChipKeyPairs("HQDZKC5BAAABJ0309", "000:d9:00.1", devId)
+	//origin1 :="rsa2048:2TuPVgMCHJy5atawrsADEzjP7MCVbyyCA89UW6Wvjp9HrAsucWfaXtPxccqhBQiZnfwj14ba78VAuQ7FPhLEyTCXLYjNgaU1s8fNtbe2oeX3hkNewSCQcKaHdGC5TC68Tx4fj59ffcaLxMgEgDVnuNrdxGq8HeaK5vCbkvUoWBjuKL2ES1ngAQnvHC2rcur7F3NsfHbgjKgegXwfFsLuK7omooDEEkNYEeYgGQ8EHsnjRFEYdmU1rD5u5nQFbX55jKnbNm3miAVbaFeEsCj6AKjrPkooh74Hxx6efxwutsv6Jk2EAqmohtSqgEzV7pq2g7tQ7XqPWbniFFbXf52bP1TYPrSkweXJoUSKHsif31KsxVgasnH3djNXHWm6LcLPygojeKHqjgNmJbwsKv"
+	//origin := "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEA6fn2R5LBtnJ+P7mINn6rv+xUzsZ4ojfft7ISMyYFTNqgfgk7E8H+\nlWrm5xDqY0axE9zWyBSeCunWmX/KLMlvleDWyTvRk4ZJn8tY5bTxBLmRXI6DC8pr\nmjVegpojico4PYz8fCKwpzM8kUpl3qPkreRk+qwu8mV/l4FdfK+DKGXrqkhAsAma\nIz3lSpcybJrNzIeRvGX7Y7Z20hY8Bm8QIIlr+vLwlhKwCghbYcjhrPU77de5bvAU\nQYxLoE+MN2Ux65d46+VAVKpmKLCEvdJ5ezCksTkPFaOYtVdOpaAjwLv6eEdGV9IQ\nUedEqPGLRBclMElR3r9WI6GNIsPAa/w/uQIDAQAB\n-----END RSA PUBLIC KEY-----"
+	//block, _ := pem.Decode([]byte(origin))
+	//pubKeyBase58 := base58.Encode(block.Bytes)
+	//paddingLength := 402 - len(pubKeyBase58)
+	//
+	//paddedPubKeyBase58 := pubKeyBase58 + strings.Repeat("u", paddingLength)
+	//fmt.Printf("PubKey based on 58encoding: %s, %d\n", paddedPubKeyBase58, len(paddedPubKeyBase58))
+
 }
 
 func signDemo(devId int) {

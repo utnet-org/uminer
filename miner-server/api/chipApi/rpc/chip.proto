@@ -68,8 +68,9 @@ message ListChipsReply {
 message ReadChipReply {
   string SerialNumber  = 1;
   string BusId = 2;
-  string p2 = 3;
-  string publicKey = 4;
+  string DevId = 3;
+  string p2 = 4;
+  string publicKey = 5;
 }
 
 //sign
