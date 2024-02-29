@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/tidwall/gjson"
 	"net/http"
 	"time"
@@ -73,6 +74,10 @@ func SendTransactionAsync(ctx context.Context, signature string) (string, error)
 	}
 	defer resp.Body.Close()
 	gzipBytes := util.GzipApi(resp)
+
+	if gjson.Get(string(gzipBytes), "error").String() != "" {
+		return "", errors.New(gjson.Get(string(gzipBytes), "error").String())
+	}
 
 	res := gjson.Get(string(gzipBytes), "result").String()
 	return res, nil

@@ -334,7 +334,7 @@ func (s *MinerStatusServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *ht
 	defer resp.Body.Close()
 	gzipBytes := util.GzipApi(resp)
 	res := gjson.Get(string(gzipBytes), "result").String()
-	power := gjson.Get(res, "power").String()
+	power := gjson.Get(res, "power").Int() / (1e12)
 	balance := gjson.Get(res, "amount").String()
 
 	num := new(big.Float)
@@ -351,7 +351,7 @@ func (s *MinerStatusServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *ht
 		Total:   amount,
 		Rewards: "1",
 		Slashed: "-1",
-		Power:   power,
+		Power:   strconv.FormatInt(power, 10),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
