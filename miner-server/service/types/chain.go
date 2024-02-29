@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
+	"regexp"
 	chipRPC "uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/cmd"
 	"uminer/miner-server/service/connect"
@@ -146,6 +148,66 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 
 }
 
+// ClaimStake claim amount of token deposit to the chain as stake
+func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeRequest) (*rpc.ClaimStakeReply, error) {
+
+	// check if access key exist
+	pubKeyBytes, err := ioutil.ReadFile("public.pem")
+	if err != nil {
+		return nil, err
+	}
+	pubKey := "ed25519:" + string(pubKeyBytes)
+	jsonData := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "dontcare",
+		"method":  "query",
+		"params":  map[string]interface{}{"request_type": "view_access_key", "finality": "final", "account_id": req.AccountId, "public_key": pubKey},
+	}
+	jsonStr, _ := json.Marshal(jsonData)
+	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+	r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		return nil, err
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	gzipBytes := util.GzipApi(resp)
+	// no such account
+	if gjson.Get(string(gzipBytes), "error").String() != "" {
+		errs := gjson.Get(string(gzipBytes), "error").String()
+		datas := gjson.Get(errs, "data").String()
+		return &rpc.ClaimStakeReply{}, errors.New(datas)
+	}
+	res := gjson.Get(string(gzipBytes), "result").String()
+	permission := gjson.Get(res, "permission").String()
+	if permission != "FullAccess" {
+		return &rpc.ClaimStakeReply{}, errors.New("miner account is not accessible")
+	}
+
+	// command on near nodes at near-cli-js
+	order := exec.Command(req.NearPath, "stake", req.AccountId, pubKey, req.Amount, "--keyPath", req.KeyPath)
+	output, err := order.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error executing command:", err)
+		return nil, err
+	}
+	fmt.Println("output:", output)
+
+	return &rpc.ClaimStakeReply{
+		TransId: "",
+		Status:  "1",
+	}, nil
+}
+
 // ClaimChipComputation claim server/chips to the chain, binding miner address, obtain container cloud connection
 func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimChipComputationRequest) (*rpc.ClaimChipComputationReply, error) {
 
@@ -187,19 +249,38 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 		return &rpc.ClaimChipComputationReply{}, errors.New("miner account is not registered yet")
 	}
 
-	// miner signature
-	timeNow := strconv.FormatInt(time.Now().Unix(), 10)
-	joinData := req.AccountId + req.ChipPubK + timeNow
-	txStr := fmt.Sprintf("%+v", joinData)
+	/* miner signature */
+	pubKeyBytes, err := ioutil.ReadFile("public.pem")
+	if err != nil {
+		return nil, err
+	}
+	pubKey := "ed25519:" + string(pubKeyBytes)
 	privKeyBytes, err := ioutil.ReadFile("private.pem")
 	if err != nil {
 		return nil, err
 	}
-	privKey := string(privKeyBytes)
+	privKey := "ed25519:" + string(privKeyBytes)
+	// command on near nodes at near-cli-js
+	order := exec.Command(req.NearPath, "extensions", "create-challenge-rsa", req.AccountId, "use-file", req.KeyPath, "without-init-call", "network-config", "my-private-chain-id", "sign-with-plaintext-private-key", "--signer-public-key", pubKey, "--signer-private-key", privKey, "display")
+	output, err := order.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error executing command:", err)
+		return nil, err
+	}
+	// get signature
+	re := regexp.MustCompile(`Signed transaction \(serialized as base64\):\s*(.+)`)
+	matches := re.FindStringSubmatch(string(output))
+	// 提取signature字段的值
+	signature := matches[1]
+	fmt.Println("signature:", signature)
+
+	timeNow := strconv.FormatInt(time.Now().Unix(), 10)
+	joinData := req.AccountId + req.ChipPubK + timeNow
+	txStr := fmt.Sprintf("%+v", joinData)
 	_ = util.MinerSignTx(privKey, txStr)
 
 	// packed as transaction, upload to the chain
-	txhash, err := connect.SendTransactionAsync(ctx, req.Signature)
+	txhash, err := connect.SendTransactionAsync(ctx, "")
 	if err != nil {
 		return &rpc.ClaimChipComputationReply{}, err
 	}

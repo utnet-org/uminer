@@ -9,6 +9,7 @@ service ChainService {
   rpc UpdateChainsStatus (ReportChainsStatusRequest) returns (ReportChainsStatusReply);
   rpc UpdateMinerStatus (ReportMinerStatusRequest) returns (ReportMinerStatusReply);
   rpc GetMinerKeys (GetMinerKeysRequest) returns (GetMinerKeysReply);
+  rpc ClaimStake (ClaimStakeRequest) returns (ClaimStakeReply);
   rpc ClaimChipComputation (ClaimChipComputationRequest) returns (ClaimChipComputationReply);
   rpc ChallengeComputation (ChallengeComputationRequest) returns (ChallengeComputationReply);
 
@@ -47,6 +48,18 @@ message ReportMinerStatusReply{
   string NumberOfWorkers = 5;
 }
 
+// miner claim stake
+message ClaimStakeRequest {
+  string accountId = 1;
+  string amount = 2;
+  string nearPath = 3;
+  string keyPath = 4;
+}
+message ClaimStakeReply {
+  string transId = 1;
+  string status = 2;
+}
+
 // miner claim computation
 message chipSets {
   string serialNumber = 1;
@@ -60,7 +73,8 @@ message ClaimChipComputationRequest {
   string accountId = 1;
   string chipPubK = 2;
   string chipP2K = 3;
-  string signature = 4;
+  string nearPath = 4;
+  string keyPath = 5;
 }
 message ClaimChipComputationReply {
   string txHash = 1;
