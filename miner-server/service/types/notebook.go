@@ -50,7 +50,7 @@ type NoteBookService struct {
 	data *data.Data
 }
 
-func NewRentalService(conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) containerApi.NotebookServiceServer {
+func NewNotebookService(conf *serverConf.Bootstrap, logger log.Logger, data *data.Data) containerApi.NotebookServiceServer {
 	return &NoteBookService{
 		conf: conf,
 		log:  log.NewHelper("NotebookService", logger),

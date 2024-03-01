@@ -39,7 +39,7 @@ func NewMinerService(ctx context.Context, conf *serverConf.Bootstrap, logger log
 	service.MinerContainerServiceH = *types.NewMinerContainerServiceHTTP(conf, logger, data)
 	service.ChainService = types.NewChainService(conf, logger, data)
 	service.ImageService = types.NewImageService(conf, logger, data)
-	service.NotebookService = types.NewRentalService(conf, logger, data)
+	service.NotebookService = types.NewNotebookService(conf, logger, data)
 
 	return service, nil
 }

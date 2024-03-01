@@ -2,13 +2,17 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/go-kratos/kratos/v2/transport/http"
 	grpc2 "google.golang.org/grpc"
+	"io/ioutil"
 	"log"
+	http2 "net/http"
 	"uminer/common/middleware/ctxcopy"
 	"uminer/common/middleware/logging"
 	"uminer/common/middleware/validate"
@@ -102,5 +106,91 @@ func MiddlewareCors() middleware.Middleware {
 			}
 			return handler(ctx, req)
 		}
+	}
+}
+
+// HandleJSONRPCRequest json gprc
+func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.Request) {
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusBadRequest)
+		return
+	}
+	// JSON-RPCc request
+	var jsonData map[string]interface{}
+	err = json.Unmarshal(body, &jsonData)
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusBadRequest)
+		return
+	}
+	// get method name
+	method, ok := jsonData["method"].(string)
+	if !ok {
+		http2.Error(w, "Method not found in request", http2.StatusBadRequest)
+		return
+	}
+	// method
+	switch method {
+
+	// to chain nodes
+	case "getMinerKeys":
+		params, ok := jsonData["params"].(map[string]interface{})
+		if !ok {
+			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
+			return
+		}
+		accessKey, ok := params["access_key"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chainApi.GetMinerKeysRequest{AccessKeys: accessKey}
+		response, err := srv.ChainService.GetMinerKeys(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+
+	// container cloud server
+	case "getNotebookList":
+		params, ok := jsonData["params"].(map[string]interface{})
+		if !ok {
+			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
+			return
+		}
+		token, ok := params["token"].(string)
+		if !ok {
+			http2.Error(w, "token not found in params", http2.StatusBadRequest)
+			return
+		}
+		notebookId, ok := params["notebookId"].(string)
+		if !ok {
+			http2.Error(w, "notebookId not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &containerApi.QueryNotebookByConditionRequest{
+			Token:     token,
+			Id:        notebookId,
+			PageSize:  10,
+			PageIndex: 1,
+		}
+		response, err := srv.NotebookService.QueryNotebookByCondition(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+
+	default:
+		http2.Error(w, "Method not supported", http2.StatusMethodNotAllowed)
+		return
 	}
 }

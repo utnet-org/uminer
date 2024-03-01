@@ -14,6 +14,10 @@ import (
 
 // http router for different methods
 func deployRouters(s *http.Server, service *service.Service) {
+	// JSON-RPC
+	s.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		HandleJSONRPCRequest(service, w, r)
+	})
 	// miner login to get token by username and password
 	s.HandleFunc("/chainService/Login", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerLoginServiceH.LoginHandler(w, r)
@@ -43,9 +47,9 @@ func deployRouters(s *http.Server, service *service.Service) {
 		service.MinerContainerServiceH.GetRentalOrderListHandler(w, r)
 	})
 	// list all notebooks related to the miner with their details
-	s.HandleFunc("/notebookService/GetNotebookList", func(w http.ResponseWriter, r *http.Request) {
-		service.MinerContainerServiceH.GetNotebookListHandler(w, r)
-	})
+	//s.HandleFunc("/notebookService/GetNotebookList", func(w http.ResponseWriter, r *http.Request) {
+	//	service.MinerContainerServiceH.GetNotebookListHandler(w, r)
+	//})
 
 }
 

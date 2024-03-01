@@ -11,8 +11,8 @@ const MinerServerIP = "192.168.10.56"
 // NodeURL nodeURL
 const NodeURL = "http://43.198.88.81:3031"
 
-// LatestBlockHash latest BlockHash
-var LatestBlockHash string
+// LatestBlockHeight latest BlockHeight
+var LatestBlockH int64
 
 func ConnectRPCServer(ip string, port string) *grpc.ClientConn {
 	conn, err := grpc.Dial(ip+":"+port, grpc.WithInsecure()) // Replace with the correct server address and port

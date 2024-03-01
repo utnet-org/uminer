@@ -209,26 +209,26 @@ func listenBurst(ctx context.Context, address string) {
 		client := &http.Client{Timeout: 5 * time.Second}
 		resp, err := client.Do(r)
 		if err != nil {
-			fmt.Println("fail to get query latest blockHash RPC response: ", err.Error())
+			fmt.Println("fail to get query latest blockHeight RPC response: ", err.Error())
 			continue
 		}
 		defer resp.Body.Close()
 		gzipBytes := util.GzipApi(resp)
 		res := gjson.Get(string(gzipBytes), "result").String()
 		sync := gjson.Get(res, "sync_info").String()
-		latestBlockHash := gjson.Get(sync, "latest_block_hash").String()
-		if cmd.LatestBlockHash == latestBlockHash {
+		latestBlockH := gjson.Get(sync, "latest_block_height").Int()
+		if cmd.LatestBlockH == latestBlockH {
 			continue
 		}
 
 		// get the mining provider
-		cmd.LatestBlockHash = latestBlockHash
+		cmd.LatestBlockH = latestBlockH
 		jsonData = map[string]interface{}{
 			"jsonrpc": "2.0",
 			"id":      "dontcare",
 			"method":  "provider",
 			"params": map[string]interface{}{
-				"block_hash": latestBlockHash,
+				"block_height": latestBlockH,
 			},
 		}
 		jsonStr, _ = json.Marshal(jsonData)
@@ -250,9 +250,10 @@ func listenBurst(ctx context.Context, address string) {
 		gzipBytes = util.GzipApi(resp)
 		res = gjson.Get(string(gzipBytes), "result").String()
 		provider := gjson.Get(res, "provider_account").String()
+		//fmt.Println(string(gzipBytes))
 		// check if the provider candidate is yourself
 		if provider != request.ChallengeKey {
-			//fmt.Println("chosen : ", provider, ", my account is", request.ChallengeKey)
+			fmt.Println("chosen : ", provider, ", my account is", request.ChallengeKey)
 			continue
 		}
 
