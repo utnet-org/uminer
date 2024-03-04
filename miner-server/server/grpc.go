@@ -146,7 +146,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		}
 		devId, ok := params["dev_id"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "dev id not found in params", http2.StatusBadRequest)
 			return
 		}
 		request := &chipApi.ChipsRequest{
@@ -167,7 +167,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 	case "burnchips":
 		devId, ok := params["dev_id"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "dev id not found in params", http2.StatusBadRequest)
 			return
 		}
 		request := &chipApi.ChipsRequest{
@@ -188,7 +188,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 	case "keysgen":
 		devId, ok := params["dev_id"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "dev id not found in params", http2.StatusBadRequest)
 			return
 		}
 		request := &chipApi.ChipsRequest{
@@ -209,17 +209,17 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 	case "keysread":
 		serial, ok := params["serial"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "serial number not found in params", http2.StatusBadRequest)
 			return
 		}
 		busId, ok := params["bus_id"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "bus id not found in params", http2.StatusBadRequest)
 			return
 		}
 		devId, ok := params["dev_id"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "dev id not found in params", http2.StatusBadRequest)
 			return
 		}
 		request := &chipApi.ChipsRequest{
@@ -267,17 +267,17 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		}
 		amount, ok := params["amount"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "amount not found in params", http2.StatusBadRequest)
 			return
 		}
 		nearPath, ok := params["near_path"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "Near path not found in params", http2.StatusBadRequest)
 			return
 		}
 		keyPath, ok := params["key_path"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "Key path not found in params", http2.StatusBadRequest)
 			return
 		}
 		request := &chainApi.ClaimStakeRequest{
@@ -307,12 +307,12 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		}
 		nearPath, ok := params["near_path"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "Near path  not found in params", http2.StatusBadRequest)
 			return
 		}
 		keyPath, ok := params["key_path"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "Key path not found in params", http2.StatusBadRequest)
 			return
 		}
 		request := &chainApi.ClaimChipComputationRequest{
