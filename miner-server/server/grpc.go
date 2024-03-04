@@ -130,16 +130,116 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		http2.Error(w, "Method not found in request", http2.StatusBadRequest)
 		return
 	}
+	params, ok := jsonData["params"].(map[string]interface{})
+	if !ok {
+		http2.Error(w, "Params not found in request", http2.StatusBadRequest)
+		return
+	}
 	// method
 	switch method {
 
-	// to chain nodes
-	case "getMinerKeys":
-		params, ok := jsonData["params"].(map[string]interface{})
+	// to worker chips operation
+	case "startchips":
 		if !ok {
 			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
 			return
 		}
+		devId, ok := params["dev_id"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chipApi.ChipsRequest{
+			Url:       "",
+			SerialNum: "",
+			BusId:     "",
+			DevId:     devId,
+		}
+		response, err := srv.ChipServiceG.StartChipCPU(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+	case "burnchips":
+		devId, ok := params["dev_id"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chipApi.ChipsRequest{
+			Url:       "",
+			SerialNum: "",
+			BusId:     "",
+			DevId:     devId,
+		}
+		response, err := srv.ChipServiceG.BurnChipEfuse(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+	case "keysgen":
+		devId, ok := params["dev_id"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chipApi.ChipsRequest{
+			Url:       "",
+			SerialNum: "",
+			BusId:     "",
+			DevId:     devId,
+		}
+		response, err := srv.ChipServiceG.GenerateChipKeyPairs(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+	case "keysread":
+		serial, ok := params["serial"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		busId, ok := params["bus_id"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		devId, ok := params["dev_id"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chipApi.ChipsRequest{
+			Url:       "",
+			SerialNum: serial,
+			BusId:     busId,
+			DevId:     devId,
+		}
+		response, err := srv.ChipServiceG.ObtainChipKeyPairs(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+
+	// to chain nodes
+	case "getminerkeys":
 		accessKey, ok := params["access_key"].(string)
 		if !ok {
 			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
@@ -155,10 +255,85 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
+	case "claimstake":
+		if !ok {
+			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
+			return
+		}
+		accountId, ok := params["account_id"].(string)
+		if !ok {
+			http2.Error(w, "Account ID not found in params", http2.StatusBadRequest)
+			return
+		}
+		amount, ok := params["amount"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		nearPath, ok := params["near_path"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		keyPath, ok := params["key_path"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chainApi.ClaimStakeRequest{
+			AccountId: accountId,
+			Amount:    amount,
+			NearPath:  nearPath,
+			KeyPath:   keyPath,
+		}
+		response, err := srv.ChainService.ClaimStake(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+	case "claimcomputation":
+		if !ok {
+			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
+			return
+		}
+		accountId, ok := params["account_id"].(string)
+		if !ok {
+			http2.Error(w, "Account ID not found in params", http2.StatusBadRequest)
+			return
+		}
+		nearPath, ok := params["near_path"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		keyPath, ok := params["key_path"].(string)
+		if !ok {
+			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chainApi.ClaimChipComputationRequest{
+			AccountId: accountId,
+			ChipPubK:  "",
+			ChipP2K:   "",
+			NearPath:  nearPath,
+			KeyPath:   keyPath,
+		}
+		response, err := srv.ChainService.ClaimChipComputation(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
 
 	// container cloud server
 	case "getNotebookList":
-		params, ok := jsonData["params"].(map[string]interface{})
 		if !ok {
 			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
 			return

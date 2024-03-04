@@ -9,7 +9,7 @@ import (
 	"uminer/miner-server/cmd"
 )
 
-func TestUpateChainStatusGRPC(t *testing.T) {
+func TestUpdateChainStatusGRPC(t *testing.T) {
 	// Connect to the RPC server
 	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
 	defer conn.Close()
