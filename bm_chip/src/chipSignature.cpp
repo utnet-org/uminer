@@ -58,6 +58,7 @@ ChipSignature* chipSignature(unsigned long chipId, const char* P2Char, const cha
     unsigned char* p2 = (unsigned char *)malloc(size_p2);
     std:: string str2(P2Char);
     p2 = hexToByteArray(str2);
+    printf("p2 = %s\n", p2);
     unsigned char* pubkey = (unsigned char *)malloc(size_pubkey);
     strcpy(reinterpret_cast<char*>(pubkey), const_cast<char*>(PubKeyChar));
 

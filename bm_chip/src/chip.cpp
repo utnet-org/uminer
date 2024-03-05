@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <string.h>
+#include <iostream>
 #include <iomanip>
 
 #include <openssl/ec.h>
@@ -14,6 +15,7 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/bn.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 
@@ -65,6 +67,79 @@ unsigned char* hexToByteArray(const std::string& hexString) {
     }
 
     return byteArray;
+}
+
+/* base58 encode */
+std::string Base58Encode(const unsigned char* input, size_t length) {
+    // Convert the input binary data to OpenSSL BIGNUM
+    BIGNUM* bn = BN_bin2bn(input, length, nullptr);
+    if (!bn) {
+        std::cout << "Error: Unable to create BIGNUM\n";
+        return "";
+    }
+
+    // Create a BIO for Base58 encoding
+    BIO* b58 = BIO_new(BIO_f_base64());
+    BIO_set_flags(b58, BIO_FLAGS_BASE64_NO_NL);
+
+    // Write BIGNUM to BIO for encoding
+    BIO* mem = BIO_new(BIO_s_mem());
+    BIO_push(b58, mem);
+    if (!BN_print(b58, bn)) {
+        std::cout << "Error: Unable to encode BIGNUM\n";
+        BIO_free_all(b58);
+        BN_free(bn);
+        return "";
+    }
+
+    // Read Base58 encoded data from BIO
+    BUF_MEM* bptr;
+    BIO_get_mem_ptr(mem, &bptr);
+
+    // Convert BIO data to string
+    std::string encoded(reinterpret_cast<char*>(bptr->data), bptr->length);
+
+    // Clean up
+    BIO_free_all(b58);
+    BN_free(bn);
+
+    return encoded;
+}
+/* base58 decode to byteArray */
+unsigned char* Base58Decode(const std::string& encoded){
+    // Create a BIO for Base58 decoding
+    BIO* b58 = BIO_new(BIO_f_base64());
+    BIO_set_flags(b58, BIO_FLAGS_BASE64_NO_NL);
+
+    // Write Base58 encoded data to BIO for decoding
+    BIO* mem = BIO_new_mem_buf(encoded.c_str(), encoded.length());
+    BIO_push(b58, mem);
+
+    // Read decoded BIGNUM from BIO
+    BIGNUM* bn = BN_new();
+//    if (!BN_read(b58, bn)) {
+//        std::cout << "Error: Unable to decode Base58\n";
+//        BIO_free_all(b58);
+//        BN_free(bn);
+//        return nullptr;
+//    }
+
+    // Convert BIGNUM to binary data
+    size_t length = BN_num_bytes(bn);
+    unsigned char* data = (unsigned char*)malloc(length);
+    if (!data) {
+        std::cout << "Error: Memory allocation failed\n";
+        BIO_free_all(b58);
+        BN_free(bn);
+        return nullptr;
+    }
+    BN_bn2bin(bn, data);
+
+    // Clean up
+    BIO_free_all(b58);
+    BN_free(bn);
+
+    return data;
 }
 
 /* Generate the RSA256 digest */

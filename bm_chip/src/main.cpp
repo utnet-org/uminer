@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string>
 #include <sstream>
+#include <iostream>
 #include <iomanip>
 #include <string.h>
 #include <pthread.h>
@@ -11,6 +12,7 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/bn.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 
@@ -24,7 +26,43 @@ std::string byteArrayToHexTest(const unsigned char* byteArray, size_t length) {
     return ss.str();
 }
 
-void signDemo(int devId, unsigned int size_p2){
+std::string Base58EncodeTest(const unsigned char* input, size_t length) {
+    // Convert the input binary data to OpenSSL BIGNUM
+    BIGNUM* bn = BN_bin2bn(input, length, nullptr);
+    if (!bn) {
+        std::cout << "Error: Unable to create BIGNUM\n";
+        return "";
+    }
+
+    // Create a BIO for Base58 encoding
+    BIO* b58 = BIO_new(BIO_f_base64());
+    BIO_set_flags(b58, BIO_FLAGS_BASE64_NO_NL);
+
+    // Write BIGNUM to BIO for encoding
+    BIO* mem = BIO_new(BIO_s_mem());
+    BIO_push(b58, mem);
+    if (!BN_print(b58, bn)) {
+        std::cout << "Error: Unable to encode BIGNUM\n";
+        BIO_free_all(b58);
+        BN_free(bn);
+        return "";
+    }
+
+    // Read Base58 encoded data from BIO
+    BUF_MEM* bptr;
+    BIO_get_mem_ptr(mem, &bptr);
+
+    // Convert BIO data to string
+    std::string encoded(reinterpret_cast<char*>(bptr->data), bptr->length);
+
+    // Clean up
+    BIO_free_all(b58);
+    BN_free(bn);
+
+    return encoded;
+}
+
+void signDemo(int devId, unsigned int size_pubkey, unsigned int size_p2){
     FILE *file_p2 = fopen(("../key/p2_"+ std::to_string(devId)).c_str(), "r");
     FILE *file_pubkey = fopen(("../key/pubkey_"+ std::to_string(devId)).c_str(), "r");
 
@@ -43,11 +81,11 @@ void signDemo(int devId, unsigned int size_p2){
         printf("Error opening file.\n");
         return;
     }
+    printf("p2 = %s\n", P2);
     std::string str = byteArrayToHexTest(P2, size_p2_padding);
     const char* P2Byte = str.c_str();
 
     // pubK
-    unsigned int size_pubkey;
     unsigned char* pubkey = (unsigned char*)malloc(size_pubkey);
     if (file_pubkey) {
         fseek(file_pubkey, 0, SEEK_END);
@@ -63,7 +101,6 @@ void signDemo(int devId, unsigned int size_p2){
     }
     std::string PubK(reinterpret_cast<char*>(pubkey));
     std::string msg = "utility";
-
     chipSignature(devId, P2Byte, PubK.c_str(), msg.c_str(), size_p2_padding, 426);
 
 }
@@ -85,7 +122,7 @@ int main(int argc, char *argv[]) {
         chipGenKeyPairs(atoi(argv[2]));
     }
     if (strcmp(argv[1], "sign") == 0) {
-        signDemo(atoi(argv[2]), 1680);
+        signDemo(atoi(argv[2]), 426, 1680);
     }
 
     return 0;

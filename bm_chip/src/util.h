@@ -15,6 +15,8 @@ struct keyPairs{
 struct keyPairs getKeyPairs();
 unsigned char* hexToByteArray(const std::string& hexString);
 std::string byteArrayToHex(const unsigned char* byteArray, size_t length);
+unsigned char* Base58Decode(const std::string& encoded);
+std::string Base58Encode(const unsigned char* byteArray, size_t length);
 void generate_sha256_digest(const unsigned char *data, size_t data_size, unsigned char *digest);
 int verify_with_public_key(const unsigned char *publicKeyData, unsigned int pub_key_length,
                            const unsigned char *digest, unsigned int digest_size,
