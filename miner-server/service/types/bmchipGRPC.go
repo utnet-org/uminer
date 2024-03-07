@@ -142,8 +142,8 @@ func (s *ChipService) GenerateChipKeyPairs(ctx context.Context, req *rpc.ChipsRe
 		}, nil
 	}
 	return &rpc.ChipStatusReply{
-		Status: "1",
-		Msg:    "unable to generate key pairs",
+		Status: "0",
+		Msg:    "unable to generate key pairs/key pairs already generated",
 	}, nil
 }
 
