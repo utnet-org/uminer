@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"log"
 	http2 "net/http"
+	"strconv"
 	"uminer/common/middleware/ctxcopy"
 	"uminer/common/middleware/logging"
 	"uminer/common/middleware/validate"
@@ -229,6 +230,50 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			DevId:     devId,
 		}
 		response, err := srv.ChipServiceG.ObtainChipKeyPairs(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+	case "signchips":
+		devId, ok := params["dev_id"].(string)
+		if !ok {
+			http2.Error(w, "dev id not found in params", http2.StatusBadRequest)
+			return
+		}
+		p2, ok := params["p2"].(string)
+		if !ok {
+			http2.Error(w, "p2 not found in params", http2.StatusBadRequest)
+			return
+		}
+		pubKey, ok := params["pubkey"].(string)
+		if !ok {
+			http2.Error(w, "pubkey not found in params", http2.StatusBadRequest)
+			return
+		}
+		p2Size, ok := params["p2_size"].(string)
+		if !ok {
+			http2.Error(w, "p2 size not found in params", http2.StatusBadRequest)
+			return
+		}
+		pubKeySize, ok := params["pubkey_size"].(string)
+		if !ok {
+			http2.Error(w, "pubkey size not found in params", http2.StatusBadRequest)
+			return
+		}
+		P2Size, _ := strconv.ParseInt(p2Size, 10, 64)
+		PubKeySize, _ := strconv.ParseInt(pubKeySize, 10, 64)
+		request := &chipApi.SignChipsRequest{
+			DevId:         devId,
+			P2:            p2,
+			PublicKey:     pubKey,
+			P2Size:        P2Size,
+			PublicKeySize: PubKeySize,
+		}
+		response, err := srv.ChipServiceG.SignChip(r.Context(), request)
 		if err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 			return

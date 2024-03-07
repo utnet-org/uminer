@@ -77,14 +77,15 @@ message ReadChipReply {
 
 //sign
 message SignChipsRequest {
-  string url = 1;
-  string serialNum = 2;
-  string busId = 3;
-  string p2 = 4;
-  string publicKey = 5;
-  int64 p2Size = 6;
-  int64 publicKeySize = 7;
-  string msg = 8;
+//  string url = 1;
+//  string serialNum = 2;
+//  string busId = 3;
+  string devId = 1;
+  string p2 = 2;
+  string publicKey = 3;
+  int64 p2Size = 4;
+  int64 publicKeySize = 5;
+  string msg = 6;
 }
 message SignChipsReply {
   string signature = 1;

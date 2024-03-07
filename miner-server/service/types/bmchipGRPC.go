@@ -186,33 +186,7 @@ func (s *ChipService) ObtainChipKeyPairs(ctx context.Context, req *rpc.ChipsRequ
 // sign a chip by p2 to get signature
 func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (*rpc.SignChipsReply, error) {
 
-	if req.SerialNum == "" && req.BusId == "" {
-		return &rpc.SignChipsReply{
-			Signature: "",
-			Status:    false,
-		}, errors.New("no chip is selected")
-	}
-
-	// obtain the devId of the chip
-	devId := -1
-	cardLists := chipApi.RemoteGetChipInfo(req.Url)
-	for _, card := range cardLists {
-		if card.SerialNum == req.SerialNum {
-			for _, chip := range card.Chips {
-				if chip.BusId == req.BusId {
-					id, _ := strconv.ParseInt(chip.DevId, 10, 64)
-					devId = int(id)
-				}
-			}
-		}
-
-	}
-	if devId == -1 {
-		//return &rpc.SignChipsReply{
-		//	Signature: "",
-		//	Status:    false,
-		//}, errors.New("no chip is selected")
-	}
+	devId, _ := strconv.ParseInt(req.DevId, 10, 64)
 
 	// recover the p2 and pubKey by base58 decode
 	originalPubKeyBase58 := strings.TrimSuffix(req.PublicKey, strings.Repeat("u", 33))
@@ -239,7 +213,7 @@ func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (
 	fmt.Println("recovered p2Key is")
 	fmt.Println(P2Key)
 
-	sign := chipApi.SignMinerChips(devId, P2Key, string(PubKeyBytes), int(req.P2Size), int(req.PublicKeySize), req.Msg)
+	sign := chipApi.SignMinerChips(int(devId), P2Key, string(PubKeyBytes), int(req.P2Size), int(req.PublicKeySize), req.Msg)
 	if sign.Signature == "" {
 		return &rpc.SignChipsReply{
 			Signature: sign.Signature,
