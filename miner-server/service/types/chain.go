@@ -317,12 +317,15 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			BusId:     "",
 		}
 		client := chipRPC.NewChipServiceClient(conn)
+		// list all chips
 		var response *chipRPC.ListChipsReply
 		response, err = client.ListAllChips(ctx, request, grpc.WaitForReady(true))
 		if err != nil {
 			fmt.Println("Error query chip information:", err)
 			continue
 		}
+
+		// begin to sign
 
 		cardLists := response.Cards
 		conn.Close()

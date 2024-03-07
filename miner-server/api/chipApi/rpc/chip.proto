@@ -66,11 +66,13 @@ message ListChipsReply {
 
 // read keys
 message ReadChipReply {
-  string SerialNumber  = 1;
-  string BusId = 2;
-  string DevId = 3;
+  string serialNumber  = 1;
+  string busId = 2;
+  string devId = 3;
   string p2 = 4;
   string publicKey = 5;
+  int64 p2Size = 6;
+  int64 publicKeySize = 7;
 }
 
 //sign

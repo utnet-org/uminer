@@ -125,7 +125,7 @@ func (s *ChipService) BurnChipEfuse(ctx context.Context, req *rpc.ChipsRequest) 
 		}, nil
 	}
 	return &rpc.ChipStatusReply{
-		Status: "1",
+		Status: "0",
 		Msg:    "unable to burn aes key at efuse",
 	}, nil
 }
@@ -138,7 +138,7 @@ func (s *ChipService) GenerateChipKeyPairs(ctx context.Context, req *rpc.ChipsRe
 	if res {
 		return &rpc.ChipStatusReply{
 			Status: "1",
-			Msg:    "generate key pairs success",
+			Msg:    "generate key pairs success and stored in files",
 		}, nil
 	}
 	return &rpc.ChipStatusReply{
@@ -173,11 +173,13 @@ func (s *ChipService) ObtainChipKeyPairs(ctx context.Context, req *rpc.ChipsRequ
 	/* obtain paddedPubKeyBase58 and fill it into the ' "public_key":rsa2048:..." ' of miner_key.json */
 
 	return &rpc.ReadChipReply{
-		SerialNumber: req.SerialNum,
-		BusId:        req.BusId,
-		DevId:        req.DevId,
-		P2:           p2KeyBase58,
-		PublicKey:    paddedPubKeyBase58,
+		SerialNumber:  req.SerialNum,
+		BusId:         req.BusId,
+		DevId:         req.DevId,
+		P2:            p2KeyBase58,
+		PublicKey:     paddedPubKeyBase58,
+		P2Size:        int64(keyPairs.P2Size),
+		PublicKeySize: int64(keyPairs.PubKeySize),
 	}, nil
 }
 
