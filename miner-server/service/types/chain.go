@@ -148,7 +148,7 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 
 }
 
-// ClaimStake claim amount of token deposit to the chain as stake
+// ClaimStake claim amount of token deposit to the chain as stake before start mining
 func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeRequest) (*rpc.ClaimStakeReply, error) {
 
 	// check if access key exist
@@ -193,7 +193,7 @@ func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeReques
 		return &rpc.ClaimStakeReply{}, errors.New("miner account is not accessible")
 	}
 
-	// command on near nodes at near-cli-js
+	// command on near nodes at near-cli-js  (KeyPath for validator_key.json)
 	order := exec.Command(req.NearPath, "stake", req.AccountId, pubKey, req.Amount, "--keyPath", req.KeyPath)
 	output, err := order.CombinedOutput()
 	if err != nil {
@@ -260,7 +260,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 		return nil, err
 	}
 	privKey := "ed25519:" + string(privKeyBytes)
-	// command on near nodes at near-cli-js
+	// command on near nodes at near-cli-js (KeyPath for miner_key.json)
 	order := exec.Command(req.NearPath, "extensions", "create-challenge-rsa", req.AccountId, "use-file", req.KeyPath, "without-init-call", "network-config", "my-private-chain-id", "sign-with-plaintext-private-key", "--signer-public-key", pubKey, "--signer-private-key", privKey, "display")
 	output, err := order.CombinedOutput()
 	if err != nil {

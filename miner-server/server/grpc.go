@@ -238,7 +238,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
 
-	// to chain nodes
+	// to miner operation and chain nodes
 	case "getminerkeys":
 		accessKey, ok := params["access_key"].(string)
 		if !ok {
@@ -332,7 +332,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
 
-	// container cloud server
+	// connect to container cloud server
 	case "getNotebookList":
 		if !ok {
 			http2.Error(w, "Params not found in request", http2.StatusBadRequest)

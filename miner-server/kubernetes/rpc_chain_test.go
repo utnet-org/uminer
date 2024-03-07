@@ -9,6 +9,7 @@ import (
 	"uminer/miner-server/cmd"
 )
 
+// TestUpdateChainStatusGRPC test on get updated chain status
 func TestUpdateChainStatusGRPC(t *testing.T) {
 	// Connect to the RPC server
 	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
@@ -30,6 +31,7 @@ func TestUpdateChainStatusGRPC(t *testing.T) {
 	fmt.Println("gRPC Response: ", response)
 }
 
+// TestGenerateMinerKeysC test on generate/obtain the miner keys
 func TestGenerateMinerKeys(t *testing.T) {
 	// Connect to the RPC server
 	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
@@ -52,6 +54,7 @@ func TestGenerateMinerKeys(t *testing.T) {
 
 }
 
+// TestGenerateMinerKeysC test on claim the stake, depositing tokens before mining
 func TestClaimStake(t *testing.T) {
 	// Connect to the RPC server
 	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
@@ -79,6 +82,7 @@ func TestClaimStake(t *testing.T) {
 
 }
 
+// TestGenerateMinerKeysC test on claim the computation of a chip
 func TestClaimChipComputation(t *testing.T) {
 	// Connect to the RPC server
 	conn := cmd.ConnectRPCServer(cmd.MinerServerIP, "9001")
