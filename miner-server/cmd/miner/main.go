@@ -170,6 +170,18 @@ func listenBurst(ctx context.Context, address string) {
 		fmt.Println("fail to dial miner RPC ", address)
 		return
 	}
+	chaincli := chainApi.NewChainServiceClient(conn)
+	list, err := chaincli.GetMinerChipsList(ctx, &chainApi.GetMinerChipsListRequest{AccountId: cmd.AccountId})
+	if err != nil {
+		fmt.Println("fail to get miner chip lists RPC ", err)
+		return
+	}
+	request := &chainApi.ChallengeComputationRequest{
+		ChallengeKey: pubKey,
+		Url:          []string{"192.158.10.1", "192.158.10.2"},
+		Message:      "test",
+		Chips:        list.Chips,
+	}
 
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -178,12 +190,6 @@ func listenBurst(ctx context.Context, address string) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-		}
-
-		request := &chainApi.ChallengeComputationRequest{
-			ChallengeKey: pubKey,
-			Url:          []string{"192.158.10.1", "192.158.10.2"},
-			Message:      "test",
 		}
 
 		/* listening to the node to be informed if being chosen as miner to burst the block */
@@ -259,12 +265,12 @@ func listenBurst(ctx context.Context, address string) {
 
 		// wait for real burst
 		fmt.Println("block candidate is selected!")
-		waitingBurstLoop(ctx, conn, request, time.Now().Unix()+10)
+		waitingBurstLoop(ctx, chaincli, request, time.Now().Unix()+10)
 
 	}
 
 }
-func waitingBurstLoop(ctx context.Context, connect *grpc.ClientConn, request *chainApi.ChallengeComputationRequest, burstTime int64) {
+func waitingBurstLoop(ctx context.Context, cli chainApi.ChainServiceClient, request *chainApi.ChallengeComputationRequest, burstTime int64) {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 	for {
@@ -275,8 +281,7 @@ func waitingBurstLoop(ctx context.Context, connect *grpc.ClientConn, request *ch
 		}
 		// get the right burst timing
 		if time.Now().Unix() >= burstTime {
-			client := chainApi.NewChainServiceClient(connect)
-			response, err := client.ChallengeComputation(ctx, request)
+			response, err := cli.ChallengeComputation(ctx, request)
 			if err != nil {
 				fmt.Println("Error calling ChallengeComputation:", err)
 			} else {

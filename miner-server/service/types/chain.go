@@ -292,15 +292,45 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 // GetMinerChipsList miner get all chips from chain
 func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerChipsListRequest) (*rpc.GetMinerChipsListReply, error) {
 
+	jsonData := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "dontcare",
+		"method":  "miner_chips_list",
+		"params":  map[string]interface{}{"account_id": req.AccountId},
+	}
+	jsonStr, _ := json.Marshal(jsonData)
+	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+	r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		return nil, err
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(r)
+	if err != nil {
+		return &rpc.GetMinerChipsListReply{}, err
+	}
+	defer resp.Body.Close()
+	gzipBytes := util.GzipApi(resp)
+
+	res := gjson.Get(string(gzipBytes), "result").String()
+	chipLists := gjson.Get(res, "chips").Array()
+
 	chips := make([]*rpc.ChipDetails, 0)
-	chips = append(chips, &rpc.ChipDetails{
-		SerialNumber:  "test",
-		BusId:         "test",
-		P2:            "test",
-		PublicKey:     "test",
-		P2Size:        1,
-		PublicKeySize: 1,
-	})
+	for _, item := range chipLists {
+		chips = append(chips, &rpc.ChipDetails{
+			SerialNumber:  gjson.Get(item.String(), "serial_number").String(),
+			BusId:         gjson.Get(item.String(), "bus_id").String(),
+			P2:            gjson.Get(item.String(), "p2").String(),
+			PublicKey:     gjson.Get(item.String(), "public_key").String(),
+			P2Size:        gjson.Get(item.String(), "p2_size").Int(),
+			PublicKeySize: gjson.Get(item.String(), "public_key_size").Int(),
+		})
+	}
 
 	return &rpc.GetMinerChipsListReply{Chips: chips}, nil
 

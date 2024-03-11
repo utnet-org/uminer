@@ -124,9 +124,10 @@ message GetMinerChipsListReply {
 // challenge miner when mining
 message ChallengeComputationRequest {
   string challengeKey = 1;
-  string blockHash = 2;
-  repeated string url = 3;
-  string message = 4;
+//  string blockHash = 2;
+  repeated string url = 2;
+  string message = 3;
+  repeated chipDetails chips = 4;
 }
 message signatureSets {
   string serialNumber = 1;

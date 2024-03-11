@@ -7,6 +7,7 @@ import (
 
 const WorkerServerIP = "192.168.10.56"
 const MinerServerIP = "192.168.10.56"
+const AccountId = "jackronwong"
 
 // NodeURL nodeURL
 const NodeURL = "http://43.198.88.81:3031"
