@@ -7,10 +7,12 @@ option go_package = "../../chainApi/rpc";
 
 service ChainService {
   rpc UpdateChainsStatus (ReportChainsStatusRequest) returns (ReportChainsStatusReply);
-  rpc UpdateMinerStatus (ReportMinerStatusRequest) returns (ReportMinerStatusReply);
+//  rpc UpdateMinerStatus (ReportMinerStatusRequest) returns (ReportMinerStatusReply);
+  rpc ReportChip (ReportChipRequest) returns (ReportChipReply);
   rpc GetMinerKeys (GetMinerKeysRequest) returns (GetMinerKeysReply);
   rpc ClaimStake (ClaimStakeRequest) returns (ClaimStakeReply);
   rpc ClaimChipComputation (ClaimChipComputationRequest) returns (ClaimChipComputationReply);
+  rpc GetMinerChipsList (GetMinerChipsListRequest) returns (GetMinerChipsListReply);
   rpc ChallengeComputation (ChallengeComputationRequest) returns (ChallengeComputationReply);
 
 }
@@ -48,6 +50,25 @@ message ReportMinerStatusReply{
   string NumberOfWorkers = 5;
 }
 
+// foundation report chip on chain
+message ReportChipRequest{
+  string serialNumber  = 1;
+  string busId = 2;
+  string power = 3;
+  string p2 = 4;
+  string publicKey = 5;
+  string p2Size = 6;
+  string publicKeySize = 7;
+  string nearPath = 8;
+  string keyPath = 9;
+  string founderPrivK = 10;
+  string founderPubK = 11;
+  string founder = 13;
+}
+message ReportChipReply{
+  string txHash = 1;
+}
+
 // miner claim stake
 message ClaimStakeRequest {
   string accountId = 1;
@@ -80,6 +101,23 @@ message ClaimChipComputationReply {
   string txHash = 1;
 //  string containerId = 2;
 //  repeated int64 rangeSet = 3;
+
+}
+
+// miner query their own chips
+message chipDetails {
+  string serialNumber  = 1;
+  string busId = 2;
+  string p2 = 3;
+  string publicKey = 4;
+  int64 p2Size = 5;
+  int64 publicKeySize = 6;
+}
+message GetMinerChipsListRequest {
+  string accountId = 1;
+}
+message GetMinerChipsListReply {
+  repeated chipDetails chips = 1;
 
 }
 

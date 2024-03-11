@@ -86,25 +86,23 @@ func (s *ChainService) UpdateChainsStatus(ctx context.Context, req *rpc.ReportCh
 	}, nil
 }
 
-// UpdateMinerStatus get basic info of every miner
-func (s *ChainService) UpdateMinerStatus(ctx context.Context, req *rpc.ReportMinerStatusRequest) (*rpc.ReportMinerStatusReply, error) {
+// ReportChip foundation report chips uploading to chain
+func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipRequest) (*rpc.ReportChipReply, error) {
 
-	//client, err := rpc.Dial("http://node-url")
-	//if err != nil {
-	//	return nil, err
-	//}
+	arg := `{"serial":` + req.SerialNumber + `,"busid":` + req.BusId + `, "power":` + req.Power + `,"p2key":` + req.P2 + `,"pubkey":` + req.PublicKey + `,"p2keysize":` + req.P2Size + `,"pubkeysize":` + req.PublicKeySize + `}`
 
-	//blockHeight, err := getBlockHeight(client)
-	//if err != nil {
-	//	return nil, err
-	//}
+	// command on near nodes at near-cli-js  (KeyPath for validator_key.json)
+	order := exec.Command(req.NearPath, "extensions register-rsa-keys ", req.Founder, "use-file", req.KeyPath, " with-init-call json-args ", arg, "network-config my-private-chain-id sign-with-plaintext-private-key --signer-public-key ", req.FounderPubK,
+		" --signer-private-key ", req.FounderPrivK, " send")
+	output, err := order.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error executing command:", err)
+		return nil, err
+	}
+	fmt.Println("output:", output)
 
-	return &rpc.ReportMinerStatusReply{
-		Computation:     "",
-		Rewards:         "",
-		NumberOfBlock:   "",
-		NumberOfWorkers: "",
-	}, nil
+	return &rpc.ReportChipReply{TxHash: ""}, nil
+
 }
 
 // GetMinerKeys generate miner pri/pubK pairs
@@ -288,6 +286,23 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	return &rpc.ClaimChipComputationReply{
 		TxHash: txhash,
 	}, nil
+
+}
+
+// GetMinerChipsList miner get all chips from chain
+func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerChipsListRequest) (*rpc.GetMinerChipsListReply, error) {
+
+	chips := make([]*rpc.ChipDetails, 0)
+	chips = append(chips, &rpc.ChipDetails{
+		SerialNumber:  "test",
+		BusId:         "test",
+		P2:            "test",
+		PublicKey:     "test",
+		P2Size:        1,
+		PublicKeySize: 1,
+	})
+
+	return &rpc.GetMinerChipsListReply{Chips: chips}, nil
 
 }
 

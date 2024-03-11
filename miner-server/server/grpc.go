@@ -283,6 +283,96 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
 
+	// foundation of utility
+	case "reportchip":
+		if !ok {
+			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
+			return
+		}
+		serial, ok := params["serial"].(string)
+		if !ok {
+			http2.Error(w, "serial number not found in params", http2.StatusBadRequest)
+			return
+		}
+		busId, ok := params["bus_id"].(string)
+		if !ok {
+			http2.Error(w, "bus id not found in params", http2.StatusBadRequest)
+			return
+		}
+		power, ok := params["power"].(string)
+		if !ok {
+			http2.Error(w, "power not found in params", http2.StatusBadRequest)
+			return
+		}
+		p2Key, ok := params["p2key"].(string)
+		if !ok {
+			http2.Error(w, "p2key not found in params", http2.StatusBadRequest)
+			return
+		}
+		pubKey, ok := params["pubkey"].(string)
+		if !ok {
+			http2.Error(w, "pubkey not found in params", http2.StatusBadRequest)
+			return
+		}
+		p2KeySize, ok := params["p2key_size"].(string)
+		if !ok {
+			http2.Error(w, "p2key size not found in params", http2.StatusBadRequest)
+			return
+		}
+		pubKeySize, ok := params["pubkey_size"].(string)
+		if !ok {
+			http2.Error(w, "pubkey size not found in params", http2.StatusBadRequest)
+			return
+		}
+		nearPath, ok := params["near_path"].(string)
+		if !ok {
+			http2.Error(w, "Near path not found in params", http2.StatusBadRequest)
+			return
+		}
+		keyPath, ok := params["key_path"].(string)
+		if !ok {
+			http2.Error(w, "Key path not found in params", http2.StatusBadRequest)
+			return
+		}
+		founder, ok := params["founder"].(string)
+		if !ok {
+			http2.Error(w, "founder not found in params", http2.StatusBadRequest)
+			return
+		}
+		founderPrivate, ok := params["founder_private"].(string)
+		if !ok {
+			http2.Error(w, "founder private key not found in params", http2.StatusBadRequest)
+			return
+		}
+		founderPub, ok := params["founder_public"].(string)
+		if !ok {
+			http2.Error(w, "founder public key not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chainApi.ReportChipRequest{
+			SerialNumber:  serial,
+			BusId:         busId,
+			Power:         power,
+			P2:            p2Key,
+			PublicKey:     pubKey,
+			P2Size:        p2KeySize,
+			PublicKeySize: pubKeySize,
+			NearPath:      nearPath,
+			KeyPath:       keyPath,
+			Founder:       founder,
+			FounderPubK:   founderPub,
+			FounderPrivK:  founderPrivate,
+		}
+		response, err := srv.ChainService.ReportChip(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+
 	// to miner operation and chain nodes
 	case "getminerkeys":
 		accessKey, ok := params["access_key"].(string)
@@ -368,6 +458,28 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			KeyPath:   keyPath,
 		}
 		response, err := srv.ChainService.ClaimChipComputation(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+	case "minerchipsList":
+		if !ok {
+			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
+			return
+		}
+		accountId, ok := params["account_id"].(string)
+		if !ok {
+			http2.Error(w, "Account ID not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chainApi.GetMinerChipsListRequest{
+			AccountId: accountId,
+		}
+		response, err := srv.ChainService.GetMinerChipsList(r.Context(), request)
 		if err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 			return
