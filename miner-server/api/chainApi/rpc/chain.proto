@@ -52,18 +52,18 @@ message ReportMinerStatusReply{
 
 // foundation report chip on chain
 message ReportChipRequest{
-  string serialNumber  = 1;
-  string busId = 2;
-  string power = 3;
-  string p2 = 4;
-  string publicKey = 5;
-  string p2Size = 6;
-  string publicKeySize = 7;
-  string nearPath = 8;
-  string keyPath = 9;
-  string founderPrivK = 10;
-  string founderPubK = 11;
-  string founder = 13;
+//  string serialNumber  = 1;
+//  string busId = 2;
+//  string power = 3;
+//  string p2 = 4;
+//  string publicKey = 5;
+//  string p2Size = 6;
+//  string publicKeySize = 7;
+  string nearPath = 1;
+  string chipFilePath = 2;
+  string founderPrivK = 3;
+  string founderPubK = 4;
+  string founder = 5;
 }
 message ReportChipReply{
   string txHash = 1;

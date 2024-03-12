@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 	chipRPC "uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/cmd"
 	"uminer/miner-server/service/connect"
@@ -89,19 +90,40 @@ func (s *ChainService) UpdateChainsStatus(ctx context.Context, req *rpc.ReportCh
 // ReportChip foundation report chips uploading to chain
 func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipRequest) (*rpc.ReportChipReply, error) {
 
-	arg := `{"serial":` + req.SerialNumber + `,"busid":` + req.BusId + `, "power":` + req.Power + `,"p2key":` + req.P2 + `,"pubkey":` + req.PublicKey + `,"p2keysize":` + req.P2Size + `,"pubkeysize":` + req.PublicKeySize + `}`
+	//arg := `{"serial":` + req.SerialNumber + `,"busid":` + req.BusId + `, "power":` + req.Power + `,"p2key":` + req.P2 + `,"pubkey":` + req.PublicKey + `,"p2keysize":` + req.P2Size + `,"pubkeysize":` + req.PublicKeySize + `}`
 
-	// command on near nodes at near-cli-js  (KeyPath for validator_key.json)
-	order := exec.Command(req.NearPath, "extensions register-rsa-keys ", req.Founder, "use-file", req.KeyPath, " with-init-call json-args ", arg, "network-config my-private-chain-id sign-with-plaintext-private-key --signer-public-key ", req.FounderPubK,
-		" --signer-private-key ", req.FounderPrivK, " send")
-	output, err := order.CombinedOutput()
+	// command on near nodes at utility-cli-js  (KeyPath for chips.json)
+	err := os.Setenv("unc", req.NearPath)
 	if err != nil {
-		fmt.Println("Error executing command:", err)
+		fmt.Println("设置环境变量失败:", err)
 		return nil, err
 	}
-	fmt.Println("output:", output)
+	cmdString := os.Getenv("unc") + " extensions register-rsa-keys unc use-file " + req.ChipFilePath + " with-init-call network-config custom sign-with-plaintext-private-key --signer-public-key " + req.FounderPubK +
+		" --signer-private-key " + req.FounderPrivK + " send"
+	parts := strings.Fields(cmdString)
+	order := exec.Command(parts[0], parts[1:]...)
+	output, err := order.CombinedOutput()
+	fmt.Println(string(output))
+	//if err != nil {
+	//	fmt.Println("Error executing command:", err)
+	//	return nil, err
+	//}
+	// get error
+	geterror := regexp.MustCompile(`Error:\s*(.+)`)
+	matches := geterror.FindStringSubmatch(string(output))
+	if len(matches) != 0 {
+		Errors := matches[1]
+		return nil, errors.New(Errors)
+	}
 
-	return &rpc.ReportChipReply{TxHash: ""}, nil
+	// get tx id
+	re := regexp.MustCompile(`Transaction ID:\s*(.+)`)
+	matches = re.FindStringSubmatch(string(output))
+	// 提取signature字段的值
+	txhash := matches[1]
+	fmt.Println("tx id:", txhash)
+
+	return &rpc.ReportChipReply{TxHash: txhash}, nil
 
 }
 
@@ -278,7 +300,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	_ = util.MinerSignTx(privKey, txStr)
 
 	// packed as transaction, upload to the chain
-	txhash, err := connect.SendTransactionAsync(ctx, "")
+	txhash, err := connect.SendTransactionAsync(ctx, signature)
 	if err != nil {
 		return &rpc.ClaimChipComputationReply{}, err
 	}

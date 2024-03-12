@@ -289,41 +289,41 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
 			return
 		}
-		serial, ok := params["serial"].(string)
-		if !ok {
-			http2.Error(w, "serial number not found in params", http2.StatusBadRequest)
-			return
-		}
-		busId, ok := params["bus_id"].(string)
-		if !ok {
-			http2.Error(w, "bus id not found in params", http2.StatusBadRequest)
-			return
-		}
-		power, ok := params["power"].(string)
-		if !ok {
-			http2.Error(w, "power not found in params", http2.StatusBadRequest)
-			return
-		}
-		p2Key, ok := params["p2key"].(string)
-		if !ok {
-			http2.Error(w, "p2key not found in params", http2.StatusBadRequest)
-			return
-		}
-		pubKey, ok := params["pubkey"].(string)
-		if !ok {
-			http2.Error(w, "pubkey not found in params", http2.StatusBadRequest)
-			return
-		}
-		p2KeySize, ok := params["p2key_size"].(string)
-		if !ok {
-			http2.Error(w, "p2key size not found in params", http2.StatusBadRequest)
-			return
-		}
-		pubKeySize, ok := params["pubkey_size"].(string)
-		if !ok {
-			http2.Error(w, "pubkey size not found in params", http2.StatusBadRequest)
-			return
-		}
+		//serial, ok := params["serial"].(string)
+		//if !ok {
+		//	http2.Error(w, "serial number not found in params", http2.StatusBadRequest)
+		//	return
+		//}
+		//busId, ok := params["bus_id"].(string)
+		//if !ok {
+		//	http2.Error(w, "bus id not found in params", http2.StatusBadRequest)
+		//	return
+		//}
+		//power, ok := params["power"].(string)
+		//if !ok {
+		//	http2.Error(w, "power not found in params", http2.StatusBadRequest)
+		//	return
+		//}
+		//p2Key, ok := params["p2key"].(string)
+		//if !ok {
+		//	http2.Error(w, "p2key not found in params", http2.StatusBadRequest)
+		//	return
+		//}
+		//pubKey, ok := params["pubkey"].(string)
+		//if !ok {
+		//	http2.Error(w, "pubkey not found in params", http2.StatusBadRequest)
+		//	return
+		//}
+		//p2KeySize, ok := params["p2key_size"].(string)
+		//if !ok {
+		//	http2.Error(w, "p2key size not found in params", http2.StatusBadRequest)
+		//	return
+		//}
+		//pubKeySize, ok := params["pubkey_size"].(string)
+		//if !ok {
+		//	http2.Error(w, "pubkey size not found in params", http2.StatusBadRequest)
+		//	return
+		//}
 		nearPath, ok := params["near_path"].(string)
 		if !ok {
 			http2.Error(w, "Near path not found in params", http2.StatusBadRequest)
@@ -350,18 +350,18 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			return
 		}
 		request := &chainApi.ReportChipRequest{
-			SerialNumber:  serial,
-			BusId:         busId,
-			Power:         power,
-			P2:            p2Key,
-			PublicKey:     pubKey,
-			P2Size:        p2KeySize,
-			PublicKeySize: pubKeySize,
-			NearPath:      nearPath,
-			KeyPath:       keyPath,
-			Founder:       founder,
-			FounderPubK:   founderPub,
-			FounderPrivK:  founderPrivate,
+			//SerialNumber:  serial,
+			//BusId:         busId,
+			//Power:         power,
+			//P2:            p2Key,
+			//PublicKey:     pubKey,
+			//P2Size:        p2KeySize,
+			//PublicKeySize: pubKeySize,
+			NearPath:     nearPath,
+			ChipFilePath: keyPath,
+			Founder:      founder,
+			FounderPubK:  founderPub,
+			FounderPrivK: founderPrivate,
 		}
 		response, err := srv.ChainService.ReportChip(r.Context(), request)
 		if err != nil {

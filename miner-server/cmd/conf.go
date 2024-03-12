@@ -5,7 +5,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-const WorkerServerIP = "192.168.10.56"
+const WorkerServerIP = "192.168.10.50"
 const MinerServerIP = "192.168.10.56"
 const AccountId = "jackronwong"
 
