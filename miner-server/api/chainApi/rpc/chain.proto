@@ -24,6 +24,7 @@ message GetMinerKeysRequest {
 message GetMinerKeysReply {
   string privateKey = 1;
   string pubKey = 2;
+  string address = 3;
 }
 
 // chain information

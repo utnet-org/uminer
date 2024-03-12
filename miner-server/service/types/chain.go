@@ -3,9 +3,11 @@ package types
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
 	"io/ioutil"
@@ -112,8 +114,8 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 	geterror := regexp.MustCompile(`Error:\s*(.+)`)
 	matches := geterror.FindStringSubmatch(string(output))
 	if len(matches) != 0 {
-		Errors := matches[1]
-		return nil, errors.New(Errors)
+		errMsg := strings.Join(matches, ", ")
+		return nil, errors.New(errMsg)
 	}
 
 	// get tx id
@@ -161,9 +163,18 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 		}
 	}
 	/* obtain pubKey and fill it into the ' "challenge_key": "ed25519..." ' of miner_key.json */
+
+	publicKeyBytes := base58.Decode(pubKey)
+	if len(publicKeyBytes) != 32 {
+		return nil, errors.New("Invalid public key length")
+	}
+	// 将Ed25519公钥转换为地址
+	publicKeyHex := hex.EncodeToString(publicKeyBytes)
+
 	return &rpc.GetMinerKeysReply{
 		PrivateKey: privKey,
 		PubKey:     pubKey,
+		Address:    publicKeyHex,
 	}, nil
 
 }
@@ -266,7 +277,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	gzipBytes := util.GzipApi(resp)
 	// no such account
 	if gjson.Get(string(gzipBytes), "error").String() != "" {
-		return &rpc.ClaimChipComputationReply{}, errors.New("miner account is not registered yet")
+		//return &rpc.ClaimChipComputationReply{}, errors.New("miner account is not registered yet")
 	}
 
 	/* miner signature */
@@ -281,29 +292,34 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	}
 	privKey := "ed25519:" + string(privKeyBytes)
 	// command on near nodes at near-cli-js (KeyPath for miner_key.json)
-	order := exec.Command(req.NearPath, "extensions", "create-challenge-rsa", req.AccountId, "use-file", req.KeyPath, "without-init-call", "network-config", "my-private-chain-id", "sign-with-plaintext-private-key", "--signer-public-key", pubKey, "--signer-private-key", privKey, "display")
+	order := exec.Command(req.NearPath, "extensions", "create-challenge-rsa", req.AccountId, "use-file", req.KeyPath, "without-init-call", "network-config", "custom", "sign-with-plaintext-private-key", "--signer-public-key", pubKey, "--signer-private-key", privKey, "display")
 	output, err := order.CombinedOutput()
-	if err != nil {
-		fmt.Println("Error executing command:", err)
-		return nil, err
-	}
+	fmt.Println(string(output))
+	//if err != nil {
+	//	fmt.Println("Error executing command:", err)
+	//	return nil, err
+	//}
 	// get signature
-	re := regexp.MustCompile(`Signed transaction \(serialized as base64\):\s*(.+)`)
-	matches := re.FindStringSubmatch(string(output))
-	// 提取signature字段的值
-	signature := matches[1]
-	fmt.Println("signature:", signature)
+	//re := regexp.MustCompile(`Signed transaction \(serialized as base64\):\s*(.+)`)
+	//txhash, err := connect.SendTransactionAsync(ctx, signature)
+	//if err != nil {
+	//	return &rpc.ClaimChipComputationReply{}, err
+	//}
 
-	timeNow := strconv.FormatInt(time.Now().Unix(), 10)
-	joinData := req.AccountId + req.ChipPubK + timeNow
-	txStr := fmt.Sprintf("%+v", joinData)
-	_ = util.MinerSignTx(privKey, txStr)
-
-	// packed as transaction, upload to the chain
-	txhash, err := connect.SendTransactionAsync(ctx, signature)
-	if err != nil {
-		return &rpc.ClaimChipComputationReply{}, err
+	// get error
+	geterror := regexp.MustCompile(`Error:\s*(.+)`)
+	matches := geterror.FindStringSubmatch(string(output))
+	if len(matches) != 0 {
+		errMsg := strings.Join(matches, ", ")
+		return nil, errors.New(errMsg)
 	}
+
+	// get tx id
+	re := regexp.MustCompile(`Transaction ID:\s*(.+)`)
+	matches = re.FindStringSubmatch(string(output))
+	// 提取signature字段的值
+	txhash := matches[1]
+	fmt.Println("tx id:", txhash)
 
 	return &rpc.ClaimChipComputationReply{
 		TxHash: txhash,
