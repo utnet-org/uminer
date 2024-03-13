@@ -12,6 +12,9 @@ const AccountId = "jackronwong"
 // NodeURL nodeURL
 const NodeURL = "http://43.198.88.81:3031"
 
+// WorkerLists my worker lists
+var WorkerLists = [...]string{"192.168.10.49", "192.168.10.50", "192.168.10.51"}
+
 // LatestBlockHeight latest BlockHeight
 var LatestBlockH int64
 

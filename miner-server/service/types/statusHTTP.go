@@ -341,14 +341,15 @@ func (s *MinerStatusServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *ht
 	num.SetString(balance)
 	divisor := new(big.Int)
 	divisor.SetString("1000000000000000000000000", 10)
-	amount := new(big.Float).Quo(num, new(big.Float).SetInt(divisor)).String()
+	amount := new(big.Float).Quo(num, new(big.Float).SetInt(divisor))
+	amountString := amount.Text('f', 9)
 
 	if gjson.Get(string(gzipBytes), "error").String() != "" {
-		amount = "--"
+		amountString = "--"
 	}
 
 	response := HTTP.ViewAccountReply{
-		Total:   amount,
+		Total:   amountString,
 		Rewards: "1",
 		Slashed: "-1",
 		Power:   strconv.FormatInt(power, 10),

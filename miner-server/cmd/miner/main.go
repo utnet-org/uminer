@@ -171,18 +171,27 @@ func listenBurst(ctx context.Context, address string) {
 		return
 	}
 	chaincli := chainApi.NewChainServiceClient(conn)
-	list, err := chaincli.GetMinerChipsList(ctx, &chainApi.GetMinerChipsListRequest{AccountId: cmd.AccountId})
+	keys, err := chaincli.GetMinerKeys(ctx, &chainApi.GetMinerKeysRequest{AccessKeys: ""})
+	if err != nil {
+		fmt.Println("fail to get miner address RPC ", err)
+		return
+	}
+	list, err := chaincli.GetMinerChipsList(ctx, &chainApi.GetMinerChipsListRequest{AccountId: keys.Address})
 	if err != nil {
 		fmt.Println("fail to get miner chip lists RPC ", err)
 		return
 	}
+	workers := make([]string, 0)
+	for _, item := range cmd.WorkerLists {
+		workers = append(workers, item)
+	}
+
 	request := &chainApi.ChallengeComputationRequest{
 		ChallengeKey: pubKey,
-		Url:          []string{"192.158.10.1", "192.158.10.2"},
+		Url:          workers,
 		Message:      "test",
 		Chips:        list.Chips,
 	}
-
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 	for {

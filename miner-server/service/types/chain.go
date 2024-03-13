@@ -172,7 +172,7 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 	publicKeyHex := hex.EncodeToString(publicKeyBytes)
 
 	return &rpc.GetMinerKeysReply{
-		PrivateKey: privKey,
+		PrivateKey: "privKey",
 		PubKey:     pubKey,
 		Address:    publicKeyHex,
 	}, nil
@@ -277,7 +277,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	gzipBytes := util.GzipApi(resp)
 	// no such account
 	if gjson.Get(string(gzipBytes), "error").String() != "" {
-		//return &rpc.ClaimChipComputationReply{}, errors.New("miner account is not registered yet")
+		return &rpc.ClaimChipComputationReply{}, errors.New("miner account is not registered yet")
 	}
 
 	/* miner signature */
@@ -333,8 +333,8 @@ func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerC
 	jsonData := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"id":      "dontcare",
-		"method":  "miner_chips_list",
-		"params":  map[string]interface{}{"account_id": req.AccountId},
+		"method":  "query",
+		"params":  map[string]interface{}{"request_type": "view_chip_list", "finality": "final", "account_id": req.AccountId},
 	}
 	jsonStr, _ := json.Marshal(jsonData)
 	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
@@ -354,6 +354,9 @@ func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerC
 	}
 	defer resp.Body.Close()
 	gzipBytes := util.GzipApi(resp)
+	if gjson.Get(string(gzipBytes), "error").String() != "" {
+		return &rpc.GetMinerChipsListReply{}, errors.New(gjson.Get(string(gzipBytes), "error").String())
+	}
 
 	res := gjson.Get(string(gzipBytes), "result").String()
 	chipLists := gjson.Get(res, "chips").Array()
@@ -363,10 +366,11 @@ func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerC
 		chips = append(chips, &rpc.ChipDetails{
 			SerialNumber:  gjson.Get(item.String(), "serial_number").String(),
 			BusId:         gjson.Get(item.String(), "bus_id").String(),
+			Power:         gjson.Get(item.String(), "power").Int(),
 			P2:            gjson.Get(item.String(), "p2").String(),
 			PublicKey:     gjson.Get(item.String(), "public_key").String(),
-			P2Size:        gjson.Get(item.String(), "p2_size").Int(),
-			PublicKeySize: gjson.Get(item.String(), "public_key_size").Int(),
+			P2Size:        1680, //gjson.Get(item.String(), "p2_size").Int(),
+			PublicKeySize: 426,  //gjson.Get(item.String(), "public_key_size").Int(),
 		})
 	}
 
@@ -379,8 +383,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 
 	// read data from chains db ...
 	signatures := make([]*rpc.SignatureSets, 0)
-	requiredChips := make([]connect.MinerChip, 0)
-	if len(requiredChips) == 0 {
+	if len(req.Chips) == 0 {
 		return &rpc.ChallengeComputationReply{
 			SignatureSets: signatures,
 			TxHash:        "",
@@ -395,7 +398,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			continue
 		}
 		request := &chipRPC.ChipsRequest{
-			Url:       "http://119.120.92.239" + ":30345",
+			Url:       each + ":30345",
 			SerialNum: "",
 			BusId:     "",
 		}
@@ -408,36 +411,36 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			continue
 		}
 
-		// begin to sign
-
+		// begin to search
 		cardLists := response.Cards
 		conn.Close()
-		for _, item := range requiredChips {
+		for _, card := range cardLists {
 			devId := -1
-			for _, card := range cardLists {
-				if card.SerialNum == item.SN {
+			for _, item := range req.Chips {
+				if card.SerialNum == item.SerialNumber {
 					for _, chip := range card.Chips {
-						if chip.BusId == item.BusID {
+						if chip.BusId == item.BusId {
 							id, _ := strconv.ParseInt(chip.DevId, 10, 64)
 							devId = int(id)
 						}
 					}
 				}
-
+				// not found, proceed to next chip
+				if devId == -1 {
+					continue
+					//return &rpc.ChallengeComputationReply{
+					//	SignatureSets: signatures,
+					//	TxHash:        "",
+					//}, errors.New("no chip is selected")
+				}
+				// found, sign
+				sign := chipApi.SignMinerChips(devId, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
+				signatures = append(signatures, &rpc.SignatureSets{
+					SerialNumber: item.SerialNumber,
+					BusID:        item.BusId,
+					Signature:    sign.Signature,
+				})
 			}
-			if devId == -1 {
-				return &rpc.ChallengeComputationReply{
-					SignatureSets: signatures,
-					TxHash:        "",
-				}, errors.New("no chip is selected")
-			}
-
-			sign := chipApi.SignMinerChips(devId, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
-			signatures = append(signatures, &rpc.SignatureSets{
-				SerialNumber: item.SN,
-				BusID:        item.BusID,
-				Signature:    sign.Signature,
-			})
 		}
 	}
 

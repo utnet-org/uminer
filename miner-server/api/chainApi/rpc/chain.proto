@@ -109,10 +109,11 @@ message ClaimChipComputationReply {
 message chipDetails {
   string serialNumber  = 1;
   string busId = 2;
-  string p2 = 3;
-  string publicKey = 4;
-  int64 p2Size = 5;
-  int64 publicKeySize = 6;
+  int64 power = 3;
+  string p2 = 4;
+  string publicKey = 5;
+  int64 p2Size = 6;
+  int64 publicKeySize = 7;
 }
 message GetMinerChipsListRequest {
   string accountId = 1;

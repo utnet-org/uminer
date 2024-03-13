@@ -7,6 +7,7 @@ import (
 	http2 "net/http"
 	"uminer/common/log"
 	"uminer/miner-server/api/HTTP"
+	"uminer/miner-server/cmd"
 	"uminer/miner-server/data"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service/connect"
@@ -74,9 +75,9 @@ func (s *MinerLoginServiceHTTP) LoginHandler(w http.ResponseWriter, r *http.Requ
 
 	// get mapping
 	workers := make([]string, 0)
-	workers = append(workers, "192.168.10.49")
-	workers = append(workers, "192.168.10.50")
-	workers = append(workers, "192.168.10.51")
+	for _, item := range cmd.WorkerLists {
+		workers = append(workers, item)
+	}
 	token := response.Payload.Token
 	finalResponse := HTTP.MapWorkersAddressReply{
 		MinerAddr:  req.MinerAddr,
