@@ -129,14 +129,14 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 
 }
 
-// GetMinerKeys generate miner pri/pubK pairs
+// GetMinerKeys generate miner pri/pubK pairs(if no private ket is sent, it will generate automatically)
 func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRequest) (*rpc.GetMinerKeysReply, error) {
 	// first check if there is stored key pairs
 	_, pubErr := os.Stat("public.pem")
 	_, privErr := os.Stat("private.pem")
 
-	var privKey, pubKey string
-	if pubErr == nil && privErr == nil {
+	var mnemonic, privKey, pubKey string
+	if pubErr == nil && privErr == nil && req.PrivateKey == "" {
 		// Read the key files
 		pubKeyBytes, err := ioutil.ReadFile("public.pem")
 		if err != nil {
@@ -150,13 +150,16 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 		privKey = string(privKeyBytes)
 	} else {
 		// Generate new key pair
-		pubKey, privKey = util.ED25519KeysGeneration()
+		mnemonic, pubKey, privKey = util.ED25519AddressGeneration(req.PrivateKey)
 		// Save the newly generated key pair
-		err := ioutil.WriteFile("public.pem", []byte(pubKey), 0644)
+		err := ioutil.WriteFile("mnemonic.pem", []byte(mnemonic), 0644)
 		if err != nil {
 			return nil, err
 		}
-		// Save the private key securely, you might want to handle this differently
+		err = ioutil.WriteFile("public.pem", []byte(pubKey), 0644)
+		if err != nil {
+			return nil, err
+		}
 		err = ioutil.WriteFile("private.pem", []byte(privKey), 0644)
 		if err != nil {
 			return nil, err

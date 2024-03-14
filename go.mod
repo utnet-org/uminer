@@ -17,6 +17,7 @@ require (
 	github.com/prometheus/common v0.46.0
 	github.com/sony/sonyflake v1.0.0
 	github.com/tidwall/gjson v1.17.0
+	github.com/tyler-smith/go-bip39 v1.1.0
 	golang.org/x/crypto v0.18.0
 	golang.org/x/oauth2 v0.16.0
 	golang.org/x/text v0.14.0

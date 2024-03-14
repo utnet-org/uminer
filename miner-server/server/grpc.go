@@ -380,7 +380,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
 			return
 		}
-		request := &chainApi.GetMinerKeysRequest{AccessKeys: accessKey}
+		request := &chainApi.GetMinerKeysRequest{PrivateKey: accessKey}
 		response, err := srv.ChainService.GetMinerKeys(r.Context(), request)
 		if err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)

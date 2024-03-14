@@ -11,7 +11,6 @@ import (
 	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -151,19 +150,6 @@ func newApp(ctx context.Context, logger log.Logger, hs *minerHttp.Server, gs *mi
 // listenBurst listen to the node, preparing for burst
 func listenBurst(ctx context.Context, address string) {
 
-	// get pubkey
-	_, pubErr := os.Stat("public.pem")
-	if pubErr != nil {
-		fmt.Println("no pubkey file is found")
-		return
-	}
-	var pubKey string
-	pubKeyBytes, err := ioutil.ReadFile("public.pem")
-	if err != nil {
-		fmt.Println("no pubkey is read")
-		return
-	}
-	pubKey = string(pubKeyBytes)
 	// dial local grpc for challenge computation
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
@@ -171,25 +157,34 @@ func listenBurst(ctx context.Context, address string) {
 		return
 	}
 	chaincli := chainApi.NewChainServiceClient(conn)
-	keys, err := chaincli.GetMinerKeys(ctx, &chainApi.GetMinerKeysRequest{AccessKeys: ""})
+	// get keys
+	_, pubErr := os.Stat("public.pem")
+	if pubErr != nil {
+		fmt.Println("no pubkey file is found")
+		return
+	}
+	keys, err := chaincli.GetMinerKeys(ctx, &chainApi.GetMinerKeysRequest{PrivateKey: ""})
 	if err != nil {
 		fmt.Println("fail to get miner address RPC ", err)
 		return
 	}
+	// get all chips and workers address ready
 	list, err := chaincli.GetMinerChipsList(ctx, &chainApi.GetMinerChipsListRequest{AccountId: keys.Address})
 	if err != nil {
 		fmt.Println("fail to get miner chip lists RPC ", err)
 		return
 	}
+	fmt.Println("chip list:", list)
 	workers := make([]string, 0)
 	for _, item := range cmd.WorkerLists {
 		workers = append(workers, item)
 	}
 
+	// start loop
 	request := &chainApi.ChallengeComputationRequest{
-		ChallengeKey: pubKey,
+		ChallengeKey: "ed25519:" + keys.PubKey,
 		Url:          workers,
-		Message:      "test",
+		Message:      "utility",
 		Chips:        list.Chips,
 	}
 	ticker := time.NewTicker(30 * time.Second)

@@ -19,7 +19,7 @@ service ChainService {
 
 // generate the miner key pairs (challenge keys)
 message GetMinerKeysRequest {
-  string accessKeys = 1;
+  string privateKey = 1;
 }
 message GetMinerKeysReply {
   string privateKey = 1;

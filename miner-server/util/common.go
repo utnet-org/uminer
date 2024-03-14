@@ -8,8 +8,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/crypto/ed25519"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -139,6 +141,47 @@ func ED25519KeysGeneration() (string, string) {
 	fmt.Println("签名验证结果:", verified)
 
 	return publicKeyBase58, privateKeyBase58
+}
+
+// ED25519AddressGeneration generates ed25519 key pairs with mnemonic,
+func ED25519AddressGeneration(private string) (string, string, string) {
+
+	var mnemonic string
+	var privKey ed25519.PrivateKey
+	var pubKey ed25519.PublicKey
+	if private == "" {
+		// generate keys
+		entropy, err := bip39.NewEntropy(128)
+		if err != nil {
+			log.Fatal(err)
+		}
+		mnemonic, _ = bip39.NewMnemonic(entropy)
+		seed := bip39.NewSeed("suit depth work bacon wine connect venue army blame better pause train", "")
+		derivedPrivkey := ed25519.NewKeyFromSeed(seed[:32])
+		privKey = derivedPrivkey
+		pubKey = derivedPrivkey.Public().(ed25519.PublicKey)
+	} else {
+		// import the keys
+		privKey = base58.Decode(private)
+		pubKey = privKey.Public().(ed25519.PublicKey)
+	}
+
+	privateKey := base58.Encode(privKey)
+	publicKey := base58.Encode(pubKey)
+	address := hex.EncodeToString(pubKey)
+
+	fmt.Println("address:", address)
+	fmt.Println("publicKey:", publicKey)
+	fmt.Println("privateKey:", privateKey)
+
+	// 使用私钥进行签名
+	signature := ed25519.Sign(privKey, []byte("message"))
+	// 验证签名
+	verified := ed25519.Verify(pubKey, []byte("message"), signature)
+	fmt.Println("sign verify:", verified)
+
+	return mnemonic, publicKey, privateKey
+
 }
 
 func MinerSignTx(privateKey string, msg string) string {
