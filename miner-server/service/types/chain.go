@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
 	"io/ioutil"
+	"math/big"
 	"net/http"
 	"os"
 	"os/exec"
@@ -89,7 +91,7 @@ func (s *ChainService) UpdateChainsStatus(ctx context.Context, req *rpc.ReportCh
 	}, nil
 }
 
-// ReportChip foundation report chips uploading to chain
+// ReportChip foundation of utility report chips uploading to chain
 func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipRequest) (*rpc.ReportChipReply, error) {
 
 	//arg := `{"serial":` + req.SerialNumber + `,"busid":` + req.BusId + `, "power":` + req.Power + `,"p2key":` + req.P2 + `,"pubkey":` + req.PublicKey + `,"p2keysize":` + req.P2Size + `,"pubkeysize":` + req.PublicKeySize + `}`
@@ -121,6 +123,9 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 	// get tx id
 	re := regexp.MustCompile(`Transaction ID:\s*(.+)`)
 	matches = re.FindStringSubmatch(string(output))
+	if len(matches) == 0 {
+		return nil, errors.New("transaction failed")
+	}
 	// 提取signature字段的值
 	txhash := matches[1]
 	fmt.Println("tx id:", txhash)
@@ -129,7 +134,7 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 
 }
 
-// GetMinerKeys generate miner pri/pubK pairs(if no private ket is sent, it will generate automatically)
+// GetMinerKeys miner generate miner pri/pubK pairs(if no private ket is sent, it will generate automatically)
 func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRequest) (*rpc.GetMinerKeysReply, error) {
 	// first check if there is stored key pairs
 	_, pubErr := os.Stat("public.pem")
@@ -254,11 +259,21 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	//}
 
 	// check if miner account exist
+	pubKeyBytes, err := ioutil.ReadFile("public.pem")
+	if err != nil {
+		return nil, err
+	}
+	pubKey := "ed25519:" + string(pubKeyBytes)
+	privKeyBytes, err := ioutil.ReadFile("private.pem")
+	if err != nil {
+		return nil, err
+	}
+	privKey := "ed25519:" + string(privKeyBytes)
 	jsonData := map[string]interface{}{
 		"jsonrpc": "2.0",
-		"id":      "czROwmnXE",
+		"id":      "dontcare",
 		"method":  "query",
-		"params":  map[string]interface{}{"account_id": req.AccountId, "finality": "final", "request_type": "view_account"},
+		"params":  map[string]interface{}{"request_type": "view_access_key", "finality": "final", "account_id": req.AccountId, "public_key": pubKey},
 	}
 	jsonStr, _ := json.Marshal(jsonData)
 	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
@@ -280,35 +295,55 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	gzipBytes := util.GzipApi(resp)
 	// no such account
 	if gjson.Get(string(gzipBytes), "error").String() != "" {
-		return &rpc.ClaimChipComputationReply{}, errors.New("miner account is not registered yet")
+		errs := gjson.Get(string(gzipBytes), "error").String()
+		datas := gjson.Get(errs, "data").String()
+		return &rpc.ClaimChipComputationReply{}, errors.New(datas)
+	}
+	res := gjson.Get(string(gzipBytes), "result").String()
+	permission := gjson.Get(res, "permission").String()
+	if permission != "FullAccess" {
+		return &rpc.ClaimChipComputationReply{}, errors.New("miner account is not accessible")
 	}
 
-	/* miner signature */
-	pubKeyBytes, err := ioutil.ReadFile("public.pem")
-	if err != nil {
-		return nil, err
+	// generate miner_key.json
+	rawdata := map[string]string{
+		"challenge_key": pubKey,
+		"public_key":    "rsa2048:" + req.ChipPubK,
 	}
-	pubKey := "ed25519:" + string(pubKeyBytes)
-	privKeyBytes, err := ioutil.ReadFile("private.pem")
-	if err != nil {
-		return nil, err
+	_, err = ioutil.ReadFile("../jsonfile/miner_key.json")
+	if err == nil {
+		file, err := os.OpenFile("../jsonfile/miner_key.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			fmt.Println("Error opening file:", err)
+			return nil, err
+		}
+		encoder := json.NewEncoder(file)
+		err = encoder.Encode(rawdata)
+		if err != nil {
+			fmt.Println("Error writing JSON to file:", err)
+			return nil, err
+		}
+	} else {
+		file, err := os.Create("../jsonfile/miner_key.json")
+		if err != nil {
+			fmt.Println("Error creating JSON file:", err)
+			return nil, err
+		}
+		encoder := json.NewEncoder(file)
+		err = encoder.Encode(rawdata)
+		if err != nil {
+			fmt.Println("Error encoding JSON:", err)
+			return nil, err
+		}
 	}
-	privKey := "ed25519:" + string(privKeyBytes)
-	// command on near nodes at near-cli-js (KeyPath for miner_key.json)
-	order := exec.Command(req.NearPath, "extensions", "create-challenge-rsa", req.AccountId, "use-file", req.KeyPath, "without-init-call", "network-config", "custom", "sign-with-plaintext-private-key", "--signer-public-key", pubKey, "--signer-private-key", privKey, "display")
+	/* miner signature: command on near nodes at utility-cli-rs (KeyPath for miner_key.json) */
+	order := exec.Command(req.NearPath, "extensions", "create-challenge-rsa", req.AccountId, "use-file", req.KeyPath, "without-init-call", "network-config", "custom", "sign-with-plaintext-private-key", "--signer-public-key", pubKey, "--signer-private-key", privKey, "send")
 	output, err := order.CombinedOutput()
 	fmt.Println(string(output))
 	//if err != nil {
 	//	fmt.Println("Error executing command:", err)
 	//	return nil, err
 	//}
-	// get signature
-	//re := regexp.MustCompile(`Signed transaction \(serialized as base64\):\s*(.+)`)
-	//txhash, err := connect.SendTransactionAsync(ctx, signature)
-	//if err != nil {
-	//	return &rpc.ClaimChipComputationReply{}, err
-	//}
-
 	// get error
 	geterror := regexp.MustCompile(`Error:\s*(.+)`)
 	matches := geterror.FindStringSubmatch(string(output))
@@ -320,6 +355,9 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	// get tx id
 	re := regexp.MustCompile(`Transaction ID:\s*(.+)`)
 	matches = re.FindStringSubmatch(string(output))
+	if len(matches) == 0 {
+		return nil, errors.New("transaction failed")
+	}
 	// 提取signature字段的值
 	txhash := matches[1]
 	fmt.Println("tx id:", txhash)
@@ -362,22 +400,34 @@ func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerC
 	}
 
 	res := gjson.Get(string(gzipBytes), "result").String()
+	total := gjson.Get(res, "total_power").String()
+	num := new(big.Float)
+	num.SetString(total)
+	divisor := new(big.Int)
+	divisor.SetString("1000000000000", 10) // = 1e12
+	amount := new(big.Float).Quo(num, new(big.Float).SetInt(divisor))
+	amountString := amount.Text('f', 1)
 	chipLists := gjson.Get(res, "chips").Array()
 
 	chips := make([]*rpc.ChipDetails, 0)
 	for _, item := range chipLists {
+		var decodedPublicKey []byte
+		decodedPublicKey, err = base64.StdEncoding.DecodeString(gjson.Get(item.String(), "public_key").String())
+		if err != nil {
+			fmt.Println("decode base64 pubkey fail:", err)
+		}
 		chips = append(chips, &rpc.ChipDetails{
-			SerialNumber:  gjson.Get(item.String(), "serial_number").String(),
+			SerialNumber:  gjson.Get(item.String(), "sn").String(),
 			BusId:         gjson.Get(item.String(), "bus_id").String(),
 			Power:         gjson.Get(item.String(), "power").Int(),
-			P2:            gjson.Get(item.String(), "p2").String(),
-			PublicKey:     gjson.Get(item.String(), "public_key").String(),
+			P2:            gjson.Get(item.String(), "p2key").String(),
+			PublicKey:     string(decodedPublicKey),
 			P2Size:        1680, //gjson.Get(item.String(), "p2_size").Int(),
 			PublicKeySize: 426,  //gjson.Get(item.String(), "public_key_size").Int(),
 		})
 	}
 
-	return &rpc.GetMinerChipsListReply{Chips: chips}, nil
+	return &rpc.GetMinerChipsListReply{Chips: chips, TotalPower: amountString}, nil
 
 }
 

@@ -120,6 +120,7 @@ message GetMinerChipsListRequest {
 }
 message GetMinerChipsListReply {
   repeated chipDetails chips = 1;
+  string totalPower = 2;
 
 }
 

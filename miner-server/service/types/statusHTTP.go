@@ -340,9 +340,9 @@ func (s *MinerStatusServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *ht
 	num := new(big.Float)
 	num.SetString(balance)
 	divisor := new(big.Int)
-	divisor.SetString("1000000000000000000000000", 10)
+	divisor.SetString("1000000000000000000000000", 10) // 1 unc = 1e24
 	amount := new(big.Float).Quo(num, new(big.Float).SetInt(divisor))
-	amountString := amount.Text('f', 9)
+	amountString := amount.Text('f', 3)
 
 	if gjson.Get(string(gzipBytes), "error").String() != "" {
 		amountString = "--"

@@ -440,6 +440,11 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "Account ID not found in params", http2.StatusBadRequest)
 			return
 		}
+		chipPubKey, ok := params["chip_pubkey"].(string)
+		if !ok {
+			http2.Error(w, "Account ID not found in params", http2.StatusBadRequest)
+			return
+		}
 		nearPath, ok := params["near_path"].(string)
 		if !ok {
 			http2.Error(w, "Near path  not found in params", http2.StatusBadRequest)
@@ -452,7 +457,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		}
 		request := &chainApi.ClaimChipComputationRequest{
 			AccountId: accountId,
-			ChipPubK:  "",
+			ChipPubK:  chipPubKey,
 			ChipP2K:   "",
 			NearPath:  nearPath,
 			KeyPath:   keyPath,

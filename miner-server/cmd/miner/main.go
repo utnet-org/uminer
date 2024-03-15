@@ -174,7 +174,7 @@ func listenBurst(ctx context.Context, address string) {
 		fmt.Println("fail to get miner chip lists RPC ", err)
 		return
 	}
-	fmt.Println("chip list:", list)
+	fmt.Println("my total chip power:", list.Chips[0].PublicKey)
 	workers := make([]string, 0)
 	for _, item := range cmd.WorkerLists {
 		workers = append(workers, item)
