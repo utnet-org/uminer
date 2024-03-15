@@ -15,6 +15,7 @@ import (
 	"time"
 	"uminer/common/log"
 	"uminer/miner-server/api/HTTP"
+	chainRPC "uminer/miner-server/api/chainApi/rpc"
 	chipRPC "uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/cmd"
 	"uminer/miner-server/data"
@@ -133,11 +134,22 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 		Addr:      strings.Split(query.Get("url"), ","),
 		SerialNum: query.Get("serialNum"),
 		BusId:     query.Get("busId"),
+		Account:   query.Get("account"),
 	}
 
 	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
+	// get claimed chips
 	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
 	defer cancel()
+	conn, err := grpc.DialContext(ctx, cmd.MinerServerIP+":9001", grpc.WithInsecure())
+	chainclient := chainRPC.NewChainServiceClient(conn)
+	var response2 *chainRPC.GetMinerChipsListReply
+	response2, err = chainclient.GetMinerChipsList(ctx, &chainRPC.GetMinerChipsListRequest{AccountId: req.Account}, grpc.WaitForReady(true))
+	if err != nil {
+		return
+	}
+	conn.Close()
+
 	workers := &HTTP.ListWorkersReply{Workers: make([]HTTP.ListCards, 0)}
 	for _, each := range req.Addr {
 
@@ -145,7 +157,9 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 		cards := make([]*HTTP.CardItem, 0)
 
 		// connect to each worker
-		conn, err := grpc.DialContext(ctx, each+":7001", grpc.WithInsecure())
+		ctx, cancel = context.WithDeadline(context.Background(), clientDeadline)
+		defer cancel()
+		conn, err = grpc.DialContext(ctx, each+":7001", grpc.WithInsecure())
 		if err != nil {
 			fmt.Println("Error connecting to RPC server:", err)
 			workers.Workers = append(workers.Workers, HTTP.ListCards{
@@ -163,10 +177,10 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 			SerialNum: req.SerialNum,
 			BusId:     req.SerialNum,
 		}
-		client := chipRPC.NewChipServiceClient(conn)
-		// Call the RPC method
+		chipclient := chipRPC.NewChipServiceClient(conn)
+		// Call the ListAllChips RPC method
 		var response *chipRPC.ListChipsReply
-		response, err = client.ListAllChips(ctx, request, grpc.WaitForReady(true))
+		response, err = chipclient.ListAllChips(ctx, request, grpc.WaitForReady(true))
 		if err != nil {
 			fmt.Println("Error query chip information:", err)
 			workers.Workers = append(workers.Workers, HTTP.ListCards{
@@ -193,38 +207,41 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 				if req.BusId != "" && chip.BusId != req.BusId {
 					continue
 				}
+				claimStatus := "unclaimed"
+				for _, item := range response2.Chips {
+					if item.SerialNumber == card.SerialNum && item.BusId == chip.BusId {
+						claimStatus = "claimed"
+					}
+				}
 				tpus = append(tpus, &HTTP.ChipItem{
 					DevId:  chip.DevId,
 					BusId:  chip.BusId,
 					Memory: chip.Memory,
 					Tpuuti: chip.Tpuuti,
 					//BoardT:  chip.BoardT,
-					ChipT:   chip.ChipT,
-					TpuP:    chip.TpuP,
-					TpuV:    chip.TpuV,
-					TpuC:    chip.TpuC,
-					Currclk: chip.Currclk,
-					Status:  chip.Status,
+					ChipT:       chip.ChipT,
+					TpuP:        chip.TpuP,
+					TpuV:        chip.TpuV,
+					TpuC:        chip.TpuC,
+					Currclk:     chip.Currclk,
+					ClaimStatus: claimStatus,
 				})
 				listLen += 1
 			}
 			// all card infos
-			// get claim status
-			claimStatus := "unclaimed"
 			// claimStatus := getStatusOfCard(card.SerialNum)
 			cards = append(cards, &HTTP.CardItem{
-				CardID:      card.CardID,
-				Name:        card.Name,
-				Mode:        card.Mode,
-				SerialNum:   card.SerialNum,
-				Atx:         card.Atx,
-				MaxP:        card.MaxP,
-				BoardP:      card.BoardP,
-				BoardT:      card.BoardT,
-				Minclk:      card.Minclk,
-				Maxclk:      card.Maxclk,
-				Chips:       tpus,
-				ClaimStatus: claimStatus,
+				CardID:    card.CardID,
+				Name:      card.Name,
+				Mode:      card.Mode,
+				SerialNum: card.SerialNum,
+				Atx:       card.Atx,
+				MaxP:      card.MaxP,
+				BoardP:    card.BoardP,
+				BoardT:    card.BoardT,
+				Minclk:    card.Minclk,
+				Maxclk:    card.Maxclk,
+				Chips:     tpus,
 			})
 		}
 

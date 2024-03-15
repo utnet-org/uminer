@@ -10,38 +10,38 @@ package HTTP
 //}
 
 type ChipItem struct {
-	DevId   string `json:"devId,omitempty"`
-	BusId   string `json:"busId,omitempty"`
-	Memory  string `json:"memory,omitempty"`
-	Tpuuti  string `json:"tpuuti,omitempty"`
-	BoardT  string `json:"boardT,omitempty"`
-	ChipT   string `json:"chipT,omitempty"`
-	TpuP    string `json:"tpuP,omitempty"`
-	TpuV    string `json:"tpuV,omitempty"`
-	TpuC    string `json:"tpuC,omitempty"`
-	Currclk string `json:"currclk,omitempty"`
-	Status  string `json:"status,omitempty"`
+	DevId       string `json:"devId,omitempty"`
+	BusId       string `json:"busId,omitempty"`
+	Memory      string `json:"memory,omitempty"`
+	Tpuuti      string `json:"tpuuti,omitempty"`
+	BoardT      string `json:"boardT,omitempty"`
+	ChipT       string `json:"chipT,omitempty"`
+	TpuP        string `json:"tpuP,omitempty"`
+	TpuV        string `json:"tpuV,omitempty"`
+	TpuC        string `json:"tpuC,omitempty"`
+	Currclk     string `json:"currclk,omitempty"`
+	ClaimStatus string `json:"claimStatus,omitempty"`
 }
 
 type CardItem struct {
-	CardID      string      `json:"cardID"`
-	Name        string      `json:"name"`
-	Mode        string      `json:"mode"`
-	SerialNum   string      `json:"serialNum"`
-	Atx         string      `json:"atx"`
-	MaxP        string      `json:"maxP"`
-	BoardP      string      `json:"boardP"`
-	BoardT      string      `json:"boardT"`
-	Minclk      string      `json:"minclk"`
-	Maxclk      string      `json:"maxclk"`
-	ClaimStatus string      `json:"claimStatus"`
-	Chips       []*ChipItem `json:"chips"`
+	CardID    string      `json:"cardID"`
+	Name      string      `json:"name"`
+	Mode      string      `json:"mode"`
+	SerialNum string      `json:"serialNum"`
+	Atx       string      `json:"atx"`
+	MaxP      string      `json:"maxP"`
+	BoardP    string      `json:"boardP"`
+	BoardT    string      `json:"boardT"`
+	Minclk    string      `json:"minclk"`
+	Maxclk    string      `json:"maxclk"`
+	Chips     []*ChipItem `json:"chips"`
 }
 
 type ListChipsRequest struct {
 	Addr      []string `json:"addr"`
 	SerialNum string   `json:"serialNum"`
 	BusId     string   `json:"busId"`
+	Account   string   `json:"account"`
 }
 type StartChipsRequest struct {
 	Addr  string `json:"addr"`

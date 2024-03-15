@@ -26,7 +26,6 @@ message ChipItem {
   string tpuV = 8;
   string tpuC = 9;
   string currclk = 10;
-  string status = 11;
 }
 
 message CardItem {
@@ -40,8 +39,7 @@ message CardItem {
   string boardT = 8;
   string minclk = 9;
   string maxclk = 10;
-  string claimStatus = 11;
-  repeated ChipItem chips = 12;
+  repeated ChipItem chips = 11;
 }
 
 
