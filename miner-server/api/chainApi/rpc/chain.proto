@@ -19,7 +19,8 @@ service ChainService {
 
 // generate the miner key pairs (challenge keys)
 message GetMinerKeysRequest {
-  string privateKey = 1;
+  string nearPath = 1;
+  string mnemonic = 2;
 }
 message GetMinerKeysReply {
   string privateKey = 1;

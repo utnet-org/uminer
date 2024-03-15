@@ -5,7 +5,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-const WorkerServerIP = "192.168.10.50"
+const WorkerServerIP = "192.168.10.56"
 const MinerServerIP = "192.168.10.56"
 const AccountId = "jackronwong"
 
@@ -13,7 +13,7 @@ const AccountId = "jackronwong"
 const NodeURL = "http://43.198.88.81:3031"
 
 // WorkerLists my worker lists
-var WorkerLists = [...]string{"192.168.10.49", "192.168.10.50", "192.168.10.51"}
+var WorkerLists = [...]string{"192.168.10.56", "192.168.10.59"}
 
 // LatestBlockHeight latest BlockHeight
 var LatestBlockH int64

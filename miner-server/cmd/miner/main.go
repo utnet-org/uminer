@@ -12,7 +12,7 @@ import (
 	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
 	"net/http"
-	"os"
+	"path/filepath"
 	"time"
 	"uminer/common/graceful"
 	"uminer/common/log"
@@ -158,12 +158,12 @@ func listenBurst(ctx context.Context, address string) {
 	}
 	chaincli := chainApi.NewChainServiceClient(conn)
 	// get keys
-	_, pubErr := os.Stat("public.pem")
-	if pubErr != nil {
+	_, fileErr := filepath.Glob("*.json")
+	if fileErr != nil {
 		fmt.Println("no pubkey file is found")
 		return
 	}
-	keys, err := chaincli.GetMinerKeys(ctx, &chainApi.GetMinerKeysRequest{PrivateKey: ""})
+	keys, err := chaincli.GetMinerKeys(ctx, &chainApi.GetMinerKeysRequest{Mnemonic: ""})
 	if err != nil {
 		fmt.Println("fail to get miner address RPC ", err)
 		return
@@ -174,7 +174,7 @@ func listenBurst(ctx context.Context, address string) {
 		fmt.Println("fail to get miner chip lists RPC ", err)
 		return
 	}
-	fmt.Println("my total chip power:", list.Chips[0].PublicKey)
+	fmt.Println("my total chip power:", list.TotalPower)
 	workers := make([]string, 0)
 	for _, item := range cmd.WorkerLists {
 		workers = append(workers, item)
@@ -182,7 +182,7 @@ func listenBurst(ctx context.Context, address string) {
 
 	// start loop
 	request := &chainApi.ChallengeComputationRequest{
-		ChallengeKey: "ed25519:" + keys.PubKey,
+		ChallengeKey: keys.PubKey,
 		Url:          workers,
 		Message:      "utility",
 		Chips:        list.Chips,

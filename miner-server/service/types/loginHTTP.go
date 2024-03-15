@@ -149,7 +149,7 @@ func (s *MinerLoginServiceHTTP) GetMinerInfoHandler(w http.ResponseWriter, r *ht
 	fmt.Println("owner is: ", ownerAddress)
 
 	finalResponse := HTTP.GetMinerIdReply{
-		MinerId: "jackronwong",
+		MinerId: ownerAddress,
 		UserId:  response.Payload.User.ID,
 	}
 	w.Header().Set("Content-Type", "application/json")

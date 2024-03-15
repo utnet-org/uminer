@@ -375,12 +375,17 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 
 	// to miner operation and chain nodes
 	case "getminerkeys":
-		accessKey, ok := params["access_key"].(string)
+		path, ok := params["near_path"].(string)
 		if !ok {
-			http2.Error(w, "Access key not found in params", http2.StatusBadRequest)
+			http2.Error(w, "command path not found in params", http2.StatusBadRequest)
 			return
 		}
-		request := &chainApi.GetMinerKeysRequest{PrivateKey: accessKey}
+		mnemonic, ok := params["mnemonic"].(string)
+		if !ok {
+			http2.Error(w, "mnemonic not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chainApi.GetMinerKeysRequest{NearPath: path, Mnemonic: mnemonic}
 		response, err := srv.ChainService.GetMinerKeys(r.Context(), request)
 		if err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)

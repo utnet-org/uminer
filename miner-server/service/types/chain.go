@@ -3,12 +3,9 @@ package types
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/btcsuite/btcutil/base58"
 	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
 	"io/ioutil"
@@ -16,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	chipRPC "uminer/miner-server/api/chipApi/rpc"
@@ -46,6 +44,12 @@ func NewChainService(conf *serverConf.Bootstrap, logger log.Logger, data *data.D
 		log:  log.NewHelper("ChainService", logger),
 		data: data,
 	}
+}
+
+type KeyData struct {
+	AccountID  string `json:"implicit_account_id"`
+	PublicKey  string `json:"public_key"`
+	PrivateKey string `json:"private_key"`
 }
 
 // UpdateChainsStatus get basic info of blockchain
@@ -137,52 +141,61 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 // GetMinerKeys miner generate miner pri/pubK pairs(if no private ket is sent, it will generate automatically)
 func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRequest) (*rpc.GetMinerKeysReply, error) {
 	// first check if there is stored key pairs
-	_, pubErr := os.Stat("public.pem")
-	_, privErr := os.Stat("private.pem")
+	file, fileErr := filepath.Glob("*.json")
 
-	var mnemonic, privKey, pubKey string
-	if pubErr == nil && privErr == nil && req.PrivateKey == "" {
+	var address, pubKey string
+	if fileErr == nil && req.Mnemonic == "" {
 		// Read the key files
-		pubKeyBytes, err := ioutil.ReadFile("public.pem")
+		fileContent, err := os.Open(file[0])
 		if err != nil {
 			return nil, err
 		}
-		privKeyBytes, err := ioutil.ReadFile("private.pem")
+		var keyData KeyData
+		err = json.NewDecoder(fileContent).Decode(&keyData)
 		if err != nil {
-			return nil, err
+			fmt.Println("Error decoding JSON:", err)
+			if err != nil {
+				return nil, err
+			}
 		}
-		pubKey = string(pubKeyBytes)
-		privKey = string(privKeyBytes)
+		pubKey = keyData.PublicKey
+		address = keyData.AccountID
 	} else {
-		// Generate new key pair
-		mnemonic, pubKey, privKey = util.ED25519AddressGeneration(req.PrivateKey)
-		// Save the newly generated key pair
-		err := ioutil.WriteFile("mnemonic.pem", []byte(mnemonic), 0644)
+		//mnemonic, pubKey, privKey = util.ED25519AddressGeneration(req.PrivateKey)
+
+		// Generate new key pair using unc-rs
+		err := os.Setenv("unc", req.NearPath)
 		if err != nil {
+			fmt.Println("设置环境变量失败:", err)
 			return nil, err
 		}
-		err = ioutil.WriteFile("public.pem", []byte(pubKey), 0644)
-		if err != nil {
-			return nil, err
-		}
-		err = ioutil.WriteFile("private.pem", []byte(privKey), 0644)
-		if err != nil {
-			return nil, err
+		cmdString := fmt.Sprintf("%s account create-account fund-later use-seed-phrase %s --seed-phrase-hd-path 'm/44'\\''/397'\\''/0'\\' save-to-folder .", os.Getenv("unc"), req.Mnemonic)
+		fmt.Println(cmdString)
+		parts := strings.Fields(cmdString)
+		order := exec.Command(parts[0], parts[1:]...)
+		output, err := order.CombinedOutput()
+		fmt.Println(string(output))
+		// get error
+		geterror := regexp.MustCompile(`Error:\s*(.+)`)
+		matches := geterror.FindStringSubmatch(string(output))
+		if len(matches) != 0 {
+			errMsg := strings.Join(matches, ", ")
+			return nil, errors.New(errMsg)
 		}
 	}
+
 	/* obtain pubKey and fill it into the ' "challenge_key": "ed25519..." ' of miner_key.json */
 
-	publicKeyBytes := base58.Decode(pubKey)
-	if len(publicKeyBytes) != 32 {
-		return nil, errors.New("Invalid public key length")
-	}
-	// 将Ed25519公钥转换为地址
-	publicKeyHex := hex.EncodeToString(publicKeyBytes)
+	//publicKeyBytes := base58.Decode(pubKey)
+	//if len(publicKeyBytes) != 32 {
+	//	return nil, errors.New("Invalid public key length")
+	//}
+	//publicKeyHex := hex.EncodeToString(publicKeyBytes)
 
 	return &rpc.GetMinerKeysReply{
-		PrivateKey: "privKey",
+		PrivateKey: "",
 		PubKey:     pubKey,
-		Address:    publicKeyHex,
+		Address:    address,
 	}, nil
 
 }
@@ -191,11 +204,30 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeRequest) (*rpc.ClaimStakeReply, error) {
 
 	// check if access key exist
-	pubKeyBytes, err := ioutil.ReadFile("public.pem")
+	//pubKeyBytes, err := ioutil.ReadFile("public.pem")
+	//if err != nil {
+	//	return nil, err
+	//}
+	//pubKey := "ed25519:" + string(pubKeyBytes)
+
+	file, fileErr := filepath.Glob("*.json")
+	if fileErr != nil {
+		return nil, fileErr
+	}
+	fileContent, err := os.Open(file[0])
 	if err != nil {
 		return nil, err
 	}
-	pubKey := "ed25519:" + string(pubKeyBytes)
+	var keyData KeyData
+	err = json.NewDecoder(fileContent).Decode(&keyData)
+	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		if err != nil {
+			return nil, err
+		}
+	}
+	pubKey := keyData.PublicKey
+
 	jsonData := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"id":      "dontcare",
@@ -250,25 +282,38 @@ func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeReques
 // ClaimChipComputation claim server/chips to the chain, binding miner address, obtain container cloud connection
 func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimChipComputationRequest) (*rpc.ClaimChipComputationReply, error) {
 
-	//bmchips := make([]MinerChip, 0)
-	//for _, item := range req.ChipSets {
-	//	bmchips = append(bmchips, MinerChip{
-	//		SN:    item.SerialNumber,
-	//		BusID: item.BusID,
-	//	})
+	//pubKeyBytes, err := ioutil.ReadFile("public.pem")
+	//if err != nil {
+	//	return nil, err
 	//}
+	//pubKey := "ed25519:" + string(pubKeyBytes)
+	//privKeyBytes, err := ioutil.ReadFile("private.pem")
+	//if err != nil {
+	//	return nil, err
+	//}
+	//privKey := "ed25519:" + string(privKeyBytes)
+
+	// get keys
+	file, fileErr := filepath.Glob("*.json")
+	if fileErr != nil {
+		return nil, fileErr
+	}
+	fileContent, err := os.Open(file[0])
+	if err != nil {
+		return nil, err
+	}
+	var keyData KeyData
+	err = json.NewDecoder(fileContent).Decode(&keyData)
+	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		if err != nil {
+			return nil, err
+		}
+	}
+	pubKey := keyData.PublicKey
+	privKey := keyData.PrivateKey
 
 	// check if miner account exist
-	pubKeyBytes, err := ioutil.ReadFile("public.pem")
-	if err != nil {
-		return nil, err
-	}
-	pubKey := "ed25519:" + string(pubKeyBytes)
-	privKeyBytes, err := ioutil.ReadFile("private.pem")
-	if err != nil {
-		return nil, err
-	}
-	privKey := "ed25519:" + string(privKeyBytes)
 	jsonData := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"id":      "dontcare",
@@ -411,17 +456,17 @@ func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerC
 
 	chips := make([]*rpc.ChipDetails, 0)
 	for _, item := range chipLists {
-		var decodedPublicKey []byte
-		decodedPublicKey, err = base64.StdEncoding.DecodeString(gjson.Get(item.String(), "public_key").String())
-		if err != nil {
-			fmt.Println("decode base64 pubkey fail:", err)
-		}
+		//var decodedPublicKey []byte
+		//decodedPublicKey, err = base64.StdEncoding.DecodeString(gjson.Get(item.String(), "public_key").String())
+		//if err != nil {
+		//	fmt.Println("decode base64 pubkey fail:", err)
+		//}
 		chips = append(chips, &rpc.ChipDetails{
 			SerialNumber:  gjson.Get(item.String(), "sn").String(),
 			BusId:         gjson.Get(item.String(), "bus_id").String(),
 			Power:         gjson.Get(item.String(), "power").Int(),
 			P2:            gjson.Get(item.String(), "p2key").String(),
-			PublicKey:     string(decodedPublicKey),
+			PublicKey:     gjson.Get(item.String(), "public_key").String(),
 			P2Size:        1680, //gjson.Get(item.String(), "p2_size").Int(),
 			PublicKeySize: 426,  //gjson.Get(item.String(), "public_key_size").Int(),
 		})
