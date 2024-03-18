@@ -208,9 +208,11 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 					continue
 				}
 				claimStatus := "unclaimed"
-				for _, item := range response2.Chips {
-					if item.SerialNumber == card.SerialNum && item.BusId == chip.BusId {
-						claimStatus = "claimed"
+				if response2 != nil {
+					for _, item := range response2.Chips {
+						if item.SerialNumber == card.SerialNum && item.BusId == chip.BusId {
+							claimStatus = "claimed"
+						}
 					}
 				}
 				tpus = append(tpus, &HTTP.ChipItem{

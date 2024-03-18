@@ -53,7 +53,7 @@ func BurnChips(SerialNumber string, busId string, chipId int) bool {
 
 }
 
-// GenChipsKeyPairs is
+// GenChipsKeyPairs is generating the key pairs from PKA after burning and restarting the machine, keys are stored in files
 func GenChipsKeyPairs(SerialNumber string, busId string, chipId int) bool {
 	res := C.chipGenKeyPairs(C.int(chipId))
 	if res == 1 {
@@ -74,7 +74,7 @@ func GenChipsKeyPairs(SerialNumber string, busId string, chipId int) bool {
 
 }
 
-// ReadChipKeyPairs is
+// ReadChipKeyPairs is to read the keys from the stored files
 func ReadChipKeyPairs(SerialNumber string, busId string, chipId int) ChipKeyPairs {
 	res := C.readKeyPairs(C.int(chipId))
 
@@ -97,3 +97,29 @@ func ReadChipKeyPairs(SerialNumber string, busId string, chipId int) ChipKeyPair
 	return keyPairs
 
 }
+
+// the fake function for operating at miner server
+
+//func StartChips(chipId int, fipBin string, rambootRootfs string) bool {
+//	return false
+//
+//}
+//func BurnChips(SerialNumber string, busId string, chipId int) bool {
+//	return false
+//
+//}
+//func GenChipsKeyPairs(SerialNumber string, busId string, chipId int) bool {
+//	return false
+//
+//}
+//func ReadChipKeyPairs(SerialNumber string, busId string, chipId int) ChipKeyPairs {
+//	keyPairs := ChipKeyPairs{
+//		SerialNumber: SerialNumber,
+//		BusId:        busId,
+//		P2:           "P2",
+//		P2Size:       int(1),
+//		PubKey:       "PubKey",
+//		PubKeySize:   int(1),
+//	}
+//	return keyPairs
+//}

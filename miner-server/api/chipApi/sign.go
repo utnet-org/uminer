@@ -21,6 +21,7 @@ type ChipSign struct {
 	Status    bool
 }
 
+// SignMinerChips is to sign message at the chip with p2
 func SignMinerChips(devId int, p2 string, pubKey string, p2Size int, pubKeySize int, message string) ChipSign {
 
 	cP2 := C.CString(p2)
@@ -39,3 +40,12 @@ func SignMinerChips(devId int, p2 string, pubKey string, p2Size int, pubKeySize 
 		Status:    true,
 	}
 }
+
+// the fake function for operating at miner server
+
+//func SignMinerChips(devId int, p2 string, pubKey string, p2Size int, pubKeySize int, message string) ChipSign {
+//	return ChipSign{
+//		Signature: "signature",
+//		Status:    true,
+//	}
+//}
