@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
+	"github.com/tyler-smith/go-bip39"
 	"google.golang.org/grpc"
 	"io/ioutil"
 	"math/big"
@@ -144,7 +145,7 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 	file, fileErr := filepath.Glob("*.json")
 
 	var address, pubKey string
-	if fileErr == nil && req.Mnemonic == "" {
+	if (fileErr == nil && len(file) != 0) && (req.Mnemonic == "" || len(strings.Fields(req.Mnemonic)) != 12) {
 		// Read the key files
 		fileContent, err := os.Open(file[0])
 		if err != nil {
@@ -164,15 +165,27 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 		//mnemonic, pubKey, privKey = util.ED25519AddressGeneration(req.PrivateKey)
 
 		// Generate new key pair using unc-rs
-		err := os.Setenv("unc", req.NearPath)
+		entropy, err := bip39.NewEntropy(128)
+		if err != nil {
+			return nil, err
+		}
+		mnemonic, _ := bip39.NewMnemonic(entropy)
+		if req.Mnemonic != "" && len(strings.Fields(req.Mnemonic)) == 12 {
+			mnemonic = req.Mnemonic
+		}
+		err = os.Setenv("unc", req.NearPath)
 		if err != nil {
 			fmt.Println("设置环境变量失败:", err)
 			return nil, err
 		}
-		cmdString := fmt.Sprintf("%s account create-account fund-later use-seed-phrase %s --seed-phrase-hd-path 'm/44'\\''/397'\\''/0'\\' save-to-folder .", os.Getenv("unc"), req.Mnemonic)
-		fmt.Println(cmdString)
-		parts := strings.Fields(cmdString)
-		order := exec.Command(parts[0], parts[1:]...)
+		command := os.Getenv("unc")
+		args := []string{
+			"account", "create-account", "fund-later", "use-seed-phrase", mnemonic,
+			"--seed-phrase-hd-path", "m/44'/397'/0'",
+			"save-to-folder", ".",
+		}
+		// execute the command
+		order := exec.Command(command, args...)
 		output, err := order.CombinedOutput()
 		fmt.Println(string(output))
 		// get error
@@ -182,6 +195,22 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 			errMsg := strings.Join(matches, ", ")
 			return nil, errors.New(errMsg)
 		}
+		// Read the key files
+		file, fileErr = filepath.Glob("*.json")
+		fileContent, err := os.Open(file[0])
+		if err != nil {
+			return nil, err
+		}
+		var keyData KeyData
+		err = json.NewDecoder(fileContent).Decode(&keyData)
+		if err != nil {
+			fmt.Println("Error decoding JSON:", err)
+			if err != nil {
+				return nil, err
+			}
+		}
+		pubKey = keyData.PublicKey
+		address = keyData.AccountID
 	}
 
 	/* obtain pubKey and fill it into the ' "challenge_key": "ed25519..." ' of miner_key.json */

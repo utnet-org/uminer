@@ -158,8 +158,8 @@ func listenBurst(ctx context.Context, address string) {
 	}
 	chaincli := chainApi.NewChainServiceClient(conn)
 	// get keys
-	_, fileErr := filepath.Glob("*.json")
-	if fileErr != nil {
+	file, fileErr := filepath.Glob("*.json")
+	if fileErr != nil || len(file) == 0 {
 		fmt.Println("no pubkey file is found")
 		return
 	}
