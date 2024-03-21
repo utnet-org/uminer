@@ -50,15 +50,16 @@ func (s *ContainerServiceHTTP) GetRentalOrderListHandler(w http.ResponseWriter, 
 	rental := make([]HTTP.RentalOrderDetails, 0)
 	rentallist := make([]HTTP.RentalOrderDetails, 3)
 	for i, _ := range rentallist {
+		// mock data
 		rental = append(rental, HTTP.RentalOrderDetails{
 			ID:         strconv.FormatInt(int64(i), 10),
 			HASH:       util.RandomString(32),
 			MinerAddr:  Addr,
 			RentalAddr: util.RandomString(11),
 			Resource:   "1684x",
-			Power:      "10",
-			StartTime:  time.Now().Format("2006-01-02 15:04"),
-			EndTime:    time.Now().Add(180 * 24 * time.Hour).Format("2006-01-02 15:04"),
+			Power:      strconv.FormatInt(int64((i+2)*10), 10),
+			StartTime:  time.Now().Add(time.Duration(-i) * 24 * time.Hour).Format("2006-01-02 15:04"),
+			EndTime:    time.Now().Add(time.Duration(180-i) * 24 * time.Hour).Format("2006-01-02 15:04"),
 		})
 	}
 	response := HTTP.GetRentalOrderListReply{

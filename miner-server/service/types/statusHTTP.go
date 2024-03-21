@@ -137,9 +137,8 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 		Account:   query.Get("account"),
 	}
 
-	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
 	// get claimed chips
-	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(6*time.Second)))
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, cmd.MinerServerIP+":9001", grpc.WithInsecure())
 	chainclient := chainRPC.NewChainServiceClient(conn)
@@ -157,11 +156,10 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 		cards := make([]*HTTP.CardItem, 0)
 
 		// connect to each worker
-		ctx, cancel = context.WithDeadline(context.Background(), clientDeadline)
-		defer cancel()
-		conn, err = grpc.DialContext(ctx, each+":7001", grpc.WithInsecure())
+		ctx2, cancel2 := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(6*time.Second)))
+		conn, err = grpc.DialContext(ctx2, each+":7001", grpc.WithInsecure())
 		if err != nil {
-			fmt.Println("Error connecting to RPC server:", err)
+			fmt.Println("Error connecting to RPC server", each, ":", err)
 			workers.Workers = append(workers.Workers, HTTP.ListCards{
 				TotalSize: 0,
 				Addr:      each,
@@ -169,6 +167,7 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 				Status:    "Disconnected",
 			})
 			workers.NumOfWorkers += 1
+			cancel2()
 			continue
 		}
 		// Prepare the request
@@ -180,7 +179,7 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 		chipclient := chipRPC.NewChipServiceClient(conn)
 		// Call the ListAllChips RPC method
 		var response *chipRPC.ListChipsReply
-		response, err = chipclient.ListAllChips(ctx, request, grpc.WaitForReady(true))
+		response, err = chipclient.ListAllChips(ctx2, request, grpc.WaitForReady(true))
 		if err != nil {
 			fmt.Println("Error query chip information:", err)
 			workers.Workers = append(workers.Workers, HTTP.ListCards{
@@ -190,6 +189,7 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 				Status:    "Disconnected",
 			})
 			workers.NumOfWorkers += 1
+			cancel2()
 			continue
 		}
 
@@ -255,6 +255,7 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 		})
 		workers.NumOfWorkers += 1
 
+		defer cancel2()
 	}
 
 	//if err != nil {
