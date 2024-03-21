@@ -339,16 +339,6 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "founder not found in params", http2.StatusBadRequest)
 			return
 		}
-		founderPrivate, ok := params["founder_private"].(string)
-		if !ok {
-			http2.Error(w, "founder private key not found in params", http2.StatusBadRequest)
-			return
-		}
-		founderPub, ok := params["founder_public"].(string)
-		if !ok {
-			http2.Error(w, "founder public key not found in params", http2.StatusBadRequest)
-			return
-		}
 		request := &chainApi.ReportChipRequest{
 			//SerialNumber:  serial,
 			//BusId:         busId,
@@ -360,8 +350,6 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			NearPath:     nearPath,
 			ChipFilePath: keyPath,
 			Founder:      founder,
-			FounderPubK:  founderPub,
-			FounderPrivK: founderPrivate,
 		}
 		response, err := srv.ChainService.ReportChip(r.Context(), request)
 		if err != nil {

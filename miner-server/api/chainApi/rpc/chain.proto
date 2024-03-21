@@ -63,9 +63,9 @@ message ReportChipRequest{
 //  string publicKeySize = 7;
   string nearPath = 1;
   string chipFilePath = 2;
-  string founderPrivK = 3;
-  string founderPubK = 4;
-  string founder = 5;
+  string founder = 3;
+//  string founderPrivK = 4;
+//  string founderPubK = 5;
 }
 message ReportChipReply{
   string txHash = 1;

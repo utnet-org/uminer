@@ -107,8 +107,23 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 		fmt.Println("设置环境变量失败:", err)
 		return nil, err
 	}
-	cmdString := os.Getenv("unc") + " extensions register-rsa-keys unc use-file " + req.ChipFilePath + " with-init-call network-config custom sign-with-plaintext-private-key --signer-public-key " + req.FounderPubK +
-		" --signer-private-key " + req.FounderPrivK + " send"
+	// read founder keys
+	type UNCKeyPair struct {
+		FounderPubK  string `json:"public_key"`
+		FounderPrivK string `json:"private_key"`
+	}
+	js, err := ioutil.ReadFile("../jsonfile/unc.json")
+	if err != nil {
+		fmt.Println("Failed to read file:", err)
+		return nil, err
+	}
+	var keyPair UNCKeyPair
+	if err := json.Unmarshal(js, &keyPair); err != nil {
+		fmt.Println("Failed to unmarshal JSON:", err)
+		return nil, err
+	}
+	cmdString := os.Getenv("unc") + " extensions register-rsa-keys unc use-file " + req.ChipFilePath + " with-init-call network-config custom sign-with-plaintext-private-key --signer-public-key " + keyPair.FounderPubK +
+		" --signer-private-key " + keyPair.FounderPrivK + " send"
 	parts := strings.Fields(cmdString)
 	order := exec.Command(parts[0], parts[1:]...)
 	output, err := order.CombinedOutput()
@@ -519,7 +534,10 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 	// call rpc of every worker and sign the chips
 	for _, each := range req.Url {
 
-		conn, err := grpc.DialContext(ctx, each+":7001", grpc.WithInsecure())
+		clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
+		ctx1, cancel := context.WithDeadline(context.Background(), clientDeadline)
+		defer cancel()
+		conn, err := grpc.DialContext(ctx1, each+":7001", grpc.WithInsecure())
 		if err != nil {
 			fmt.Println("Error connecting to RPC server:", err)
 			continue
@@ -532,14 +550,17 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 		client := chipRPC.NewChipServiceClient(conn)
 		// list all chips
 		var response *chipRPC.ListChipsReply
-		response, err = client.ListAllChips(ctx, request, grpc.WaitForReady(true))
+		response, err = client.ListAllChips(ctx1, request, grpc.WaitForReady(true))
 		if err != nil {
 			fmt.Println("Error query chip information:", err)
 			continue
 		}
 
 		// begin to search
-		cardLists := response.Cards
+		cardLists := make([]*chipRPC.CardItem, 0)
+		if response != nil {
+			cardLists = response.Cards
+		}
 		conn.Close()
 		for _, card := range cardLists {
 			devId := -1

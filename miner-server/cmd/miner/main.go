@@ -206,9 +206,9 @@ func listenBurst(ctx context.Context, address string) {
 		}
 		jsonStr, _ := json.Marshal(jsonData)
 		clientDeadline := time.Now().Add(time.Duration(4 * time.Second))
-		ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+		ctx2, cancel := context.WithDeadline(context.Background(), clientDeadline)
 		defer cancel()
-		r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+		r, err := http.NewRequestWithContext(ctx2, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
 		if err != nil {
 			fmt.Println("Error connecting to query latest blockHash RPC: ", err.Error())
 			continue
@@ -242,7 +242,7 @@ func listenBurst(ctx context.Context, address string) {
 			},
 		}
 		jsonStr, _ = json.Marshal(jsonData)
-		r, err = http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+		r, err = http.NewRequestWithContext(ctx2, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
 		if err != nil {
 			fmt.Println("Error connecting to query miner provider RPC: ", err.Error())
 			continue
