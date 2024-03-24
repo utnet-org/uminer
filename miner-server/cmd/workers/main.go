@@ -21,30 +21,31 @@ import (
 
 func main() {
 
+	// activate worker server
 	httpServer := &serverConf.Server_HTTP{
 		Network: "tcp",
 		Addr:    cmd.WorkerServerIP + ":6001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
-	// 创建 Server_GRPC 对象并设置相关字段
 	grpcServer := &serverConf.Server_GRPC{
 		Network: "tcp",
 		Addr:    cmd.WorkerServerIP + ":7001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
-	// 创建 Bootstrap 配置对象
+	// build Bootstrap configuration
 	bootstrap := &serverConf.Bootstrap{
 		App: &serverConf.App{
-			// 设置 App 相关字段
+			// set App
 		},
 		Server: &serverConf.Server{
+			// set Server
 			Http: httpServer,
 			Grpc: grpcServer,
 		},
 		Data: &serverConf.Data{
-			// 设置 Data 相关字段
+			// set Data
 		},
 		Storage: []byte("my_storage_data"), // 设置 Storage 字段
 	}
@@ -61,7 +62,7 @@ func main() {
 		panic(err)
 	}
 
-	// 协程优雅退出
+	// exit gently
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
