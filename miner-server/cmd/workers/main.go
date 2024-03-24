@@ -81,8 +81,9 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger) (
 	}
 
 	grpcServer := server.NewWorkerGRPCServer(bc.Server, newService)
-	//reflection.Register(grpcServer.Server)
+
 	httpServer := server.NewHTTPServer(bc.Server, newService)
+
 	app := newApp(ctx, logger, httpServer, grpcServer)
 
 	return app, nil, nil

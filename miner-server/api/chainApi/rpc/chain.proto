@@ -9,7 +9,7 @@ service ChainService {
   rpc UpdateChainsStatus (ReportChainsStatusRequest) returns (ReportChainsStatusReply);
 //  rpc UpdateMinerStatus (ReportMinerStatusRequest) returns (ReportMinerStatusReply);
   rpc ReportChip (ReportChipRequest) returns (ReportChipReply);
-  rpc GetMinerKeys (GetMinerKeysRequest) returns (GetMinerKeysReply);
+  rpc GetMinerAccountKeys (GetMinerAccountKeysRequest) returns (GetMinerAccountKeysReply);
   rpc ClaimStake (ClaimStakeRequest) returns (ClaimStakeReply);
   rpc ClaimChipComputation (ClaimChipComputationRequest) returns (ClaimChipComputationReply);
   rpc GetMinerChipsList (GetMinerChipsListRequest) returns (GetMinerChipsListReply);
@@ -18,14 +18,13 @@ service ChainService {
 }
 
 // generate the miner key pairs (challenge keys)
-message GetMinerKeysRequest {
-  string nearPath = 1;
+message GetMinerAccountKeysRequest {
+  string nodePath = 1;
   string mnemonic = 2;
 }
-message GetMinerKeysReply {
-  string privateKey = 1;
-  string pubKey = 2;
-  string address = 3;
+message GetMinerAccountKeysReply {
+  string pubKey = 1;
+  string address = 2;
 }
 
 // chain information
@@ -61,11 +60,9 @@ message ReportChipRequest{
 //  string publicKey = 5;
 //  string p2Size = 6;
 //  string publicKeySize = 7;
-  string nearPath = 1;
+  string nodePath = 1;
   string chipFilePath = 2;
   string founder = 3;
-//  string founderPrivK = 4;
-//  string founderPubK = 5;
 }
 message ReportChipReply{
   string txHash = 1;
@@ -75,7 +72,7 @@ message ReportChipReply{
 message ClaimStakeRequest {
   string accountId = 1;
   string amount = 2;
-  string nearPath = 3;
+  string nodePath = 3;
   string keyPath = 4;
 }
 message ClaimStakeReply {
@@ -89,32 +86,24 @@ message chipSets {
   string busID = 2;
 }
 message ClaimChipComputationRequest {
-//  string address = 1;
-//  string serverIP = 2;
-//  repeated chipSets chipSets = 3;
-//  int64 power = 4;
   string accountId = 1;
   string chipPubK = 2;
-  string chipP2K = 3;
-  string nearPath = 4;
-  string keyPath = 5;
+  string nodePath = 3;
+  string keyPath = 4;
 }
 message ClaimChipComputationReply {
   string txHash = 1;
-//  string containerId = 2;
-//  repeated int64 rangeSet = 3;
-
 }
 
 // miner query their own chips
 message chipDetails {
   string serialNumber  = 1;
   string busId = 2;
-  int64 power = 3;
+  int64  power = 3;
   string p2 = 4;
   string publicKey = 5;
-  int64 p2Size = 6;
-  int64 publicKeySize = 7;
+  int64  p2Size = 6;
+  int64  publicKeySize = 7;
 }
 message GetMinerChipsListRequest {
   string accountId = 1;
@@ -128,7 +117,6 @@ message GetMinerChipsListReply {
 // challenge miner when mining
 message ChallengeComputationRequest {
   string challengeKey = 1;
-//  string blockHash = 2;
   repeated string url = 2;
   string message = 3;
   repeated chipDetails chips = 4;
@@ -139,7 +127,6 @@ message signatureSets {
   string signature = 3;
 }
 message ChallengeComputationReply {
-//  string   containerID = 1;
   repeated signatureSets signatureSets = 1;
   string   txHash = 2;
 }

@@ -102,7 +102,7 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 	//arg := `{"serial":` + req.SerialNumber + `,"busid":` + req.BusId + `, "power":` + req.Power + `,"p2key":` + req.P2 + `,"pubkey":` + req.PublicKey + `,"p2keysize":` + req.P2Size + `,"pubkeysize":` + req.PublicKeySize + `}`
 
 	// command on near nodes at utility-cli-js  (KeyPath for chips.json)
-	err := os.Setenv("unc", req.NearPath)
+	err := os.Setenv("unc", req.NodePath)
 	if err != nil {
 		fmt.Println("设置环境变量失败:", err)
 		return nil, err
@@ -154,8 +154,8 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 
 }
 
-// GetMinerKeys miner generate miner pri/pubK pairs(if no private ket is sent, it will generate automatically)
-func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRequest) (*rpc.GetMinerKeysReply, error) {
+// GetMinerAccountKeys miner generate miner pri/pubK pairs with its account address (if no private ket is sent, it will generate automatically)
+func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMinerAccountKeysRequest) (*rpc.GetMinerAccountKeysReply, error) {
 	// first check if there is stored key pairs
 	file, fileErr := filepath.Glob("*.json")
 
@@ -188,7 +188,7 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 		if req.Mnemonic != "" && len(strings.Fields(req.Mnemonic)) == 12 {
 			mnemonic = req.Mnemonic
 		}
-		err = os.Setenv("unc", req.NearPath)
+		err = os.Setenv("unc", req.NodePath)
 		if err != nil {
 			fmt.Println("设置环境变量失败:", err)
 			return nil, err
@@ -236,10 +236,9 @@ func (s *ChainService) GetMinerKeys(ctx context.Context, req *rpc.GetMinerKeysRe
 	//}
 	//publicKeyHex := hex.EncodeToString(publicKeyBytes)
 
-	return &rpc.GetMinerKeysReply{
-		PrivateKey: "",
-		PubKey:     pubKey,
-		Address:    address,
+	return &rpc.GetMinerAccountKeysReply{
+		PubKey:  pubKey,
+		Address: address,
 	}, nil
 
 }
@@ -309,7 +308,7 @@ func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeReques
 	}
 
 	// command on near nodes at near-cli-js  (KeyPath for validator_key.json)
-	order := exec.Command(req.NearPath, "stake", req.AccountId, pubKey, req.Amount, "--keyPath", req.KeyPath)
+	order := exec.Command(req.NodePath, "stake", req.AccountId, pubKey, req.Amount, "--keyPath", req.KeyPath)
 	output, err := order.CombinedOutput()
 	if err != nil {
 		fmt.Println("Error executing command:", err)
@@ -325,17 +324,6 @@ func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeReques
 
 // ClaimChipComputation claim server/chips to the chain, binding miner address, obtain container cloud connection
 func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimChipComputationRequest) (*rpc.ClaimChipComputationReply, error) {
-
-	//pubKeyBytes, err := ioutil.ReadFile("public.pem")
-	//if err != nil {
-	//	return nil, err
-	//}
-	//pubKey := "ed25519:" + string(pubKeyBytes)
-	//privKeyBytes, err := ioutil.ReadFile("private.pem")
-	//if err != nil {
-	//	return nil, err
-	//}
-	//privKey := "ed25519:" + string(privKeyBytes)
 
 	// get keys
 	file, fileErr := filepath.Glob("*.json")
@@ -426,7 +414,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 		}
 	}
 	/* miner signature: command on near nodes at utility-cli-rs (KeyPath for miner_key.json) */
-	order := exec.Command(req.NearPath, "extensions", "create-challenge-rsa", req.AccountId, "use-file", req.KeyPath, "without-init-call", "network-config", "custom", "sign-with-plaintext-private-key", "--signer-public-key", pubKey, "--signer-private-key", privKey, "send")
+	order := exec.Command(req.NodePath, "extensions", "create-challenge-rsa", req.AccountId, "use-file", req.KeyPath, "without-init-call", "network-config", "custom", "sign-with-plaintext-private-key", "--signer-public-key", pubKey, "--signer-private-key", privKey, "send")
 	output, err := order.CombinedOutput()
 	fmt.Println(string(output))
 	//if err != nil {

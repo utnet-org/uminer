@@ -4,7 +4,7 @@
    sudo rmmod bmsophon (clear previous version if not compatible)\
    sudo bmnnsdk2_bm1684_v2.7.0_20220810patched/bmnnsdk2-bm1684_v2.7.0/scripts/remove_driver_pcie.sh\
    sudo bmnnsdk2_bm1684_v2.7.0_20220810patched/bmnnsdk2-bm1684_v2.7.0/scripts/install_driver_pcie.sh
-2. install_driver for 1684x (0.5.0)\
+2. install_driver for 1684x (0.5.0) (the install package is provided)\
    sudo rmmod bmsophon, sudo apt purge sophon-rpc(clear previous version if not compatible)\
    sudo apt install dkms libncurses5\
    sudo dpkg -i sc7_driver/libsophon/sophon-libsophon-dev_0.5.0_amd64.deb

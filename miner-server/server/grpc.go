@@ -110,7 +110,7 @@ func MiddlewareCors() middleware.Middleware {
 	}
 }
 
-// HandleJSONRPCRequest json gprc
+// HandleJSONRPCRequest json rpc
 func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.Request) {
 
 	body, err := ioutil.ReadAll(r.Body)
@@ -136,10 +136,10 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		http2.Error(w, "Params not found in request", http2.StatusBadRequest)
 		return
 	}
-	// method
+	// all available rpc method
 	switch method {
 
-	// to worker chips operation
+	// miner calls workers to operate chips
 	case "startchips":
 		if !ok {
 			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
@@ -186,7 +186,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
-	case "keysgen":
+	case "keysgeneration":
 		devId, ok := params["dev_id"].(string)
 		if !ok {
 			http2.Error(w, "dev id not found in params", http2.StatusBadRequest)
@@ -207,7 +207,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
-	case "keysread":
+	case "keysquery":
 		serial, ok := params["serial"].(string)
 		if !ok {
 			http2.Error(w, "serial number not found in params", http2.StatusBadRequest)
@@ -283,50 +283,15 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
 
-	// foundation of utility
+	// report raw chips by foundation of utility
 	case "reportchip":
 		if !ok {
 			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
 			return
 		}
-		//serial, ok := params["serial"].(string)
-		//if !ok {
-		//	http2.Error(w, "serial number not found in params", http2.StatusBadRequest)
-		//	return
-		//}
-		//busId, ok := params["bus_id"].(string)
-		//if !ok {
-		//	http2.Error(w, "bus id not found in params", http2.StatusBadRequest)
-		//	return
-		//}
-		//power, ok := params["power"].(string)
-		//if !ok {
-		//	http2.Error(w, "power not found in params", http2.StatusBadRequest)
-		//	return
-		//}
-		//p2Key, ok := params["p2key"].(string)
-		//if !ok {
-		//	http2.Error(w, "p2key not found in params", http2.StatusBadRequest)
-		//	return
-		//}
-		//pubKey, ok := params["pubkey"].(string)
-		//if !ok {
-		//	http2.Error(w, "pubkey not found in params", http2.StatusBadRequest)
-		//	return
-		//}
-		//p2KeySize, ok := params["p2key_size"].(string)
-		//if !ok {
-		//	http2.Error(w, "p2key size not found in params", http2.StatusBadRequest)
-		//	return
-		//}
-		//pubKeySize, ok := params["pubkey_size"].(string)
-		//if !ok {
-		//	http2.Error(w, "pubkey size not found in params", http2.StatusBadRequest)
-		//	return
-		//}
-		nearPath, ok := params["near_path"].(string)
+		nodePath, ok := params["node_path"].(string)
 		if !ok {
-			http2.Error(w, "Near path not found in params", http2.StatusBadRequest)
+			http2.Error(w, "Node path not found in params", http2.StatusBadRequest)
 			return
 		}
 		keyPath, ok := params["key_path"].(string)
@@ -340,14 +305,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			return
 		}
 		request := &chainApi.ReportChipRequest{
-			//SerialNumber:  serial,
-			//BusId:         busId,
-			//Power:         power,
-			//P2:            p2Key,
-			//PublicKey:     pubKey,
-			//P2Size:        p2KeySize,
-			//PublicKeySize: pubKeySize,
-			NearPath:     nearPath,
+			NodePath:     nodePath,
 			ChipFilePath: keyPath,
 			Founder:      founder,
 		}
@@ -361,11 +319,11 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
 
-	// to miner operation and chain nodes
-	case "getminerkeys":
-		path, ok := params["near_path"].(string)
+	// miner operate utility chain nodes
+	case "getmineraccountkeys":
+		nodePath, ok := params["node_path"].(string)
 		if !ok {
-			http2.Error(w, "command path not found in params", http2.StatusBadRequest)
+			http2.Error(w, "Node path not found in params", http2.StatusBadRequest)
 			return
 		}
 		mnemonic, ok := params["mnemonic"].(string)
@@ -373,8 +331,8 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "mnemonic not found in params", http2.StatusBadRequest)
 			return
 		}
-		request := &chainApi.GetMinerKeysRequest{NearPath: path, Mnemonic: mnemonic}
-		response, err := srv.ChainService.GetMinerKeys(r.Context(), request)
+		request := &chainApi.GetMinerAccountKeysRequest{NodePath: nodePath, Mnemonic: mnemonic}
+		response, err := srv.ChainService.GetMinerAccountKeys(r.Context(), request)
 		if err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 			return
@@ -398,9 +356,9 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "amount not found in params", http2.StatusBadRequest)
 			return
 		}
-		nearPath, ok := params["near_path"].(string)
+		nodePath, ok := params["node_path"].(string)
 		if !ok {
-			http2.Error(w, "Near path not found in params", http2.StatusBadRequest)
+			http2.Error(w, "Node path not found in params", http2.StatusBadRequest)
 			return
 		}
 		keyPath, ok := params["key_path"].(string)
@@ -411,7 +369,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		request := &chainApi.ClaimStakeRequest{
 			AccountId: accountId,
 			Amount:    amount,
-			NearPath:  nearPath,
+			NodePath:  nodePath,
 			KeyPath:   keyPath,
 		}
 		response, err := srv.ChainService.ClaimStake(r.Context(), request)
@@ -438,9 +396,9 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "Account ID not found in params", http2.StatusBadRequest)
 			return
 		}
-		nearPath, ok := params["near_path"].(string)
+		nodePath, ok := params["node_path"].(string)
 		if !ok {
-			http2.Error(w, "Near path  not found in params", http2.StatusBadRequest)
+			http2.Error(w, "Node path not found in params", http2.StatusBadRequest)
 			return
 		}
 		keyPath, ok := params["key_path"].(string)
@@ -451,8 +409,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		request := &chainApi.ClaimChipComputationRequest{
 			AccountId: accountId,
 			ChipPubK:  chipPubKey,
-			ChipP2K:   "",
-			NearPath:  nearPath,
+			NodePath:  nodePath,
 			KeyPath:   keyPath,
 		}
 		response, err := srv.ChainService.ClaimChipComputation(r.Context(), request)
@@ -487,7 +444,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
 
-	// connect to container cloud server
+	// miner connect to container cloud server to call rpc service
 	case "getNotebookList":
 		if !ok {
 			http2.Error(w, "Params not found in request", http2.StatusBadRequest)

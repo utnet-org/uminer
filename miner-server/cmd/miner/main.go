@@ -24,18 +24,7 @@ import (
 	"uminer/miner-server/util"
 )
 
-type ServerAddr struct {
-	HttpServer string
-	GrpcServer string
-}
-
 func main() {
-
-	// worker server address
-	workerAddresses := []ServerAddr{
-		{HttpServer: "192.168.10.19:8001", GrpcServer: "192.168.10.19:9001"},
-		{HttpServer: "192.168.10.47:8001", GrpcServer: "192.168.10.47:9001"},
-	}
 
 	// activate miner server
 	httpServer := &serverConf.Server_HTTP{
@@ -50,22 +39,23 @@ func main() {
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
-	// 创建 Bootstrap 配置对象
+	// build Bootstrap configuration
 	bootstrap := &serverConf.Bootstrap{
 		App: &serverConf.App{
-			// 设置 App 相关字段
+			// set App
 		},
 		Server: &serverConf.Server{
+			// set Server
 			Http: httpServer,
 			Grpc: grpcServer,
 		},
 		Data: &serverConf.Data{
-			// 设置 Data 相关字段
+			// set Data
 		},
 		Storage: []byte("my_storage_data"), // 设置 Storage 字段
 	}
 
-	app, close, err := initApp(context.Background(), bootstrap, log.DefaultLogger, workerAddresses)
+	app, close, err := initApp(context.Background(), bootstrap, log.DefaultLogger)
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +67,7 @@ func main() {
 		panic(err)
 	}
 
-	// 协程优雅退出
+	// exit gently
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
@@ -86,7 +76,7 @@ func main() {
 }
 
 // initApp init kratos application.
-func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, workerAddresses []ServerAddr) (*kratos.App, func(), error) {
+func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger) (*kratos.App, func(), error) {
 	//data, close, err := data.NewData(bc, logger)
 	//if err != nil {
 	//	return nil, nil, err
@@ -98,37 +88,11 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger, w
 
 	// new miner grpc
 	grpcServer := server.NewMinerGRPCServer(bc.Server, newService)
-	// connect worker grpc
-	//var workerGrpcConnArr []rpc.ChipServiceServer
-	//for _, addr := range workerAddresses {
-	//	workerHServer := &serverConf.Server_HTTP{
-	//		Network: "tcp",
-	//		Addr:    addr.HttpServer,
-	//		Timeout: &duration.Duration{Seconds: 60},
-	//	}
-	//	workerGServer := &serverConf.Server_GRPC{
-	//		Network: "tcp",
-	//		Addr:    addr.GrpcServer,
-	//		Timeout: &duration.Duration{Seconds: 60},
-	//	}
-	//	bs := &serverConf.Bootstrap{
-	//		App: &serverConf.App{},
-	//		Server: &serverConf.Server{
-	//			Http: workerHServer,
-	//			Grpc: workerGServer,
-	//		},
-	//		Data:    &serverConf.Data{},
-	//		Storage: []byte("my_storage_data"), // 设置 Storage 字段
-	//	}
-	//	client := types.NewChipService(bs, logger, nil)
-	//	workerGrpcConnArr = append(workerGrpcConnArr, client)
-	//
-	//}
 
 	httpServer := server.NewHTTPServer(bc.Server, newService)
 
-	// listen to the nodes for bursting a block
-	go listenBurst(ctx, bc.Server.Grpc.Addr)
+	// listen to the nodes for being chosen to mine and report a block
+	go listenMining(ctx, bc.Server.Grpc.Addr)
 
 	app := newApp(ctx, logger, httpServer, grpcServer)
 
@@ -147,8 +111,8 @@ func newApp(ctx context.Context, logger log.Logger, hs *minerHttp.Server, gs *mi
 	)
 }
 
-// listenBurst listen to the node, preparing for burst
-func listenBurst(ctx context.Context, address string) {
+// listenMining listen to the node, preparing for burst
+func listenMining(ctx context.Context, address string) {
 
 	// dial local grpc for challenge computation
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
@@ -157,13 +121,13 @@ func listenBurst(ctx context.Context, address string) {
 		return
 	}
 	chaincli := chainApi.NewChainServiceClient(conn)
-	// get keys
+	// get miner keys
 	file, fileErr := filepath.Glob("*.json")
 	if fileErr != nil || len(file) == 0 {
 		fmt.Println("no pubkey file is found")
 		return
 	}
-	keys, err := chaincli.GetMinerKeys(ctx, &chainApi.GetMinerKeysRequest{Mnemonic: ""})
+	keys, err := chaincli.GetMinerAccountKeys(ctx, &chainApi.GetMinerAccountKeysRequest{Mnemonic: ""})
 	if err != nil {
 		fmt.Println("fail to get miner address RPC ", err)
 		return
@@ -180,7 +144,7 @@ func listenBurst(ctx context.Context, address string) {
 		workers = append(workers, item)
 	}
 
-	// start loop
+	// start listening loop
 	request := &chainApi.ChallengeComputationRequest{
 		ChallengeKey: keys.PubKey,
 		Url:          workers,
@@ -231,7 +195,7 @@ func listenBurst(ctx context.Context, address string) {
 			continue
 		}
 
-		// get the mining provider
+		// get the next mining provider
 		cmd.LatestBlockH = latestBlockH
 		jsonData = map[string]interface{}{
 			"jsonrpc": "2.0",
@@ -260,21 +224,20 @@ func listenBurst(ctx context.Context, address string) {
 		gzipBytes = util.GzipApi(resp)
 		res = gjson.Get(string(gzipBytes), "result").String()
 		provider := gjson.Get(res, "provider_account").String()
-		//fmt.Println(string(gzipBytes))
 		// check if the provider candidate is yourself
 		if provider != request.ChallengeKey {
 			fmt.Println("chosen : ", provider, ", my account is", request.ChallengeKey)
 			continue
 		}
 
-		// wait for real burst
+		// wait for the timing to be challenged and asked to sign chips for computation proof
 		fmt.Println("block candidate is selected!")
-		waitingBurstLoop(ctx, chaincli, request, time.Now().Unix()+10)
+		waitingChallengeLoop(ctx, chaincli, request, time.Now().Unix()+10)
 
 	}
 
 }
-func waitingBurstLoop(ctx context.Context, cli chainApi.ChainServiceClient, request *chainApi.ChallengeComputationRequest, burstTime int64) {
+func waitingChallengeLoop(ctx context.Context, cli chainApi.ChainServiceClient, request *chainApi.ChallengeComputationRequest, challengeTime int64) {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 	for {
@@ -283,8 +246,8 @@ func waitingBurstLoop(ctx context.Context, cli chainApi.ChainServiceClient, requ
 			return
 		case <-ticker.C:
 		}
-		// get the right burst timing
-		if time.Now().Unix() >= burstTime {
+		// get the right challenge timing
+		if time.Now().Unix() >= challengeTime {
 			response, err := cli.ChallengeComputation(ctx, request)
 			if err != nil {
 				fmt.Println("Error calling ChallengeComputation:", err)
