@@ -27,14 +27,14 @@ func NewMinerLoginServiceHTTP(conf *serverConf.Bootstrap, logger log.Logger, dat
 	}
 }
 
-// LoginHandler get login token and all worker address of a miner
+// LoginHandler get container cloud server login token and all worker address of a miner
 func (s *MinerLoginServiceHTTP) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// method Get
 	if r.Method != http2.MethodGet {
 		http2.Error(w, "Method Not Allowed", http2.StatusMethodNotAllowed)
 		return
 	}
-	// get params
+	// get parameters
 	requestUrl := connect.MainURL + "/v1/authmanage/token"
 	query := r.URL.Query()
 	req := &HTTP.MapWorkersAddressRequest{
@@ -62,7 +62,6 @@ func (s *MinerLoginServiceHTTP) LoginHandler(w http.ResponseWriter, r *http.Requ
 
 	switch errObj := response.Error.(type) {
 	case map[string]interface{}:
-		// 转换为 map 类型成功，可以提取目标字段的值
 		message, ok := errObj["message"].(string)
 		if !ok {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
@@ -73,7 +72,6 @@ func (s *MinerLoginServiceHTTP) LoginHandler(w http.ResponseWriter, r *http.Requ
 
 	}
 
-	// get mapping
 	workers := make([]string, 0)
 	for _, item := range cmd.WorkerLists {
 		workers = append(workers, item)
@@ -92,7 +90,7 @@ func (s *MinerLoginServiceHTTP) LoginHandler(w http.ResponseWriter, r *http.Requ
 
 }
 
-// GetMinerInfoHandler get minerInfo(userId) from token
+// GetMinerInfoHandler get minerInfo(container cloud userId) from token
 func (s *MinerLoginServiceHTTP) GetMinerInfoHandler(w http.ResponseWriter, r *http.Request) {
 	// method Get
 	if r.Method != http2.MethodGet {
@@ -107,7 +105,7 @@ func (s *MinerLoginServiceHTTP) GetMinerInfoHandler(w http.ResponseWriter, r *ht
 	jsonData := map[string]interface{}{
 		"token": token,
 	}
-	// get userid
+	// get container cloud userId
 	resp := connect.HTTPRequest("GET", requestUrl, jsonData, "application/json", token)
 	type User struct {
 		ID            string   `json:"id"`
@@ -135,7 +133,6 @@ func (s *MinerLoginServiceHTTP) GetMinerInfoHandler(w http.ResponseWriter, r *ht
 
 	switch errObj := response.Error.(type) {
 	case map[string]interface{}:
-		// 转换为 map 类型成功，可以提取目标字段的值
 		message, ok := errObj["message"].(string)
 		if !ok {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)

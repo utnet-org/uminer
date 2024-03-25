@@ -24,7 +24,7 @@ import (
 	"uminer/miner-server/service"
 )
 
-// NewMinerGRPCServer new a gRPC server.
+// NewMinerGRPCServer initialize a miner gRPC server.
 func NewMinerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server {
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
@@ -50,13 +50,14 @@ func NewMinerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server {
 	}
 
 	gs := grpc.NewServer(opts...)
+	// register all miner grpc service
 	chainApi.RegisterChainServiceServer(gs, s.ChainService)
 	containerApi.RegisterImageServiceServer(gs, s.ImageService)
 	containerApi.RegisterNotebookServiceServer(gs, s.NotebookService)
 	return gs
 }
 
-// NewWorkerGRPCServer new a gRPC server.
+// NewWorkerGRPCServer initialize a worker gRPC server.
 func NewWorkerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server {
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
@@ -87,11 +88,12 @@ func NewWorkerGRPCServer(c *serverConf.Server, s *service.Service) *grpc.Server 
 
 	opts = append(opts, grpc.Middleware(MiddlewareCors()))
 	gs := grpc.NewServer(opts...)
+	// register all worker grpc service
 	chipApi.RegisterChipServiceServer(gs, s.ChipServiceG)
 	return gs
 }
 
-// MiddlewareCors kratos框架跨域中间件
+// MiddlewareCors kratos framework cross-origin middleware
 func MiddlewareCors() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
@@ -110,7 +112,7 @@ func MiddlewareCors() middleware.Middleware {
 	}
 }
 
-// HandleJSONRPCRequest json rpc
+// HandleJSONRPCRequest json-rpc handler for all grpc method
 func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.Request) {
 
 	body, err := ioutil.ReadAll(r.Body)

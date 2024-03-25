@@ -34,6 +34,7 @@ func NewMinerService(ctx context.Context, conf *serverConf.Bootstrap, logger log
 		return nil, err
 	}
 
+	// initialize new service including all kinds of service function  at  miner
 	service.MinerLoginServiceH = *types.NewMinerLoginServiceHTTP(conf, logger, data)
 	service.MinerStatusServiceH = *types.NewMinerStatusServiceHTTP(conf, logger, data)
 	service.MinerContainerServiceH = *types.NewMinerContainerServiceHTTP(conf, logger, data)
@@ -52,6 +53,7 @@ func NewWorkerService(ctx context.Context, conf *serverConf.Bootstrap, logger lo
 		return nil, err
 	}
 
+	// initialize new nm-chip service function at worker
 	service.ChipServiceG = types.NewChipService(conf, logger, data)
 
 	return service, nil

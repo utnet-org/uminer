@@ -12,17 +12,17 @@ import (
 	"uminer/miner-server/service"
 )
 
-// http router for different methods
+// http router for different handlers func
 func deployRouters(s *http.Server, service *service.Service) {
-	// JSON-RPC
+	// JSON-RPC handler function
 	s.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		HandleJSONRPCRequest(service, w, r)
 	})
-	// miner login to get token by username and password
+	// miner login to get address and container cloud server token
 	s.HandleFunc("/chainService/Login", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerLoginServiceH.LoginHandler(w, r)
 	})
-	// get userid by token
+	// get container cloud userid by the token
 	s.HandleFunc("/chainService/GetMinerInfo", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerLoginServiceH.GetMinerInfoHandler(w, r)
 	})
@@ -34,26 +34,22 @@ func deployRouters(s *http.Server, service *service.Service) {
 	s.HandleFunc("/chipService/StartChipCPU", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerStatusServiceH.StartChipCPUHandler(w, r)
 	})
-	// update the latest information of the node
+	// update the latest status and information of the utility node
 	s.HandleFunc("/chainService/GetNodesStatus", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerStatusServiceH.GetNodesStatusHandler(w, r)
 	})
-	// view account
+	// view miner account information by the rpc method on utility node
 	s.HandleFunc("/chainService/ViewAccount", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerStatusServiceH.ViewAccountHandler(w, r)
 	})
-	// list all rental orders related to the miner with their details
+	// list all chip rental orders related to the miner with their details
 	s.HandleFunc("/chainService/GetRentalOrderList", func(w http.ResponseWriter, r *http.Request) {
 		service.MinerContainerServiceH.GetRentalOrderListHandler(w, r)
 	})
-	// list all notebooks related to the miner with their details
-	//s.HandleFunc("/notebookService/GetNotebookList", func(w http.ResponseWriter, r *http.Request) {
-	//	service.MinerContainerServiceH.GetNotebookListHandler(w, r)
-	//})
 
 }
 
-// NewHTTPServer new a HTTP server.
+// NewHTTPServer initialize an HTTP server.
 func NewHTTPServer(c *serverConf.Server, service *service.Service) *http.Server {
 	var opts = []http.ServerOption{}
 
@@ -82,7 +78,7 @@ func NewHTTPServer(c *serverConf.Server, service *service.Service) *http.Server 
 	return srv
 }
 
-// kratos框架跨域中间件
+// corsFilter kratos framework cross-origin middleware
 func corsFilter(next http2.Handler) http2.Handler {
 	return http2.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
