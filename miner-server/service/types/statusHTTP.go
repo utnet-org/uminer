@@ -171,6 +171,8 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 		}
 		// Prepare the request
 		request := &chipRPC.ChipsRequest{
+			// the port 30345 of each worker provides the information of all the chips (119.120.92.239 is used for demonstration)
+			//Url:       each + ":30345",
 			Url:       "http://119.120.92.239" + ":30345",
 			SerialNum: req.SerialNum,
 			BusId:     req.SerialNum,

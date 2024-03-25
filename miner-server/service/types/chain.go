@@ -53,7 +53,7 @@ type KeyData struct {
 	PrivateKey string `json:"private_key"`
 }
 
-// UpdateChainsStatus get basic info of blockchain
+// UpdateChainsStatus get basic information and status of blockchain from utility node
 func (s *ChainService) UpdateChainsStatus(ctx context.Context, req *rpc.ReportChainsStatusRequest) (*rpc.ReportChainsStatusReply, error) {
 
 	jsonData := map[string]interface{}{
@@ -96,18 +96,16 @@ func (s *ChainService) UpdateChainsStatus(ctx context.Context, req *rpc.ReportCh
 	}, nil
 }
 
-// ReportChip foundation of utility report chips uploading to chain
+// ReportChip foundation of utility report chips, uploading to chain
 func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipRequest) (*rpc.ReportChipReply, error) {
 
-	//arg := `{"serial":` + req.SerialNumber + `,"busid":` + req.BusId + `, "power":` + req.Power + `,"p2key":` + req.P2 + `,"pubkey":` + req.PublicKey + `,"p2keysize":` + req.P2Size + `,"pubkeysize":` + req.PublicKeySize + `}`
-
-	// command on near nodes at utility-cli-js  (KeyPath for chips.json)
+	// command on utility nodes at utility-cli-js (KeyPath for chips.json)
 	err := os.Setenv("unc", req.NodePath)
 	if err != nil {
-		fmt.Println("设置环境变量失败:", err)
+		fmt.Println("setting environment variable fail:", err)
 		return nil, err
 	}
-	// read founder keys
+	// read foundation keys from unc.json file
 	type UNCKeyPair struct {
 		FounderPubK  string `json:"public_key"`
 		FounderPrivK string `json:"private_key"`
@@ -146,7 +144,6 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 	if len(matches) == 0 {
 		return nil, errors.New("transaction failed")
 	}
-	// 提取signature字段的值
 	txhash := matches[1]
 	fmt.Println("tx id:", txhash)
 
@@ -154,11 +151,11 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 
 }
 
-// GetMinerAccountKeys miner generate miner pri/pubK pairs with its account address (if no private ket is sent, it will generate automatically)
+// GetMinerAccountKeys miner generate miner private key/public key pairs with its account address (if no private ket is sent, it will generate automatically)
 func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMinerAccountKeysRequest) (*rpc.GetMinerAccountKeysReply, error) {
-	// first check if there is stored key pairs
-	file, fileErr := filepath.Glob("*.json")
 
+	// check if account access key exists
+	file, fileErr := filepath.Glob("*.json")
 	var address, pubKey string
 	if (fileErr == nil && len(file) != 0) && (req.Mnemonic == "" || len(strings.Fields(req.Mnemonic)) != 12) {
 		// Read the key files
@@ -177,9 +174,7 @@ func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMine
 		pubKey = keyData.PublicKey
 		address = keyData.AccountID
 	} else {
-		//mnemonic, pubKey, privKey = util.ED25519AddressGeneration(req.PrivateKey)
-
-		// Generate new key pair using unc-rs
+		// Generate new key pair using unc-rs client
 		entropy, err := bip39.NewEntropy(128)
 		if err != nil {
 			return nil, err
@@ -190,7 +185,7 @@ func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMine
 		}
 		err = os.Setenv("unc", req.NodePath)
 		if err != nil {
-			fmt.Println("设置环境变量失败:", err)
+			fmt.Println("setting environment variable fail:", err)
 			return nil, err
 		}
 		command := os.Getenv("unc")
@@ -200,6 +195,7 @@ func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMine
 			"save-to-folder", ".",
 		}
 		// execute the command
+		/* mnemonic, private key, public Key and address will be stored into the 'address'.json */
 		order := exec.Command(command, args...)
 		output, err := order.CombinedOutput()
 		fmt.Println(string(output))
@@ -228,14 +224,6 @@ func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMine
 		address = keyData.AccountID
 	}
 
-	/* obtain pubKey and fill it into the ' "challenge_key": "ed25519..." ' of miner_key.json */
-
-	//publicKeyBytes := base58.Decode(pubKey)
-	//if len(publicKeyBytes) != 32 {
-	//	return nil, errors.New("Invalid public key length")
-	//}
-	//publicKeyHex := hex.EncodeToString(publicKeyBytes)
-
 	return &rpc.GetMinerAccountKeysReply{
 		PubKey:  pubKey,
 		Address: address,
@@ -246,13 +234,7 @@ func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMine
 // ClaimStake claim amount of token deposit to the chain as stake before start mining
 func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeRequest) (*rpc.ClaimStakeReply, error) {
 
-	// check if access key exist
-	//pubKeyBytes, err := ioutil.ReadFile("public.pem")
-	//if err != nil {
-	//	return nil, err
-	//}
-	//pubKey := "ed25519:" + string(pubKeyBytes)
-
+	// check if account access key exists
 	file, fileErr := filepath.Glob("*.json")
 	if fileErr != nil {
 		return nil, fileErr
@@ -307,7 +289,7 @@ func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeReques
 		return &rpc.ClaimStakeReply{}, errors.New("miner account is not accessible")
 	}
 
-	// command on near nodes at near-cli-js  (KeyPath for validator_key.json)
+	// command on utility nodes at utility-cli-js  (KeyPath for validator_key.json)
 	order := exec.Command(req.NodePath, "stake", req.AccountId, pubKey, req.Amount, "--keyPath", req.KeyPath)
 	output, err := order.CombinedOutput()
 	if err != nil {
@@ -428,14 +410,12 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 		errMsg := strings.Join(matches, ", ")
 		return nil, errors.New(errMsg)
 	}
-
 	// get tx id
 	re := regexp.MustCompile(`Transaction ID:\s*(.+)`)
 	matches = re.FindStringSubmatch(string(output))
 	if len(matches) == 0 {
 		return nil, errors.New("transaction failed")
 	}
-	// 提取signature字段的值
 	txhash := matches[1]
 	fmt.Println("tx id:", txhash)
 
@@ -445,7 +425,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 
 }
 
-// GetMinerChipsList miner get all chips from chain
+// GetMinerChipsList miner get all claimed chips by rpc method at the utility node
 func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerChipsListRequest) (*rpc.GetMinerChipsListReply, error) {
 
 	jsonData := map[string]interface{}{
@@ -488,11 +468,6 @@ func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerC
 
 	chips := make([]*rpc.ChipDetails, 0)
 	for _, item := range chipLists {
-		//var decodedPublicKey []byte
-		//decodedPublicKey, err = base64.StdEncoding.DecodeString(gjson.Get(item.String(), "public_key").String())
-		//if err != nil {
-		//	fmt.Println("decode base64 pubkey fail:", err)
-		//}
 		chips = append(chips, &rpc.ChipDetails{
 			SerialNumber:  gjson.Get(item.String(), "sn").String(),
 			BusId:         gjson.Get(item.String(), "bus_id").String(),
@@ -508,7 +483,7 @@ func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerC
 
 }
 
-// ChallengeComputation accept challenge by the blockchain to sign chips
+// ChallengeComputation accept challenge by the blockchain nodes to sign chips when chosen to report a new block
 func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.ChallengeComputationRequest) (*rpc.ChallengeComputationReply, error) {
 
 	// read data from chains db ...
@@ -519,7 +494,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			TxHash:        "",
 		}, errors.New("no chip is selected")
 	}
-	// call rpc of every worker and sign the chips
+	// call every worker and sign the corresponding chips in rpc method
 	for _, each := range req.Url {
 
 		clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
@@ -531,6 +506,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			continue
 		}
 		request := &chipRPC.ChipsRequest{
+			// the port 30345 of each worker provides the information of all the chips
 			Url:       each + ":30345",
 			SerialNum: "",
 			BusId:     "",
@@ -544,7 +520,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			continue
 		}
 
-		// begin to search
+		// begin to search chip devId
 		cardLists := make([]*chipRPC.CardItem, 0)
 		if response != nil {
 			cardLists = response.Cards
@@ -561,15 +537,12 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 						}
 					}
 				}
-				// not found, proceed to next chip
+				// if the current chip not found, proceed to next chip
 				if devId == -1 {
+					fmt.Println("chip", item.SerialNumber, item.BusId, "is not selected")
 					continue
-					//return &rpc.ChallengeComputationReply{
-					//	SignatureSets: signatures,
-					//	TxHash:        "",
-					//}, errors.New("no chip is selected")
 				}
-				// found, sign
+				// found the right chip and sign
 				sign := chipApi.SignMinerChips(devId, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
 				signatures = append(signatures, &rpc.SignatureSets{
 					SerialNumber: item.SerialNumber,
@@ -580,15 +553,14 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 		}
 	}
 
-	// broadcast to nodes
+	// broadcast the signature to nodes (now under development)
 	privKeyBytes, err := ioutil.ReadFile("private.pem")
 	if err != nil {
 		return nil, err
 	}
 	privKey := string(privKeyBytes)
 	txStr := fmt.Sprintf("%+v", signatures)
-	sign := util.MinerSignTx(privKey, txStr)
-	txhash, err := connect.SendTransactionAsync(ctx, sign)
+	txhash, err := connect.SendTransactionAsync(ctx, privKey+txStr)
 	if err != nil {
 		return nil, err
 	}

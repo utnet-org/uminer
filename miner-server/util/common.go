@@ -183,8 +183,3 @@ func ED25519AddressGeneration(private string) (string, string, string) {
 	return mnemonic, publicKey, privateKey
 
 }
-
-func MinerSignTx(privateKey string, msg string) string {
-
-	return "sign"
-}

@@ -38,12 +38,12 @@ func TestGenerateMinerKeys(t *testing.T) {
 	defer conn.Close()
 
 	// Prepare the request
-	request := &chainApi.GetMinerKeysRequest{}
+	request := &chainApi.GetMinerAccountKeysRequest{}
 	client := chainApi.NewChainServiceClient(conn)
 
 	// Call the RPC method
-	var response *chainApi.GetMinerKeysReply
-	response, err := client.GetMinerKeys(context.Background(), request, grpc.WaitForReady(true))
+	var response *chainApi.GetMinerAccountKeysReply
+	response, err := client.GetMinerAccountKeys(context.Background(), request, grpc.WaitForReady(true))
 	if err != nil {
 		fmt.Println("调用 gRPC 方法失败:", err)
 		return
@@ -64,7 +64,7 @@ func TestClaimStake(t *testing.T) {
 	request := &chainApi.ClaimStakeRequest{
 		AccountId: "jackronwong",
 		Amount:    "100000000",
-		NearPath:  "/Users/mac/sandbox/utnet/utility-cli-rs/target/debug/near",
+		NodePath:  "/Users/mac/sandbox/utnet/utility-cli-rs/target/debug/near",
 		KeyPath:   "/Users/mac/sandbox/utnet/uminer/miner-server/cmd/miner/validator_key.json",
 	}
 	client := chainApi.NewChainServiceClient(conn)
@@ -92,8 +92,7 @@ func TestClaimChipComputation(t *testing.T) {
 	request := &chainApi.ClaimChipComputationRequest{
 		AccountId: "jackronwong",
 		ChipPubK:  "",
-		ChipP2K:   "",
-		NearPath:  "/Users/mac/sandbox/utnet/utility-cli-rs/target/debug/near",
+		NodePath:  "/Users/mac/sandbox/utnet/utility-cli-rs/target/debug/near",
 		KeyPath:   "/Users/mac/sandbox/utnet/uminer/miner-server/cmd/miner/miner_key.json",
 	}
 	client := chainApi.NewChainServiceClient(conn)
