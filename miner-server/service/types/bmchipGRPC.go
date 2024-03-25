@@ -32,7 +32,7 @@ func NewChipService(conf *serverConf.Bootstrap, logger log.Logger, data *data.Da
 	}
 }
 
-// show details of all chips
+// ListAllChips show details of all available bm-chips on a worker
 func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (*rpc.ListChipsReply, error) {
 
 	cards := make([]*rpc.CardItem, 0)
@@ -41,12 +41,13 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 	cardLists := chipApi.RemoteGetChipInfo(req.Url)
 	listLen := 0
 
+	// all cards
 	for _, card := range cardLists {
 		tpus := make([]*rpc.ChipItem, 0)
 		if req.SerialNum != "" && card.SerialNum != req.SerialNum {
 			continue
 		}
-		// tpu chips
+		// all tpu chips in one card
 		for _, chip := range card.Chips {
 			if req.BusId != "" && chip.BusId != req.BusId {
 				continue
@@ -65,8 +66,7 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 			})
 			listLen += 1
 		}
-		// all card infos
-		// claimStatus := getStatusOfCard(card.SerialNum)
+		// all cards infos
 		cards = append(cards, &rpc.CardItem{
 			CardID:    card.CardID,
 			Name:      card.Name,
@@ -89,7 +89,7 @@ func (s *ChipService) ListAllChips(ctx context.Context, req *rpc.ChipsRequest) (
 
 }
 
-// start chip CPU
+// StartChipCPU to start chip CPU before calling chips to perform their task
 func (s *ChipService) StartChipCPU(ctx context.Context, req *rpc.ChipsRequest) (*rpc.ChipStatusReply, error) {
 
 	fipBin := "../../../bm_chip/src/fip.bin"
@@ -109,7 +109,7 @@ func (s *ChipService) StartChipCPU(ctx context.Context, req *rpc.ChipsRequest) (
 	}, nil
 }
 
-// burn chip at efuse
+// BurnChipEfuse burn the secret key of the chip at EFUSE area
 func (s *ChipService) BurnChipEfuse(ctx context.Context, req *rpc.ChipsRequest) (*rpc.ChipStatusReply, error) {
 
 	chipId, _ := strconv.ParseInt(req.DevId, 10, 64)
@@ -126,7 +126,7 @@ func (s *ChipService) BurnChipEfuse(ctx context.Context, req *rpc.ChipsRequest) 
 	}, nil
 }
 
-// generate p2 + pubkey at chip and store them into files
+// GenerateChipKeyPairs generate p2 key (private key encrypted by secret key at EFUSE) + public key at chip and store them into files
 func (s *ChipService) GenerateChipKeyPairs(ctx context.Context, req *rpc.ChipsRequest) (*rpc.ChipStatusReply, error) {
 
 	chipId, _ := strconv.ParseInt(req.DevId, 10, 64)
@@ -143,7 +143,7 @@ func (s *ChipService) GenerateChipKeyPairs(ctx context.Context, req *rpc.ChipsRe
 	}, nil
 }
 
-// read stored files to get p2 + pubkey at chip
+// ObtainChipKeyPairs read stored files to get p2 + pubkey of a chip
 func (s *ChipService) ObtainChipKeyPairs(ctx context.Context, req *rpc.ChipsRequest) (*rpc.ReadChipReply, error) {
 
 	chipId, _ := strconv.ParseInt(req.DevId, 10, 64)
@@ -157,7 +157,7 @@ func (s *ChipService) ObtainChipKeyPairs(ctx context.Context, req *rpc.ChipsRequ
 		}, errors.New("unable to read key pairs")
 	}
 
-	// encode it with base58 encoding
+	// encode both keys with base58 encoding
 	block, _ := pem.Decode([]byte(keyPairs.PubKey))
 	pubKeyBase58 := base58.Encode(block.Bytes)
 	paddingLength := 402 - len(pubKeyBase58)
@@ -166,7 +166,7 @@ func (s *ChipService) ObtainChipKeyPairs(ctx context.Context, req *rpc.ChipsRequ
 	P2Bytes, _ := hex.DecodeString(keyPairs.P2)
 	p2KeyBase58 := base58.Encode(P2Bytes)
 
-	/* obtain paddedPubKeyBase58 and fill it into the ' "public_key":rsa2048:..." ' of miner_key.json */
+	/* obtain all chip information and fill it into the chip.json at the jsonfile directory, and get prepare to upload to the chain  */
 
 	return &rpc.ReadChipReply{
 		SerialNumber:  req.SerialNum,
@@ -179,7 +179,7 @@ func (s *ChipService) ObtainChipKeyPairs(ctx context.Context, req *rpc.ChipsRequ
 	}, nil
 }
 
-// sign a chip by p2 to get signature
+// SignChip sign at the chip by p2 key to get the unique signature for verification
 func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (*rpc.SignChipsReply, error) {
 
 	devId, _ := strconv.ParseInt(req.DevId, 10, 64)
@@ -187,7 +187,7 @@ func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (
 	// recover the p2 and pubKey by base58 decode
 	originalPubKeyBase58 := strings.TrimSuffix(req.PublicKey, strings.Repeat("u", 33))
 	pubKeyBytes := base58.Decode(originalPubKeyBase58)
-	// use x509.ParsePKCS1PublicKey parse the bytes
+	// use x509.ParsePKCS1PublicKey parse the bytes, and recovery the pubkey hex
 	pubKey, err := x509.ParsePKCS1PublicKey(pubKeyBytes)
 	if err != nil {
 		return &rpc.SignChipsReply{
@@ -203,7 +203,7 @@ func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (
 	PubKeyBytes := pem.EncodeToMemory(pemBlock)
 	fmt.Println("recovered pubKey is")
 	fmt.Println(string(PubKeyBytes))
-	// use hex.EncodeToString encode the bytes
+	// use hex.EncodeToString encode the bytes, and recovery the p2 key hex
 	P2Bytes := base58.Decode(req.P2)
 	P2Key := hex.EncodeToString(P2Bytes)
 	fmt.Println("recovered p2Key is")
@@ -216,8 +216,6 @@ func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (
 			Status:    false,
 		}, errors.New("unable to sign the chip")
 	}
-
-	// packed as transaction, upload to the chain
 
 	return &rpc.SignChipsReply{
 		Signature: sign.Signature,

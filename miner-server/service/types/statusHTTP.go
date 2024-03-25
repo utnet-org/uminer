@@ -78,8 +78,6 @@ func (s *MinerStatusServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r 
 	res := gjson.Get(string(gzipBytes), "result").String()
 	sync := gjson.Get(res, "sync_info").String()
 	latestHeight := gjson.Get(sync, "latest_block_height").Int()
-	//latestHash := gjson.Get(sync, "latest_block_hash").String()
-	//latestTime := gjson.Get(sync, "latest_block_time").String()
 
 	// get gas fee
 	jsonData = map[string]interface{}{
@@ -107,6 +105,7 @@ func (s *MinerStatusServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r 
 	gas := gjson.Get(res, "gas_price").String()
 
 	response := HTTP.ReportNodesStatusReply{
+		//  Computation NumberOfMiners Rewards are mock data currently
 		Computation:       "1000",
 		NumberOfMiners:    "100",
 		Rewards:           "10",
@@ -197,17 +196,19 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 		cardLists = response.Cards
 		listLen := 0
 		conn.Close()
+		// all cards
 		for _, card := range cardLists {
 			tpus := make([]*HTTP.ChipItem, 0)
 			if req.SerialNum != "" && card.SerialNum != req.SerialNum {
 				continue
 			}
-			// tpu chips
+			// all tpu chips in one card
 			for _, chip := range card.Chips {
 				if req.BusId != "" && chip.BusId != req.BusId {
 					continue
 				}
 				claimStatus := "unclaimed"
+				// compare the chips owned and the chips claimed
 				if response2 != nil {
 					for _, item := range response2.Chips {
 						if item.SerialNumber == card.SerialNum && item.BusId == chip.BusId {
@@ -230,8 +231,7 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 				})
 				listLen += 1
 			}
-			// all card infos
-			// claimStatus := getStatusOfCard(card.SerialNum)
+			// all cards infos
 			cards = append(cards, &HTTP.CardItem{
 				CardID:    card.CardID,
 				Name:      card.Name,
@@ -258,10 +258,6 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 		defer cancel2()
 	}
 
-	//if err != nil {
-	//	http2.Error(w, err.Error(), http2.StatusInternalServerError)
-	//	return
-	//}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(workers); err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)
@@ -285,7 +281,7 @@ func (s *MinerStatusServiceHTTP) StartChipCPUHandler(w http.ResponseWriter, r *h
 	}
 
 	// connect to worker
-	clientDeadline := time.Now().Add(time.Duration(15 * time.Second)) // for the first time to start a chip, it can take up to 10s
+	clientDeadline := time.Now().Add(time.Duration(15 * time.Second)) // for the first time to start a chip, it can take up to 15s
 	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, req.Addr+":7001", grpc.WithInsecure())
@@ -369,7 +365,8 @@ func (s *MinerStatusServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *ht
 	}
 
 	response := HTTP.ViewAccountReply{
-		Total:   amountString,
+		Total: amountString,
+		//  Rewards Slashed are mock data currently
 		Rewards: "1",
 		Slashed: "-1",
 		Power:   strconv.FormatInt(power, 10),

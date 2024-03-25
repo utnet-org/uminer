@@ -32,7 +32,7 @@ func NewMinerContainerServiceHTTP(conf *serverConf.Bootstrap, logger log.Logger,
 	}
 }
 
-// GetRentalOrderListHandler get all rental order list
+// GetRentalOrderListHandler get all rental order list according to account address
 func (s *ContainerServiceHTTP) GetRentalOrderListHandler(w http.ResponseWriter, r *http.Request) {
 
 	// method Get
@@ -42,9 +42,9 @@ func (s *ContainerServiceHTTP) GetRentalOrderListHandler(w http.ResponseWriter, 
 	}
 	// get params
 	query := r.URL.Query()
-	Addr := query.Get("address")
+	account := query.Get("account")
 
-	// connect to node rpc methods
+	// connect to utility node rpc methods to get the results
 
 	// get response
 	rental := make([]HTTP.RentalOrderDetails, 0)
@@ -54,7 +54,7 @@ func (s *ContainerServiceHTTP) GetRentalOrderListHandler(w http.ResponseWriter, 
 		rental = append(rental, HTTP.RentalOrderDetails{
 			ID:         strconv.FormatInt(int64(i), 10),
 			HASH:       util.RandomString(32),
-			MinerAddr:  Addr,
+			MinerAddr:  account,
 			RentalAddr: util.RandomString(11),
 			Resource:   "1684x",
 			Power:      strconv.FormatInt(int64((i+2)*10), 10),
@@ -73,7 +73,7 @@ func (s *ContainerServiceHTTP) GetRentalOrderListHandler(w http.ResponseWriter, 
 
 }
 
-// GetNotebookListHandler get all notebook list
+// GetNotebookListHandler get all notebook list by user token and notebook id
 func (s *ContainerServiceHTTP) GetNotebookListHandler(w http.ResponseWriter, r *http.Request) {
 
 	// method Get
