@@ -8,34 +8,35 @@ import (
 	"time"
 )
 
-// container cloud
+// MainURL container cloud server url
 const MainURL = "https://console.utlab.io/openaiserver"
 
-// Delay
+// Delay connection rpc delay
 const Delay = 4
 
+// HTTPRequest container cloud server http request handler
 func HTTPRequest(method string, url string, data interface{}, contentType string, authToken string) []byte {
 	client := &http.Client{Timeout: 5 * time.Second}
 	jsonStr, _ := json.Marshal(data)
 
-	// 创建POST请求
+	// HTTP POST request
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		panic(err)
 	}
 
-	// 设置请求头
+	// set header
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Authorization", "Bearer "+authToken)
 
-	// 发送请求
+	// send request
 	resp, err := client.Do(req)
 	if err != nil {
 		panic(err)
 	}
 	defer resp.Body.Close()
 
-	// 读取响应内容
+	// read response contents
 	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
