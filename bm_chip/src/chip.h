@@ -32,7 +32,6 @@ struct bmsmi {
     int chip_temp;   // chip temperature
     int board_power;
     float tpu_power;
-//    int fan_speed;
 
 };
 
@@ -55,7 +54,7 @@ struct ChipDeclaration {
     int PubKSize;
 };
 
-/* method for chips */
+/* handler for bm-chip */
 // start chip cpu
 int startCPU(int dev_id, const char * boot_file, const char * core_file);
 // chip burning

@@ -36,6 +36,20 @@ func SignMinerChips(devId int, p2 string, pubKey string, p2Size int, pubKeySize 
 	// get final chip signature result
 	fmt.Printf("Signature of chip %d: %s\n", devId, C.GoString((*C.char)(unsafe.Pointer(signatures[0].SignMsg))))
 	fmt.Printf("PubKey of chip %d: %s\n", devId, C.GoString((*C.char)(unsafe.Pointer(signatures[0].PubK))))
+	if signatures[0].status == "-1" {
+		fmt.Printf("signature of chip %d: fails due to wrong p2 key or internal chip error", devId)
+		return ChipSign{
+			Signature: "",
+			Status:    false,
+		}
+	}
+	if signatures[0].status == "0" {
+		fmt.Printf("signature of chip %d: fails due to failure of verification of public key", devId)
+		return ChipSign{
+			Signature: C.GoString((*C.char)(unsafe.Pointer(signatures[0].SignMsg))),
+			Status:    false,
+		}
+	}
 	return ChipSign{
 		Signature: C.GoString((*C.char)(unsafe.Pointer(signatures[0].SignMsg))),
 		Status:    true,

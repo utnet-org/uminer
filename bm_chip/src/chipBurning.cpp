@@ -49,11 +49,9 @@ int chipGenKeyPairs(int seq) {
         bm_dev_free(handle);
         return -1;
     }
-//    strcpy((char*)pubkey, "hello");
-//    strcpy((char*)p2, "world");
 
 
-    /* Must be 16btye aligned storage, otherwise spacc cannot decrypt correctly*/
+    /* Must be 16 btye aligned storage, otherwise SPACC cannot decrypt correctly*/
     unsigned int size_p2_padding = (size_p2 + 15) & ~15;
     printf("size_pubkey: %d size_p2: %d\n", size_pubkey, size_p2);
     printf("pubkey: %s  \n", pubkey);
@@ -111,7 +109,7 @@ ChipDeclaration readKeyPairs(int seq) {
 
     ChipDeclaration oneChip;
 
-    // read files to get results
+    // read files to get keys results
     FILE *file_pubkey = fopen(("../../../bm_chip/src/key/pubkey_"+ std::to_string(seq)).c_str(), "r");
     FILE *file_p2 = fopen(("../../../bm_chip/src/key/p2_"+ std::to_string(seq)).c_str(), "r");
     if (file_pubkey) {
@@ -138,7 +136,7 @@ ChipDeclaration readKeyPairs(int seq) {
         return oneChip;
     }
 
-    // hex
+    // hex transform the p2 key binary bytes
     std::string str = byteArrayToHex(p2, size_p2_padding);
     const char* P2Byte = str.c_str();
 

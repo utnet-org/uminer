@@ -31,6 +31,7 @@
 
 ChipSignature* chipSignature(unsigned long chipId, const char* P2Char, const char* PubKeyChar, const char* message, unsigned int size_p2, unsigned int  size_pubkey) {
 
+    /*** sign by p2 with decryption of secret key ***/
 #if !defined(USING_CMODEL) && !defined(SOC_MODE)
     bm_handle_t handle;
     bm_status_t ret = BM_SUCCESS;
@@ -53,7 +54,6 @@ ChipSignature* chipSignature(unsigned long chipId, const char* P2Char, const cha
     size_t data_size = sizeof(data) - 1;
     unsigned char digest[SHA256_DIGEST_LENGTH];
     generate_sha256_digest(reinterpret_cast<const unsigned char*>(data), data_size, digest);
-
     /* digital signature */
     unsigned char* p2 = (unsigned char *)malloc(size_p2);
     std:: string str2(P2Char);
@@ -62,6 +62,7 @@ ChipSignature* chipSignature(unsigned long chipId, const char* P2Char, const cha
     unsigned char* pubkey = (unsigned char *)malloc(size_pubkey);
     strcpy(reinterpret_cast<char*>(pubkey), const_cast<char*>(PubKeyChar));
 
+    /* produce signature */
     ret = bmcpu_gen_sign(handle, signature, &size_signature,
                          digest,sizeof(digest), p2, size_p2);
     if (ret != BM_SUCCESS) {
@@ -70,10 +71,10 @@ ChipSignature* chipSignature(unsigned long chipId, const char* P2Char, const cha
         ChipSignature* emptys = new ChipSignature[1];
         emptys->SignMsg = nullptr;
         emptys->PubK = nullptr;
-        emptys->status = 0;
+        emptys->status = -1;
         return emptys;
     }
-    // hex
+    // hex transform the signature binary bytes
     std::string signatureHex = byteArrayToHex(signature, size_signature);
     printf("signature size: %d\n",size_signature);
     printf("signature: %s\n",signature);
