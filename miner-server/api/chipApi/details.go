@@ -28,7 +28,7 @@ type TPUCards struct {
 	Chips []BMChips
 }
 
-// BMChips struct of bmchip parameter
+// BMChips struct of bm-chip parameter
 type BMChips struct {
 	DevId       string
 	BusId       string
@@ -49,25 +49,25 @@ type BMChips struct {
 	Status  string
 }
 
-// RemoteGetChipInfo information from "curl 10.0.3.178:9100"
+// RemoteGetChipInfo information from query command like "curl 10.0.3.178:9100"
 func RemoteGetChipInfo(url string) []TPUCards {
 	cardLists := make([]TPUCards, 0)
 
 	response, err := http.Get(url)
 	if err != nil {
-		fmt.Println("HTTP请求失败:", err)
+		fmt.Println("HTTP query fails:", err)
 		return cardLists
 	}
 	defer response.Body.Close()
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		fmt.Println("读取响应失败:", err)
+		fmt.Println("read response fails:", err)
 		return cardLists
 	}
 	parser := &expfmt.TextParser{}
 	metricFamilies, err := parser.TextToMetricFamilies(strings.NewReader(string(body)))
 	if err != nil {
-		fmt.Println("解析失败:", err)
+		fmt.Println("parse fails:", err)
 		return cardLists
 	}
 
@@ -78,7 +78,7 @@ func RemoteGetChipInfo(url string) []TPUCards {
 				chip := make([]BMChips, 0)
 				coreNum, _ := strconv.ParseInt(m.Label[0].GetValue(), 10, 64)
 				sliceLength := len(m.Label[3].GetValue())
-				// busid for every chip, form like 000:0a:00.0
+				// bus id for every chip, form like 000:0a:00.0
 				for n := 0; n < int(coreNum); n++ {
 					chip = append(chip, BMChips{
 						BusId:  m.Label[3].GetValue()[:sliceLength-1], // + strconv.Itoa(n),
@@ -143,7 +143,7 @@ func RemoteGetChipInfo(url string) []TPUCards {
 		}
 
 	}
-	// chip params
+	// chip parameters
 	for _, mf := range metricFamilies {
 		if mf.GetName() == "bitmain_chip_memory_used_bytes" {
 			for i, m := range mf.Metric {
@@ -203,7 +203,7 @@ func RemoteGetChipInfo(url string) []TPUCards {
 
 }
 
-// BMChipsInfos reading data from txt written from bm-smi
+// BMChipsInfos reading data from txt written from command bm-smi
 func BMChipsInfos(directory string) []TPUCards {
 	// open file
 	cardList := make([]TPUCards, 0)
@@ -212,14 +212,13 @@ func BMChipsInfos(directory string) []TPUCards {
 		fmt.Println("fail to open file: ", err)
 		return cardList
 	}
-	//defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	if err := scanner.Err(); err != nil {
 		fmt.Println("scan file error: ", err)
 	}
 
-	// 定义正则表达式，用于匹配控制字符
+	// define a regular expression to match control characters
 	reg := regexp.MustCompile("\x1b\\[.*?[@-~]")
 
 	lineCount := 0
@@ -257,10 +256,8 @@ func BMChipsInfos(directory string) []TPUCards {
 
 		lineCount++
 		var readLine = lineCount - 1
-		// 第一行：卡和第一张芯片信息
+		// first line：get card and first chip information
 		if readLine%9 == 8 && readLine >= 8 {
-			//fmt.Println(cleanLine)
-			//fmt.Println("+++++++++++++++++++++++++")
 
 			elements := strings.Fields(cleanLine)
 			if len(elements) == 0 {
@@ -322,7 +319,7 @@ func BMChipsInfos(directory string) []TPUCards {
 			break
 		}
 
-		// 第二行：卡和第一张芯片信息
+		// second line：get card and first chip information
 		if readLine%9 == 0 && readLine >= 9 {
 			elements := strings.Fields(cleanLine)
 			for i, elem := range elements {
@@ -355,7 +352,7 @@ func BMChipsInfos(directory string) []TPUCards {
 			chipList = append(chipList, tpu)
 		}
 
-		// 第三行：第二张/第三张 第一行 芯片信息
+		// third line：get the second/third chip information(first line)
 		if (readLine%9 == 2 && readLine >= 11) || (readLine%9 == 5 && readLine >= 14) {
 			elements := strings.Fields(cleanLine)
 			for i, elem := range elements {
@@ -396,7 +393,7 @@ func BMChipsInfos(directory string) []TPUCards {
 			}
 
 		}
-		// 第三行：第二张/第三张 第二行 芯片信息
+		// third line：get the second/third chip information(second line)
 		if (readLine%9 == 3 && readLine >= 12) || (readLine%9 == 6 && readLine >= 15) {
 			elements := strings.Fields(cleanLine)
 			for i, elem := range elements {
@@ -421,8 +418,6 @@ func BMChipsInfos(directory string) []TPUCards {
 		if readLine == 16 || (readLine%9 == 7 && readLine > 16) {
 			card.Chips = chipList
 			cardList = append(cardList, card)
-			//fmt.Println(cardList)
-			//fmt.Println("+++++++++++++++++++++++++")
 		}
 
 	}

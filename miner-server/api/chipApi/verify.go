@@ -20,7 +20,7 @@ import (
 	"fmt"
 )
 
-// verify at c++ by the openssl library
+// VerifyMinerChips verify signature by public key at c++ openssl library
 //func VerifyMinerChips(signature string, pubK string, signatureSize int, pubKSize int, message string) bool {
 //	cSignature := C.CString(signature)
 //	cPubK := C.CString(pubK)
@@ -35,7 +35,7 @@ import (
 //	return false
 //}
 
-// verify at go by crypto library
+// transform hex string to binary bytes
 func hexStringToBytes(hexString string) ([]byte, error) {
 	signatureBytes, err := hex.DecodeString(hexString)
 	if err != nil {
@@ -43,21 +43,22 @@ func hexStringToBytes(hexString string) ([]byte, error) {
 	}
 	return signatureBytes, nil
 }
+
+// VerifyChipsSignature verify signature by public key at golang crypto library
 func VerifyChipsSignature(signature string, publicKey string, message string) bool {
-	// parse publicKey
+	// parse publicKey to rsa.PublicKey
 	block, _ := pem.Decode([]byte(publicKey))
 	if block == nil {
 		fmt.Println("failed to parse PEM block containing the public key")
 		return false
 	}
-
 	pubKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
 	if err != nil {
 		fmt.Println("failed to parse DER encoded public key: ", err)
 		return false
 	}
 
-	// Verify sign
+	// Verify signature in rsa.VerifyPKCS1v15
 	data := []byte(message)
 	digest := sha256.Sum256(data)
 	signatureBytes, err := hexStringToBytes(signature)
@@ -65,13 +66,13 @@ func VerifyChipsSignature(signature string, publicKey string, message string) bo
 		fmt.Println("hex signature Error:", err)
 		return false
 	}
-
 	err = rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, digest[:], signatureBytes)
 	if err != nil {
 		fmt.Println("signature verification failed: ", err)
 		return false
 	}
 
-	fmt.Println("Signature verified successfully")
+	fmt.Println("signature verified successfully")
 	return true
+
 }

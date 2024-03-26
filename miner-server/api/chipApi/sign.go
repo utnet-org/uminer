@@ -15,24 +15,25 @@ import (
 	"unsafe"
 )
 
-// ChipSign struct of chip signature
+// ChipSign the structure of chip signature
 type ChipSign struct {
 	Signature string
 	Status    bool
 }
 
-// SignMinerChips is to sign message at the chip with p2
+// SignMinerChips the api through cgo to sign a message at the chip with p2 key
 func SignMinerChips(devId int, p2 string, pubKey string, p2Size int, pubKeySize int, message string) ChipSign {
 
 	cP2 := C.CString(p2)
 	cpubKey := C.CString(pubKey)
 	cMessage := C.CString(message)
+	// cgo chipSignature func handler at c++ driver: sign the chip along with message and p2 key
 	res := C.chipSignature(C.ulong(devId), cP2, cpubKey, cMessage, C.uint(p2Size), C.uint(pubKeySize))
 
-	// Convert the C array to a Go slice for easier handling
+	// convert the array from c++ to the array by golang slice for easier handling
 	signatures := (*[1 << 30]C.struct_ChipSignature)(unsafe.Pointer(res))[:1:1]
 
-	// get final ChipSignature result
+	// get final chip signature result
 	fmt.Printf("Signature of chip %d: %s\n", devId, C.GoString((*C.char)(unsafe.Pointer(signatures[0].SignMsg))))
 	fmt.Printf("PubKey of chip %d: %s\n", devId, C.GoString((*C.char)(unsafe.Pointer(signatures[0].PubK))))
 	return ChipSign{
@@ -41,7 +42,7 @@ func SignMinerChips(devId int, p2 string, pubKey string, p2Size int, pubKeySize 
 	}
 }
 
-// the fake function for operating at miner server
+// the fake function for operating at miner server when lack of chips and driver
 
 //func SignMinerChips(devId int, p2 string, pubKey string, p2Size int, pubKeySize int, message string) ChipSign {
 //	return ChipSign{

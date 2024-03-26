@@ -15,7 +15,7 @@ import (
 	"unsafe"
 )
 
-// ChipKeyPairs struct of p2-pubKey pairs for a bmchip after burning and encrypting
+// ChipKeyPairs the structure of p2Key-pubKey pairs for a bm-chip after burning and encryption
 type ChipKeyPairs struct {
 	SerialNumber string
 	BusId        string
@@ -25,10 +25,12 @@ type ChipKeyPairs struct {
 	PubKeySize   int
 }
 
-// StartChips api through cgo to drive bmchip to activate cpu
+// StartChips the api through cgo to call the driver to activate bm-chip
 func StartChips(chipId int, fipBin string, rambootRootfs string) bool {
+	// files for activate A53 process of the chip
 	cfipBin := C.CString(fipBin)
 	cRambootRootfs := C.CString(rambootRootfs)
+	// cgo startCPU func handler at c++ driver: activate the chip
 	res := C.startCPU(C.int(chipId), cfipBin, cRambootRootfs)
 
 	if res == 1 {
@@ -40,8 +42,9 @@ func StartChips(chipId int, fipBin string, rambootRootfs string) bool {
 
 }
 
-// BurnChips api through cgo to drive bmchip to burn and get p2-pubKey pairs
+// BurnChips the api through cgo to drive bm-chip to burn secret key at EFUSE
 func BurnChips(SerialNumber string, busId string, chipId int) bool {
+	// cgo chipBurning func handler at c++ driver: burn secret key at EFUSE
 	res := C.chipBurning(C.int(chipId))
 
 	if res == 1 {
@@ -53,9 +56,11 @@ func BurnChips(SerialNumber string, busId string, chipId int) bool {
 
 }
 
-// GenChipsKeyPairs is generating the key pairs from PKA after burning and restarting the machine, keys are stored in files
+// GenChipsKeyPairs the api through cgo to generate the key pairs from PKA after burning and restarting the machine, keys are stored in files
 func GenChipsKeyPairs(SerialNumber string, busId string, chipId int) bool {
+	// cgo chipGenKeyPairs func handler at c++ driver: generate the p2 key and public key simultaneously
 	res := C.chipGenKeyPairs(C.int(chipId))
+
 	if res == 1 {
 		fmt.Println("chip ", chipId, "generate p2 and pubKey success !")
 		return true
@@ -74,11 +79,12 @@ func GenChipsKeyPairs(SerialNumber string, busId string, chipId int) bool {
 
 }
 
-// ReadChipKeyPairs is to read the keys from the stored files
+// ReadChipKeyPairs the api through cgo to read the keys from the stored files
 func ReadChipKeyPairs(SerialNumber string, busId string, chipId int) ChipKeyPairs {
+	// cgo chipGenKeyPairs func handler at c++ driver: generate the p2 key and public key simultaneously
 	res := C.readKeyPairs(C.int(chipId))
 
-	// Convert the C array to a Go slice for easier handling
+	// convert the array from c++ to the array by golang slice for easier handling
 	chipArray := (*[1 << 30]C.struct_ChipDeclaration)(unsafe.Pointer(&res))[:1:1]
 	chip := chipArray[0]
 
@@ -98,7 +104,7 @@ func ReadChipKeyPairs(SerialNumber string, busId string, chipId int) ChipKeyPair
 
 }
 
-// the fake function for operating at miner server
+// the fake function for operating at miner server when lack of chips and driver
 
 //func StartChips(chipId int, fipBin string, rambootRootfs string) bool {
 //	return false
