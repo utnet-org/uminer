@@ -14,7 +14,7 @@ const MainURL = "https://console.utlab.io/openaiserver"
 // Delay connection rpc delay
 const Delay = 4
 
-// HTTPRequest container cloud server http request handler
+// HTTPRequest cloud container cloud server http request handler
 func HTTPRequest(method string, url string, data interface{}, contentType string, authToken string) []byte {
 	client := &http.Client{Timeout: 5 * time.Second}
 	jsonStr, _ := json.Marshal(data)
