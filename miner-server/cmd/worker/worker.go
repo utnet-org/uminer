@@ -1,9 +1,10 @@
-package main
+package worker
 
 import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/golang/protobuf/ptypes/duration"
+	"github.com/urfave/cli/v2"
 	"time"
 	"uminer/common/graceful"
 	"uminer/miner-server/cmd"
@@ -19,7 +20,9 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 )
 
-func main() {
+func StartWorkerServer(c *cli.Context) error {
+
+	cmd.WorkerServerIP = c.String("serverip")
 
 	// activate worker server
 	httpServer := &serverConf.Server_HTTP{
@@ -50,7 +53,7 @@ func main() {
 		Storage: []byte("my_storage_data"), // 设置 Storage 字段
 	}
 
-	app, close, err := initApp(context.Background(), bootstrap, log.DefaultLogger)
+	app, close, err := initWorkerApp(context.Background(), bootstrap, log.DefaultLogger)
 	if err != nil {
 		panic(err)
 	}
@@ -68,10 +71,12 @@ func main() {
 		defer cancel()
 		graceful.Shutdown(ctx)
 	}()
+
+	return nil
 }
 
-// initApp init kratos application.
-func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger) (*kratos.App, func(), error) {
+// initWorkerApp init kratos application.
+func initWorkerApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger) (*kratos.App, func(), error) {
 	//data, close, err := data.NewData(bc, logger)
 	//if err != nil {
 	//	return nil, nil, err
@@ -85,12 +90,12 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger) (
 
 	httpServer := server.NewHTTPServer(bc.Server, newService)
 
-	app := newApp(ctx, logger, httpServer, grpcServer)
+	app := newWorker(ctx, logger, httpServer, grpcServer)
 
 	return app, nil, nil
 }
 
-func newApp(ctx context.Context, logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
+func newWorker(ctx context.Context, logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
 	return kratos.New(
 		kratos.Context(ctx),
 		kratos.Metadata(map[string]string{}),

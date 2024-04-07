@@ -1,4 +1,4 @@
-package main
+package miner
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	minerHttp "github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/tidwall/gjson"
+	"github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"net/http"
 	"path/filepath"
@@ -24,7 +25,13 @@ import (
 	"uminer/miner-server/util"
 )
 
-func main() {
+func StartMinerServer(c *cli.Context) error {
+
+	cmd.MinerServerIP = c.String("serverip")
+	if c.IsSet("node") {
+		cmd.NodeURL = c.String("node")
+	}
+	cmd.WorkerLists = c.StringSlice("workerip")
 
 	// activate miner server
 	httpServer := &serverConf.Server_HTTP{
@@ -55,7 +62,7 @@ func main() {
 		Storage: []byte("my_storage_data"), // 设置 Storage 字段
 	}
 
-	app, close, err := initApp(context.Background(), bootstrap, log.DefaultLogger)
+	app, close, err := initMinerApp(context.Background(), bootstrap, log.DefaultLogger)
 	if err != nil {
 		panic(err)
 	}
@@ -73,10 +80,12 @@ func main() {
 		defer cancel()
 		graceful.Shutdown(ctx)
 	}()
+
+	return nil
 }
 
-// initApp init kratos application.
-func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger) (*kratos.App, func(), error) {
+// initMinerApp init kratos application.
+func initMinerApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger) (*kratos.App, func(), error) {
 	//data, close, err := data.NewData(bc, logger)
 	//if err != nil {
 	//	return nil, nil, err
@@ -94,12 +103,12 @@ func initApp(ctx context.Context, bc *serverConf.Bootstrap, logger log.Logger) (
 	// listen to the nodes for being chosen to mine and report a block
 	go listenMining(ctx, bc.Server.Grpc.Addr)
 
-	app := newApp(ctx, logger, httpServer, grpcServer)
+	app := newMiner(ctx, logger, httpServer, grpcServer)
 
 	return app, nil, nil
 }
 
-func newApp(ctx context.Context, logger log.Logger, hs *minerHttp.Server, gs *minerGprc.Server) *kratos.App {
+func newMiner(ctx context.Context, logger log.Logger, hs *minerHttp.Server, gs *minerGprc.Server) *kratos.App {
 	return kratos.New(
 		kratos.Context(ctx),
 		kratos.Metadata(map[string]string{}),
