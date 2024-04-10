@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
         chipBurning(atoi(argv[2]));
     }
     if (strcmp(argv[1], "keygen") == 0){
-        chipGenKeyPairs(atoi(argv[2]));
+        chipGenKeyPairs(argv[2], argv[3], atoi(argv[4]));
     }
     if (strcmp(argv[1], "sign") == 0) {
         signDemo(atoi(argv[2]), 426, 1680);

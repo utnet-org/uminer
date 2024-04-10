@@ -152,10 +152,20 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "dev id not found in params", http2.StatusBadRequest)
 			return
 		}
+		serial, ok := params["serial"].(string)
+		if !ok {
+			http2.Error(w, "serial number not found in params", http2.StatusBadRequest)
+			return
+		}
+		busId, ok := params["bus_id"].(string)
+		if !ok {
+			http2.Error(w, "bus id not found in params", http2.StatusBadRequest)
+			return
+		}
 		request := &chipApi.ChipsRequest{
 			Url:       "",
-			SerialNum: "",
-			BusId:     "",
+			SerialNum: serial,
+			BusId:     busId,
 			DevId:     devId,
 		}
 		response, err := srv.ChipServiceG.StartChipCPU(r.Context(), request)
@@ -194,10 +204,20 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "dev id not found in params", http2.StatusBadRequest)
 			return
 		}
+		serial, ok := params["serial"].(string)
+		if !ok {
+			http2.Error(w, "serial number not found in params", http2.StatusBadRequest)
+			return
+		}
+		busId, ok := params["bus_id"].(string)
+		if !ok {
+			http2.Error(w, "bus id not found in params", http2.StatusBadRequest)
+			return
+		}
 		request := &chipApi.ChipsRequest{
 			Url:       "",
-			SerialNum: "",
-			BusId:     "",
+			SerialNum: serial,
+			BusId:     busId,
 			DevId:     devId,
 		}
 		response, err := srv.ChipServiceG.GenerateChipKeyPairs(r.Context(), request)

@@ -59,7 +59,7 @@ func BurnChips(SerialNumber string, busId string, chipId int) bool {
 // GenChipsKeyPairs the api through cgo to generate the key pairs from PKA after burning and restarting the machine, keys are stored in files
 func GenChipsKeyPairs(SerialNumber string, busId string, chipId int) bool {
 	// cgo chipGenKeyPairs func handler at c++ driver: generate the p2 key and public key simultaneously
-	res := C.chipGenKeyPairs(C.int(chipId))
+	res := C.chipGenKeyPairs(C.CString(SerialNumber), C.CString(busId), C.int(chipId))
 
 	if res == 1 {
 		fmt.Println("chip ", chipId, "generate p2 and pubKey success !")
@@ -82,7 +82,7 @@ func GenChipsKeyPairs(SerialNumber string, busId string, chipId int) bool {
 // ReadChipKeyPairs the api through cgo to read the keys from the stored files
 func ReadChipKeyPairs(SerialNumber string, busId string, chipId int) ChipKeyPairs {
 	// cgo chipGenKeyPairs func handler at c++ driver: generate the p2 key and public key simultaneously
-	res := C.readKeyPairs(C.int(chipId))
+	res := C.readKeyPairs(C.CString(SerialNumber), C.CString(busId), C.int(chipId))
 
 	// convert the array from c++ to the array by golang slice for easier handling
 	chipArray := (*[1 << 30]C.struct_ChipDeclaration)(unsafe.Pointer(&res))[:1:1]

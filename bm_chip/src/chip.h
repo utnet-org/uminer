@@ -60,9 +60,9 @@ int startCPU(int dev_id, const char * boot_file, const char * core_file);
 // chip burning
 int chipBurning(int dev_id);
 // chip get P2 and pubkey
-int chipGenKeyPairs(int dev_id);
+int chipGenKeyPairs(const char* sn, const char* busid, int dev_id);
 // read P2 and pubkey from file
-struct ChipDeclaration readKeyPairs(int dev_id);
+struct ChipDeclaration readKeyPairs(const char* sn, const char* busid, int dev_id);
 // chip signature
 struct ChipSignature* chipSignature(unsigned long chipId, const char* p2, const char* pubkey, const char* message, unsigned int size_p2, unsigned int  size_pubkey);
 // chip verification

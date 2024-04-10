@@ -23,7 +23,7 @@
 #endif
 
 
-int chipGenKeyPairs(int seq) {
+int chipGenKeyPairs(const char* sn, const char* busid, int seq) {
 
     /*** read p2 and pubKey by SPACC and PKA ***/
 #if !defined(USING_CMODEL) && !defined(SOC_MODE)
@@ -56,8 +56,9 @@ int chipGenKeyPairs(int seq) {
     printf("size_pubkey: %d size_p2: %d\n", size_pubkey, size_p2);
     printf("pubkey: %s  \n", pubkey);
 
-    FILE *file_pubkey = fopen(("../../../bm_chip/src/key/pubkey_"+ std::to_string(seq)).c_str(), "w");
-    FILE *file_p2 = fopen(("../../../bm_chip/src/key/p2_"+ std::to_string(seq)).c_str(), "w");
+    std::string filename = std::string(sn) + "_" + std::string(busid); //std::to_string(seq)).c_str()
+    FILE *file_pubkey = fopen(("../../../bm_chip/src/key/pubkey_"+ filename).c_str(), "w");
+    FILE *file_p2 = fopen(("../../../bm_chip/src/key/p2_"+ filename).c_str(), "w");
 
     // this directory is for c++ demo
 //    FILE *file_pubkey = fopen(("../key/pubkey_"+ std::to_string(seq)).c_str(), "w");
@@ -99,7 +100,7 @@ int chipGenKeyPairs(int seq) {
 
 }
 
-ChipDeclaration readKeyPairs(int seq) {
+ChipDeclaration readKeyPairs(const char* sn, const char* busid, int seq) {
 
     unsigned int size_p2 = 2048;
     unsigned int size_pubkey = 2048;
@@ -110,8 +111,9 @@ ChipDeclaration readKeyPairs(int seq) {
     ChipDeclaration oneChip;
 
     // read files to get keys results
-    FILE *file_pubkey = fopen(("../../../bm_chip/src/key/pubkey_"+ std::to_string(seq)).c_str(), "r");
-    FILE *file_p2 = fopen(("../../../bm_chip/src/key/p2_"+ std::to_string(seq)).c_str(), "r");
+    std::string filename = std::string(sn) + "_" + std::string(busid); //std::to_string(seq)).c_str()
+    FILE *file_pubkey = fopen(("../../../bm_chip/src/key/pubkey_"+ filename).c_str(), "r");
+    FILE *file_p2 = fopen(("../../../bm_chip/src/key/p2_"+ filename).c_str(), "r");
     if (file_pubkey) {
         fseek(file_pubkey, 0, SEEK_END);
         size_pubkey = ftell(file_pubkey);
