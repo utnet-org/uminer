@@ -6,10 +6,19 @@ import (
 	"os"
 	"uminer/miner-server/cmd"
 	"uminer/miner-server/cmd/miner"
+	"uminer/miner-server/cmd/utlog"
 	"uminer/miner-server/cmd/worker"
 )
 
+var StorageMiner storageMiner
+
+type storageMiner struct{}
+
 func main() {
+
+	// set up logs
+	utlog.SetupLogLevels()
+
 	app := &cli.App{
 		Name:                 "utility miner",
 		Usage:                "Utility decentralized network miner",
@@ -27,7 +36,7 @@ func main() {
 			},
 			&cli.StringSliceFlag{
 				Name:  "workerip",
-				Usage: "Set worker IP addresses",
+				Usage: "Set all workers IP addresses of a miner",
 				Value: cli.NewStringSlice(),
 			},
 			&cli.StringFlag{
@@ -52,8 +61,11 @@ func main() {
 		},
 	}
 
-	err := app.Run(os.Args)
-	if err != nil {
-		fmt.Println(err)
+	app.Setup()
+	app.Metadata["repoType"] = StorageMiner
+	if err := app.Run(os.Args); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
+
 }

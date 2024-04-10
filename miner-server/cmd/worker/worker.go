@@ -1,13 +1,13 @@
 package worker
 
 import (
-	"fmt"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/urfave/cli/v2"
 	"time"
 	"uminer/common/graceful"
 	"uminer/miner-server/cmd"
+	"uminer/miner-server/cmd/utlog"
 
 	"uminer/common/log"
 	"uminer/miner-server/serverConf"
@@ -23,6 +23,8 @@ import (
 func StartWorkerServer(c *cli.Context) error {
 
 	cmd.WorkerServerIP = c.String("serverip")
+
+	utlog.Mainlog.Info("Initializing utility worker")
 
 	// activate worker server
 	httpServer := &serverConf.Server_HTTP{
@@ -60,7 +62,7 @@ func StartWorkerServer(c *cli.Context) error {
 	defer close()
 
 	// start and wait for stop signal
-	fmt.Println("Worker started successfully.")
+	utlog.Mainlog.Info("Worker started successfully")
 	if err := app.Run(); err != nil {
 		panic(err)
 	}

@@ -19,6 +19,7 @@ import (
 	"uminer/common/log"
 	chainApi "uminer/miner-server/api/chainApi/rpc"
 	"uminer/miner-server/cmd"
+	"uminer/miner-server/cmd/utlog"
 	"uminer/miner-server/server"
 	"uminer/miner-server/serverConf"
 	"uminer/miner-server/service"
@@ -32,6 +33,8 @@ func StartMinerServer(c *cli.Context) error {
 		cmd.NodeURL = c.String("node")
 	}
 	cmd.WorkerLists = c.StringSlice("workerip")
+
+	utlog.Mainlog.Info("Initializing utility miner")
 
 	// activate miner server
 	httpServer := &serverConf.Server_HTTP{
@@ -69,7 +72,7 @@ func StartMinerServer(c *cli.Context) error {
 	defer close()
 
 	// start and wait for stop signal
-	fmt.Println("Miner started successfully.")
+	utlog.Mainlog.Info("Miner started successfully")
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
@@ -126,25 +129,25 @@ func listenMining(ctx context.Context, address string) {
 	// dial local grpc for challenge computation
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
-		fmt.Println("fail to dial miner RPC ", address)
+		utlog.Mainlog.Error("fail to dial miner RPC")
 		return
 	}
 	chaincli := chainApi.NewChainServiceClient(conn)
 	// get miner keys
 	file, fileErr := filepath.Glob("*.json")
 	if fileErr != nil || len(file) == 0 {
-		fmt.Println("no pubkey file is found")
+		utlog.Mainlog.Error("no pubkey file is found")
 		return
 	}
 	keys, err := chaincli.GetMinerAccountKeys(ctx, &chainApi.GetMinerAccountKeysRequest{Mnemonic: ""})
 	if err != nil {
-		fmt.Println("fail to get miner address RPC ", err)
+		utlog.Mainlog.Error("fail to get miner address RPC:", err.Error())
 		return
 	}
 	// get all chips and workers address ready
 	list, err := chaincli.GetMinerChipsList(ctx, &chainApi.GetMinerChipsListRequest{AccountId: keys.Address})
 	if err != nil {
-		fmt.Println("fail to get miner chip lists RPC ", err)
+		utlog.Mainlog.Error("fail to get miner chip lists RPC:", err.Error())
 		return
 	}
 	fmt.Println("my total chip power:", list.TotalPower)
@@ -183,7 +186,7 @@ func listenMining(ctx context.Context, address string) {
 		defer cancel()
 		r, err := http.NewRequestWithContext(ctx2, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
 		if err != nil {
-			fmt.Println("Error connecting to query latest blockHash RPC: ", err.Error())
+			utlog.Mainlog.Error("Error connecting to query latest blockHash RPC:", err.Error())
 			continue
 		}
 		r.Header.Add("Content-Type", "application/json; charset=utf-8")
@@ -192,7 +195,7 @@ func listenMining(ctx context.Context, address string) {
 		client := &http.Client{Timeout: 5 * time.Second}
 		resp, err := client.Do(r)
 		if err != nil {
-			fmt.Println("fail to get query latest blockHeight RPC response: ", err.Error())
+			utlog.Mainlog.Error("fail to get query latest blockHeight RPC response:", err.Error())
 			continue
 		}
 		defer resp.Body.Close()
@@ -205,6 +208,7 @@ func listenMining(ctx context.Context, address string) {
 		}
 
 		// get the next mining provider
+		utlog.Mainlog.Info("querying the next block candidate...")
 		cmd.LatestBlockH = latestBlockH
 		jsonData = map[string]interface{}{
 			"jsonrpc": "2.0",
@@ -217,7 +221,7 @@ func listenMining(ctx context.Context, address string) {
 		jsonStr, _ = json.Marshal(jsonData)
 		r, err = http.NewRequestWithContext(ctx2, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
 		if err != nil {
-			fmt.Println("Error connecting to query miner provider RPC: ", err.Error())
+			utlog.Mainlog.Error("Error connecting to query miner provider RPC:", err.Error())
 			continue
 		}
 		r.Header.Add("Content-Type", "application/json; charset=utf-8")
@@ -226,7 +230,7 @@ func listenMining(ctx context.Context, address string) {
 		cli := &http.Client{Timeout: 5 * time.Second}
 		resp, err = cli.Do(r)
 		if err != nil {
-			fmt.Println("fail to get query miner provider RPC response: ", err.Error())
+			utlog.Mainlog.Error("fail to get query miner provider RPC response:", err.Error())
 			continue
 		}
 		defer resp.Body.Close()
@@ -235,12 +239,12 @@ func listenMining(ctx context.Context, address string) {
 		provider := gjson.Get(res, "provider_account").String()
 		// check if the provider candidate is yourself
 		if provider != request.ChallengeKey {
-			fmt.Println("chosen : ", provider, ", my account is", request.ChallengeKey)
+			utlog.Mainlog.Warn("chosen : ", provider, ", my account is", request.ChallengeKey)
 			continue
 		}
 
 		// wait for the timing to be challenged and asked to sign chips for computation proof
-		fmt.Println("block candidate is selected!")
+		utlog.Mainlog.Info("you are selected as the next block candidate!")
 		waitingChallengeLoop(ctx, chaincli, request, time.Now().Unix()+10)
 
 	}
@@ -259,11 +263,11 @@ func waitingChallengeLoop(ctx context.Context, cli chainApi.ChainServiceClient, 
 		if time.Now().Unix() >= challengeTime {
 			response, err := cli.ChallengeComputation(ctx, request)
 			if err != nil {
-				fmt.Println("Error calling ChallengeComputation:", err)
+				utlog.Mainlog.Error("Error calling ChallengeComputation:", err.Error())
 			} else {
-				fmt.Println("ChallengeComputation response: ", response)
+				utlog.Mainlog.Info("ChallengeComputation response: ", response)
 			}
-			fmt.Println("block is burst and broadcast !")
+			utlog.Mainlog.Info("block is burst and broadcast !")
 			return
 		}
 	}
