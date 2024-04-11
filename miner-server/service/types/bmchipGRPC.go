@@ -219,7 +219,7 @@ func (s *ChipService) SignChip(ctx context.Context, req *rpc.SignChipsRequest) (
 
 	return &rpc.SignChipsReply{
 		Signature: sign.Signature,
-		Status:    true,
+		Status:    sign.Status,
 	}, nil
 
 }

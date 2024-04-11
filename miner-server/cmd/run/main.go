@@ -31,7 +31,7 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:  "serverip",
-				Usage: "Set miner server IP address",
+				Usage: "Set miner/worker server IP address",
 				Value: "127.0.0.1",
 			},
 			&cli.StringSliceFlag{
