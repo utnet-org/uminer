@@ -12,7 +12,7 @@ var MinerServerIP = "127.0.0.1"
 var WorkerServerIP = "127.0.0.1"
 
 // NodeURL utility nodeURL
-var NodeURL = "http://43.198.88.81:3031"
+var NodeURL = "http://127.0.0.1:0"
 
 // WorkerLists my worker lists(when deployed on miner server, all available worker is listed below)
 var WorkerLists = []string{"127.0.0.1"}
