@@ -63,6 +63,7 @@ message ReportChipRequest{
   string nodePath = 1;
   string chipFilePath = 2;
   string founder = 3;
+  string founderKeyPath = 4;
 }
 message ReportChipReply{
   string txHash = 1;
@@ -74,6 +75,7 @@ message ClaimStakeRequest {
   string amount = 2;
   string nodePath = 3;
   string keyPath = 4;
+  string net = 5;
 }
 message ClaimStakeReply {
   string transId = 1;
@@ -90,6 +92,7 @@ message ClaimChipComputationRequest {
   string chipPubK = 2;
   string nodePath = 3;
   string keyPath = 4;
+  string net = 5;
 }
 message ClaimChipComputationReply {
   string txHash = 1;

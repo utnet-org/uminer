@@ -106,22 +106,21 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 		return nil, err
 	}
 	// read foundation keys from unc.json file
-	type UNCKeyPair struct {
-		FounderPubK  string `json:"public_key"`
-		FounderPrivK string `json:"private_key"`
-	}
-	js, err := ioutil.ReadFile("../jsonfile/unc.json")
-	if err != nil {
-		fmt.Println("Failed to read file:", err)
-		return nil, err
-	}
-	var keyPair UNCKeyPair
-	if err := json.Unmarshal(js, &keyPair); err != nil {
-		fmt.Println("Failed to unmarshal JSON:", err)
-		return nil, err
-	}
-	cmdString := os.Getenv("unc") + " extensions register-rsa-keys unc use-file " + req.ChipFilePath + " with-init-call network-config custom sign-with-plaintext-private-key --signer-public-key " + keyPair.FounderPubK +
-		" --signer-private-key " + keyPair.FounderPrivK + " send"
+	//type UNCKeyPair struct {
+	//	FounderPubK  string `json:"public_key"`
+	//	FounderPrivK string `json:"private_key"`
+	//}
+	//js, err := ioutil.ReadFile("../jsonfile/unc.json")
+	//if err != nil {
+	//	fmt.Println("Failed to read file:", err)
+	//	return nil, err
+	//}
+	//var keyPair UNCKeyPair
+	//if err := json.Unmarshal(js, &keyPair); err != nil {
+	//	fmt.Println("Failed to unmarshal JSON:", err)
+	//	return nil, err
+	//}
+	cmdString := os.Getenv("unc") + " extensions register-rsa-keys unc use-file " + req.ChipFilePath + " with-init-call network-config custom sign-with-access-key-file " + req.FounderKeyPath + " send"
 	parts := strings.Fields(cmdString)
 	order := exec.Command(parts[0], parts[1:]...)
 	output, err := order.CombinedOutput()
@@ -252,6 +251,7 @@ func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeReques
 		}
 	}
 	pubKey := keyData.PublicKey
+	privateKey := keyData.PrivateKey
 
 	jsonData := map[string]interface{}{
 		"jsonrpc": "2.0",
@@ -289,14 +289,35 @@ func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeReques
 		return &rpc.ClaimStakeReply{}, errors.New("miner account is not accessible")
 	}
 
-	// command on utility nodes at utility-cli-js  (KeyPath for validator_key.json)
-	order := exec.Command(req.NodePath, "stake", req.AccountId, pubKey, req.Amount, "--keyPath", req.KeyPath)
-	output, err := order.CombinedOutput()
+	// command on utility nodes at utility:unc-validator
+	err = os.Setenv("unc-validator", req.NodePath)
 	if err != nil {
-		fmt.Println("Error executing command:", err)
+		fmt.Println("setting environment variable fail:", err)
 		return nil, err
 	}
-	fmt.Println("output:", output)
+	command := os.Getenv("unc-validator")
+	amount := req.Amount + " unc"
+	args := []string{
+		"pledging", "pledge-proposal", req.AccountId, pubKey, amount, "network-config", req.Net, "sign-with-plaintext-private-key", "--signer-public-key",
+		pubKey, "--signer-private-key", privateKey,
+	}
+	// execute the command
+	order := exec.Command(command, args...)
+	output, err := order.CombinedOutput()
+	fmt.Println(string(output))
+	// get error
+	geterror := regexp.MustCompile(`error:\s*(.+)`)
+	matches := geterror.FindStringSubmatch(string(output))
+	if len(matches) != 0 {
+		errMsg := strings.Join(matches, ", ")
+		return nil, errors.New(errMsg)
+	}
+	geterror = regexp.MustCompile(`Error:\s*(.+)`)
+	matches = geterror.FindStringSubmatch(string(output))
+	if len(matches) != 0 {
+		errMsg := strings.Join(matches, ", ")
+		return nil, errors.New(errMsg)
+	}
 
 	return &rpc.ClaimStakeReply{
 		TransId: "",
@@ -325,7 +346,6 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 		}
 	}
 	pubKey := keyData.PublicKey
-	privKey := keyData.PrivateKey
 
 	// check if miner account exist
 	jsonData := map[string]interface{}{
@@ -396,7 +416,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 		}
 	}
 	/* miner signature: command on near nodes at utility-cli-rs (KeyPath for miner_key.json) */
-	order := exec.Command(req.NodePath, "extensions", "create-challenge-rsa", req.AccountId, "use-file", req.KeyPath, "without-init-call", "network-config", "custom", "sign-with-plaintext-private-key", "--signer-public-key", pubKey, "--signer-private-key", privKey, "send")
+	order := exec.Command(req.NodePath, "account", "add-key", req.AccountId, "grant-full-access", "use-manually-provided-public-key", req.ChipPubK, "network-config", req.Net, "sign-with-keychain", "send")
 	output, err := order.CombinedOutput()
 	fmt.Println(string(output))
 	//if err != nil {

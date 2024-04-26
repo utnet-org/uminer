@@ -326,10 +326,16 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "founder not found in params", http2.StatusBadRequest)
 			return
 		}
+		founderKeyPath, ok := params["founder_key_path"].(string)
+		if !ok {
+			http2.Error(w, "founderKeyPath not found in params", http2.StatusBadRequest)
+			return
+		}
 		request := &chainApi.ReportChipRequest{
-			NodePath:     nodePath,
-			ChipFilePath: keyPath,
-			Founder:      founder,
+			NodePath:       nodePath,
+			ChipFilePath:   keyPath,
+			Founder:        founder,
+			FounderKeyPath: founderKeyPath,
 		}
 		response, err := srv.ChainService.ReportChip(r.Context(), request)
 		if err != nil {
@@ -363,7 +369,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
-	case "claimstake":
+	case "claimpledge":
 		if !ok {
 			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
 			return
@@ -388,11 +394,17 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "Key path not found in params", http2.StatusBadRequest)
 			return
 		}
+		net, ok := params["net"].(string)
+		if !ok {
+			http2.Error(w, "net type not found in params", http2.StatusBadRequest)
+			return
+		}
 		request := &chainApi.ClaimStakeRequest{
 			AccountId: accountId,
 			Amount:    amount,
 			NodePath:  nodePath,
 			KeyPath:   keyPath,
+			Net:       net,
 		}
 		response, err := srv.ChainService.ClaimStake(r.Context(), request)
 		if err != nil {
@@ -428,11 +440,17 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "Key path not found in params", http2.StatusBadRequest)
 			return
 		}
+		net, ok := params["net"].(string)
+		if !ok {
+			http2.Error(w, "net type not found in params", http2.StatusBadRequest)
+			return
+		}
 		request := &chainApi.ClaimChipComputationRequest{
 			AccountId: accountId,
 			ChipPubK:  chipPubKey,
 			NodePath:  nodePath,
 			KeyPath:   keyPath,
+			Net:       net,
 		}
 		response, err := srv.ChainService.ClaimChipComputation(r.Context(), request)
 		if err != nil {
