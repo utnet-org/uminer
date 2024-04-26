@@ -369,6 +369,37 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
+	case "activatemineraccount":
+		nodePath, ok := params["node_path"].(string)
+		if !ok {
+			http2.Error(w, "Node path not found in params", http2.StatusBadRequest)
+			return
+		}
+		accountId, ok := params["account_id"].(string)
+		if !ok {
+			http2.Error(w, "account_id not found in params", http2.StatusBadRequest)
+			return
+		}
+		net, ok := params["net"].(string)
+		if !ok {
+			http2.Error(w, "net type not found in params", http2.StatusBadRequest)
+			return
+		}
+		sender, ok := params["sender"].(string)
+		if !ok {
+			http2.Error(w, "sender not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chainApi.ActivateNewAccountRequest{NodePath: nodePath, AccountId: accountId, Net: net, Sender: sender}
+		response, err := srv.ChainService.ActivateNewAccount(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
 	case "claimpledge":
 		if !ok {
 			http2.Error(w, "Params not found in request", http2.StatusBadRequest)

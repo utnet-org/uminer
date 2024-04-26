@@ -230,6 +230,73 @@ func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMine
 
 }
 
+// ActivateNewAccount founder send 1 unc to a new miner for activation
+func (s *ChainService) ActivateNewAccount(ctx context.Context, req *rpc.ActivateNewAccountRequest) (*rpc.ActivateNewAccountReply, error) {
+
+	// check if miner account exist
+	file, fileErr := filepath.Glob("*.json")
+	if fileErr != nil {
+		return nil, fileErr
+	}
+	fileContent, err := os.Open(file[0])
+	if err != nil {
+		return nil, err
+	}
+	var keyData KeyData
+	err = json.NewDecoder(fileContent).Decode(&keyData)
+	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		if err != nil {
+			return nil, err
+		}
+	}
+	pubKey := keyData.PublicKey
+
+	jsonData := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "dontcare",
+		"method":  "query",
+		"params":  map[string]interface{}{"request_type": "view_access_key", "finality": "final", "account_id": req.AccountId, "public_key": pubKey},
+	}
+	jsonStr, _ := json.Marshal(jsonData)
+	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+	r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		return nil, err
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	gzipBytes := util.GzipApi(resp)
+	// no such account
+	if gjson.Get(string(gzipBytes), "error").String() != "" {
+		// start transfer
+		amount := "1 unc"
+		order := exec.Command(req.NodePath, "unc", "tokens", req.Sender, "send-unc", req.AccountId, amount, "network-config", req.Net, "sign-with-keychain", "send")
+		output, _ := order.CombinedOutput()
+		fmt.Println(string(output))
+		// get error
+		geterror := regexp.MustCompile(`Error:\s*(.+)`)
+		matches := geterror.FindStringSubmatch(string(output))
+		if len(matches) != 0 {
+			errMsg := strings.Join(matches, ", ")
+			return nil, errors.New(errMsg)
+		}
+		return &rpc.ActivateNewAccountReply{TxHash: ""}, nil
+	}
+
+	return &rpc.ActivateNewAccountReply{}, errors.New("already activated")
+
+}
+
 // ClaimStake claim amount of token deposit to the chain as stake before start mining
 func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeRequest) (*rpc.ClaimStakeReply, error) {
 

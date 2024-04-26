@@ -10,6 +10,7 @@ service ChainService {
 //  rpc UpdateMinerStatus (ReportMinerStatusRequest) returns (ReportMinerStatusReply);
   rpc ReportChip (ReportChipRequest) returns (ReportChipReply);
   rpc GetMinerAccountKeys (GetMinerAccountKeysRequest) returns (GetMinerAccountKeysReply);
+  rpc ActivateNewAccount (ActivateNewAccountRequest) returns (ActivateNewAccountReply);
   rpc ClaimStake (ClaimStakeRequest) returns (ClaimStakeReply);
   rpc ClaimChipComputation (ClaimChipComputationRequest) returns (ClaimChipComputationReply);
   rpc GetMinerChipsList (GetMinerChipsListRequest) returns (GetMinerChipsListReply);
@@ -26,6 +27,18 @@ message GetMinerAccountKeysReply {
   string pubKey = 1;
   string address = 2;
 }
+
+//
+message ActivateNewAccountRequest {
+  string accountId = 1;
+  string nodePath = 2;
+  string sender = 3;
+  string net = 4;
+}
+message ActivateNewAccountReply{
+  string txHash = 1;
+}
+
 
 // chain information
 message ReportChainsStatusRequest{
