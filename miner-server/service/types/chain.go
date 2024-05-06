@@ -120,7 +120,7 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 	//	fmt.Println("Failed to unmarshal JSON:", err)
 	//	return nil, err
 	//}
-	cmdString := os.Getenv("unc") + " extensions register-rsa-keys unc use-file " + req.ChipFilePath + " with-init-call network-config custom sign-with-access-key-file " + req.FounderKeyPath + " send"
+	cmdString := os.Getenv("unc") + " extensions register-rsa-keys " + req.Founder + " use-file " + req.ChipFilePath + " with-init-call network-config custom sign-with-access-key-file " + req.FounderKeyPath + " send"
 	parts := strings.Fields(cmdString)
 	order := exec.Command(parts[0], parts[1:]...)
 	output, err := order.CombinedOutput()
@@ -413,6 +413,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 		}
 	}
 	pubKey := keyData.PublicKey
+	privateKey := keyData.PrivateKey
 
 	// check if miner account exist
 	jsonData := map[string]interface{}{
@@ -483,7 +484,8 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 		}
 	}
 	/* miner signature: command on near nodes at utility-cli-rs (KeyPath for miner_key.json) */
-	order := exec.Command(req.NodePath, "account", "add-key", req.AccountId, "grant-full-access", "use-manually-provided-public-key", req.ChipPubK, "network-config", req.Net, "sign-with-keychain", "send")
+	order := exec.Command(req.NodePath, "account", "add-key", req.AccountId, "grant-full-access", "use-manually-provided-public-key", req.ChipPubK, "network-config", req.Net, "sign-with-plaintext-private-key",
+		"--signer-public-key", pubKey, "--signer-private-key", privateKey)
 	output, err := order.CombinedOutput()
 	fmt.Println(string(output))
 	//if err != nil {
