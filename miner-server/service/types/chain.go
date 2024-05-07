@@ -136,7 +136,6 @@ func (s *ChainService) ReportChip(ctx context.Context, req *rpc.ReportChipReques
 		errMsg := strings.Join(matches, ", ")
 		return nil, errors.New(errMsg)
 	}
-
 	// get tx id
 	re := regexp.MustCompile(`Transaction ID:\s*(.+)`)
 	matches = re.FindStringSubmatch(string(output))
@@ -230,11 +229,11 @@ func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMine
 
 }
 
-// ActivateNewAccount founder send 1 unc to a new miner for activation
-func (s *ChainService) ActivateNewAccount(ctx context.Context, req *rpc.ActivateNewAccountRequest) (*rpc.ActivateNewAccountReply, error) {
+// FaucetNewAccount founder send unc to a new miner for activation
+func (s *ChainService) FaucetNewAccount(ctx context.Context, req *rpc.FaucetNewAccountRequest) (*rpc.FaucetNewAccountReply, error) {
 
-	// check if miner account exist
-	file, fileErr := filepath.Glob("*.json")
+	// load founder key
+	file, fileErr := filepath.Glob("../jsonfile/unc.json")
 	if fileErr != nil {
 		return nil, fileErr
 	}
@@ -251,49 +250,29 @@ func (s *ChainService) ActivateNewAccount(ctx context.Context, req *rpc.Activate
 		}
 	}
 	pubKey := keyData.PublicKey
-
-	jsonData := map[string]interface{}{
-		"jsonrpc": "2.0",
-		"id":      "dontcare",
-		"method":  "query",
-		"params":  map[string]interface{}{"request_type": "view_access_key", "finality": "final", "account_id": req.AccountId, "public_key": pubKey},
+	privateKey := keyData.PrivateKey
+	// start transfer
+	amount := req.Amount + " unc"
+	order := exec.Command(req.NodePath, "tokens", req.Sender, "send-unc", req.AccountId, amount, "network-config", req.Net, "sign-with-plaintext-private-key",
+		"--signer-public-key", pubKey, "--signer-private-key", privateKey, "send")
+	output, _ := order.CombinedOutput()
+	fmt.Println(string(output))
+	// get error
+	geterror := regexp.MustCompile(`Error:\s*(.+)`)
+	matches := geterror.FindStringSubmatch(string(output))
+	if len(matches) != 0 {
+		errMsg := strings.Join(matches, ", ")
+		return nil, errors.New(errMsg)
 	}
-	jsonStr, _ := json.Marshal(jsonData)
-	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
-	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	defer cancel()
-	r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
-	if err != nil {
-		return nil, err
+	// get tx id
+	re := regexp.MustCompile(`Transaction ID:\s*(.+)`)
+	matches = re.FindStringSubmatch(string(output))
+	if len(matches) == 0 {
+		return nil, errors.New("transaction failed")
 	}
-	r.Header.Add("Content-Type", "application/json; charset=utf-8")
-	r.Header.Add("accept-encoding", "gzip,deflate")
-
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Do(r)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	gzipBytes := util.GzipApi(resp)
-	// no such account
-	if gjson.Get(string(gzipBytes), "error").String() != "" {
-		// start transfer
-		amount := "1 unc"
-		order := exec.Command(req.NodePath, "unc", "tokens", req.Sender, "send-unc", req.AccountId, amount, "network-config", req.Net, "sign-with-keychain", "send")
-		output, _ := order.CombinedOutput()
-		fmt.Println(string(output))
-		// get error
-		geterror := regexp.MustCompile(`Error:\s*(.+)`)
-		matches := geterror.FindStringSubmatch(string(output))
-		if len(matches) != 0 {
-			errMsg := strings.Join(matches, ", ")
-			return nil, errors.New(errMsg)
-		}
-		return &rpc.ActivateNewAccountReply{TxHash: ""}, nil
-	}
-
-	return &rpc.ActivateNewAccountReply{}, errors.New("already activated")
+	txhash := matches[1]
+	fmt.Println("tx id:", txhash)
+	return &rpc.FaucetNewAccountReply{TxHash: txhash}, nil
 
 }
 
@@ -366,7 +345,7 @@ func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeReques
 	amount := req.Amount + " unc"
 	args := []string{
 		"pledging", "pledge-proposal", req.AccountId, pubKey, amount, "network-config", req.Net, "sign-with-plaintext-private-key", "--signer-public-key",
-		pubKey, "--signer-private-key", privateKey,
+		pubKey, "--signer-private-key", privateKey, "send",
 	}
 	// execute the command
 	order := exec.Command(command, args...)
@@ -385,9 +364,17 @@ func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeReques
 		errMsg := strings.Join(matches, ", ")
 		return nil, errors.New(errMsg)
 	}
+	// get tx id
+	re := regexp.MustCompile(`Transaction ID:\s*(.+)`)
+	matches = re.FindStringSubmatch(string(output))
+	if len(matches) == 0 {
+		return nil, errors.New("transaction failed")
+	}
+	txhash := matches[1]
+	fmt.Println("tx id:", txhash)
 
 	return &rpc.ClaimStakeReply{
-		TransId: "",
+		TransId: txhash,
 		Status:  "1",
 	}, nil
 }
@@ -485,7 +472,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	}
 	/* miner signature: command on near nodes at utility-cli-rs (KeyPath for miner_key.json) */
 	order := exec.Command(req.NodePath, "account", "add-key", req.AccountId, "grant-full-access", "use-manually-provided-public-key", req.ChipPubK, "network-config", req.Net, "sign-with-plaintext-private-key",
-		"--signer-public-key", pubKey, "--signer-private-key", privateKey)
+		"--signer-public-key", pubKey, "--signer-private-key", privateKey, "send")
 	output, err := order.CombinedOutput()
 	fmt.Println(string(output))
 	//if err != nil {
