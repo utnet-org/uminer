@@ -5,7 +5,7 @@ its purpose is to upload all the real burned chip with its information of serial
 For a near super account, he will have to EXECUTE the rpc "reportChip" with its private key and public key provided in a json file "unc.json".\
 --signer-public-key ed25519:xxx is the public key of the super account, --signer-private-key ed25519:xxx is the private key of the super account to do a signature
 
-# 2.About miner_key.json
+# 2.About miner_ChallengeKey.json
 its purpose is to create a file for containing miner public key and chip public key, so that a miner binds with a chip to claim its computation, rpc method "ClaimChipComputation" is used
 
 ## challenge_key

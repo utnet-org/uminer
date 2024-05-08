@@ -451,7 +451,7 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		}
-	case "claimcomputation":
+	case "addchipkeys":
 		if !ok {
 			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
 			return
@@ -471,7 +471,47 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			http2.Error(w, "Node path not found in params", http2.StatusBadRequest)
 			return
 		}
-		keyPath, ok := params["key_path"].(string)
+		net, ok := params["net"].(string)
+		if !ok {
+			http2.Error(w, "net type not found in params", http2.StatusBadRequest)
+			return
+		}
+		request := &chainApi.AddChipOwnershipRequest{
+			AccountId: accountId,
+			ChipPubK:  chipPubKey,
+			NodePath:  nodePath,
+			Net:       net,
+		}
+		response, err := srv.ChainService.AddChipOwnership(r.Context(), request)
+		if err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		}
+	case "claimcomputation":
+		if !ok {
+			http2.Error(w, "Params not found in request", http2.StatusBadRequest)
+			return
+		}
+		accountId, ok := params["account_id"].(string)
+		if !ok {
+			http2.Error(w, "Account ID not found in params", http2.StatusBadRequest)
+			return
+		}
+		nodePath, ok := params["node_path"].(string)
+		if !ok {
+			http2.Error(w, "Node path not found in params", http2.StatusBadRequest)
+			return
+		}
+		challengeKeyPath, ok := params["challenge_key_path"].(string)
+		if !ok {
+			http2.Error(w, "Key path not found in params", http2.StatusBadRequest)
+			return
+		}
+		signerKeyPath, ok := params["signer_key_path"].(string)
 		if !ok {
 			http2.Error(w, "Key path not found in params", http2.StatusBadRequest)
 			return
@@ -482,11 +522,11 @@ func HandleJSONRPCRequest(srv *service.Service, w http.ResponseWriter, r *http2.
 			return
 		}
 		request := &chainApi.ClaimChipComputationRequest{
-			AccountId: accountId,
-			ChipPubK:  chipPubKey,
-			NodePath:  nodePath,
-			KeyPath:   keyPath,
-			Net:       net,
+			AccountId:        accountId,
+			NodePath:         nodePath,
+			ChallengeKeyPath: challengeKeyPath,
+			SignerKeyPath:    signerKeyPath,
+			Net:              net,
 		}
 		response, err := srv.ChainService.ClaimChipComputation(r.Context(), request)
 		if err != nil {

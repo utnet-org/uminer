@@ -12,6 +12,7 @@ service ChainService {
   rpc GetMinerAccountKeys (GetMinerAccountKeysRequest) returns (GetMinerAccountKeysReply);
   rpc FaucetNewAccount (FaucetNewAccountRequest) returns (FaucetNewAccountReply);
   rpc ClaimStake (ClaimStakeRequest) returns (ClaimStakeReply);
+  rpc AddChipOwnership (AddChipOwnershipRequest) returns (AddChipOwnershipReply);
   rpc ClaimChipComputation (ClaimChipComputationRequest) returns (ClaimChipComputationReply);
   rpc GetMinerChipsList (GetMinerChipsListRequest) returns (GetMinerChipsListReply);
   rpc ChallengeComputation (ChallengeComputationRequest) returns (ChallengeComputationReply);
@@ -101,12 +102,21 @@ message chipSets {
   string serialNumber = 1;
   string busID = 2;
 }
-message ClaimChipComputationRequest {
+message AddChipOwnershipRequest {
   string accountId = 1;
   string chipPubK = 2;
   string nodePath = 3;
-  string keyPath = 4;
-  string net = 5;
+  string net = 4;
+}
+message AddChipOwnershipReply {
+  string txHash = 1;
+}
+message ClaimChipComputationRequest {
+  string accountId = 1;
+  string nodePath = 3;
+  string challengeKeyPath = 4;
+  string signerKeyPath = 5;
+  string net = 6;
 }
 message ClaimChipComputationReply {
   string txHash = 1;

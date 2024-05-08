@@ -154,7 +154,7 @@ func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMine
 
 	// check if account access key exists
 	file, fileErr := filepath.Glob("*.json")
-	var address, pubKey string
+	var address, pubKey, privateKey string
 	if (fileErr == nil && len(file) != 0) && (req.Mnemonic == "" || len(strings.Fields(req.Mnemonic)) != 12) {
 		// Read the key files
 		fileContent, err := os.Open(file[0])
@@ -170,6 +170,7 @@ func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMine
 			}
 		}
 		pubKey = keyData.PublicKey
+		privateKey = keyData.PrivateKey
 		address = keyData.AccountID
 	} else {
 		// Generate new key pair using unc-rs client
@@ -219,7 +220,41 @@ func (s *ChainService) GetMinerAccountKeys(ctx context.Context, req *rpc.GetMine
 			}
 		}
 		pubKey = keyData.PublicKey
+		privateKey = keyData.PrivateKey
 		address = keyData.AccountID
+	}
+
+	// generate validator_key.json for signing keys at claim computation
+	rawdata := map[string]string{
+		"account_id":  address,
+		"public_key":  pubKey,
+		"private_key": privateKey,
+	}
+	_, err := ioutil.ReadFile("../jsonfile/validator_key.json")
+	if err == nil {
+		file, err := os.OpenFile("../jsonfile/validator_key.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			fmt.Println("Error opening file:", err)
+			return nil, err
+		}
+		encoder := json.NewEncoder(file)
+		err = encoder.Encode(rawdata)
+		if err != nil {
+			fmt.Println("Error writing JSON to file:", err)
+			return nil, err
+		}
+	} else {
+		file, err := os.Create("../jsonfile/validator_key.json")
+		if err != nil {
+			fmt.Println("Error creating JSON file:", err)
+			return nil, err
+		}
+		encoder := json.NewEncoder(file)
+		err = encoder.Encode(rawdata)
+		if err != nil {
+			fmt.Println("Error encoding JSON:", err)
+			return nil, err
+		}
 	}
 
 	return &rpc.GetMinerAccountKeysReply{
@@ -379,8 +414,8 @@ func (s *ChainService) ClaimStake(ctx context.Context, req *rpc.ClaimStakeReques
 	}, nil
 }
 
-// ClaimChipComputation claim server/chips to the chain, binding miner address, obtain container cloud connection
-func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimChipComputationRequest) (*rpc.ClaimChipComputationReply, error) {
+// AddChipOwnership add a key ownership to a miner identified by chip public key
+func (s *ChainService) AddChipOwnership(ctx context.Context, req *rpc.AddChipOwnershipRequest) (*rpc.AddChipOwnershipReply, error) {
 
 	// get keys
 	file, fileErr := filepath.Glob("*.json")
@@ -431,22 +466,22 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	if gjson.Get(string(gzipBytes), "error").String() != "" {
 		errs := gjson.Get(string(gzipBytes), "error").String()
 		datas := gjson.Get(errs, "data").String()
-		return &rpc.ClaimChipComputationReply{}, errors.New(datas)
+		return &rpc.AddChipOwnershipReply{}, errors.New(datas)
 	}
 	res := gjson.Get(string(gzipBytes), "result").String()
 	permission := gjson.Get(res, "permission").String()
 	if permission != "FullAccess" {
-		return &rpc.ClaimChipComputationReply{}, errors.New("miner account is not accessible")
+		return &rpc.AddChipOwnershipReply{}, errors.New("miner account is not accessible")
 	}
 
-	// generate miner_key.json
+	// generate miner_challengeKey.json for challenge at claim computation
 	rawdata := map[string]string{
-		"challenge_key": pubKey,
 		"public_key":    "rsa2048:" + req.ChipPubK,
+		"challenge_key": pubKey,
 	}
-	_, err = ioutil.ReadFile("../jsonfile/miner_key.json")
+	_, err = ioutil.ReadFile("../jsonfile/miner_challengeKey.json")
 	if err == nil {
-		file, err := os.OpenFile("../jsonfile/miner_key.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		file, err := os.OpenFile("../jsonfile/miner_challengeKey.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			fmt.Println("Error opening file:", err)
 			return nil, err
@@ -458,7 +493,7 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 			return nil, err
 		}
 	} else {
-		file, err := os.Create("../jsonfile/miner_key.json")
+		file, err := os.Create("../jsonfile/miner_challengeKey.json")
 		if err != nil {
 			fmt.Println("Error creating JSON file:", err)
 			return nil, err
@@ -470,7 +505,8 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 			return nil, err
 		}
 	}
-	/* miner signature: command on near nodes at utility-cli-rs (KeyPath for miner_key.json) */
+
+	/* miner signature: command on unc node */
 	order := exec.Command(req.NodePath, "account", "add-key", req.AccountId, "grant-full-access", "use-manually-provided-public-key", req.ChipPubK, "network-config", req.Net, "sign-with-plaintext-private-key",
 		"--signer-public-key", pubKey, "--signer-private-key", privateKey, "send")
 	output, err := order.CombinedOutput()
@@ -479,6 +515,91 @@ func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimC
 	//	fmt.Println("Error executing command:", err)
 	//	return nil, err
 	//}
+	// get error
+	geterror := regexp.MustCompile(`Error:\s*(.+)`)
+	matches := geterror.FindStringSubmatch(string(output))
+	if len(matches) != 0 {
+		errMsg := strings.Join(matches, ", ")
+		return nil, errors.New(errMsg)
+	}
+	// get tx id
+	re := regexp.MustCompile(`Transaction ID:\s*(.+)`)
+	matches = re.FindStringSubmatch(string(output))
+	if len(matches) == 0 {
+		return nil, errors.New("transaction failed")
+	}
+	txhash := matches[1]
+	fmt.Println("tx id:", txhash)
+
+	return &rpc.AddChipOwnershipReply{
+		TxHash: txhash,
+	}, nil
+
+}
+
+// ClaimChipComputation claim server/chips to the chain, binding miner address
+func (s *ChainService) ClaimChipComputation(ctx context.Context, req *rpc.ClaimChipComputationRequest) (*rpc.ClaimChipComputationReply, error) {
+
+	// get keys
+	file, fileErr := filepath.Glob("*.json")
+	if fileErr != nil {
+		return nil, fileErr
+	}
+	fileContent, err := os.Open(file[0])
+	if err != nil {
+		return nil, err
+	}
+	var keyData KeyData
+	err = json.NewDecoder(fileContent).Decode(&keyData)
+	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		if err != nil {
+			return nil, err
+		}
+	}
+	pubKey := keyData.PublicKey
+
+	// check if miner account exist
+	jsonData := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "dontcare",
+		"method":  "query",
+		"params":  map[string]interface{}{"request_type": "view_access_key", "finality": "final", "account_id": req.AccountId, "public_key": pubKey},
+	}
+	jsonStr, _ := json.Marshal(jsonData)
+	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+	r, err := http.NewRequestWithContext(ctx, http.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		return nil, err
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	gzipBytes := util.GzipApi(resp)
+	// no such account
+	if gjson.Get(string(gzipBytes), "error").String() != "" {
+		errs := gjson.Get(string(gzipBytes), "error").String()
+		datas := gjson.Get(errs, "data").String()
+		return &rpc.ClaimChipComputationReply{}, errors.New(datas)
+	}
+	res := gjson.Get(string(gzipBytes), "result").String()
+	permission := gjson.Get(res, "permission").String()
+	if permission != "FullAccess" {
+		return &rpc.ClaimChipComputationReply{}, errors.New("miner account is not accessible")
+	}
+
+	/* miner signature: command on unc node (KeyPath: miner_challengeKey.json + validator_key.json) */
+	order := exec.Command(req.NodePath, "extensions", "create-challenge-rsa", req.AccountId, "use-file", req.ChallengeKeyPath, "without-init-call", "network-config", req.Net, "sign-with-access-key-file", req.SignerKeyPath, "send")
+	output, err := order.CombinedOutput()
+	fmt.Println(string(output))
 	// get error
 	geterror := regexp.MustCompile(`Error:\s*(.+)`)
 	matches := geterror.FindStringSubmatch(string(output))
