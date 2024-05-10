@@ -507,7 +507,8 @@ func (s *ChainService) AddChipOwnership(ctx context.Context, req *rpc.AddChipOwn
 	}
 
 	/* miner signature: command on unc node */
-	order := exec.Command(req.NodePath, "account", "add-key", req.AccountId, "grant-full-access", "use-manually-provided-public-key", req.ChipPubK, "network-config", req.Net, "sign-with-plaintext-private-key",
+	rsaKey := "rsa2048:" + req.ChipPubK
+	order := exec.Command(req.NodePath, "account", "add-key", req.AccountId, "grant-full-access", "use-manually-provided-public-key", rsaKey, "network-config", req.Net, "sign-with-plaintext-private-key",
 		"--signer-public-key", pubKey, "--signer-private-key", privateKey, "send")
 	output, err := order.CombinedOutput()
 	fmt.Println(string(output))
@@ -723,9 +724,9 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			cardLists = response.Cards
 		}
 		conn.Close()
-		for _, card := range cardLists {
+		for _, item := range req.Chips {
 			devId := -1
-			for _, item := range req.Chips {
+			for _, card := range cardLists {
 				if card.SerialNum == item.SerialNumber {
 					for _, chip := range card.Chips {
 						if chip.BusId == item.BusId {
@@ -734,19 +735,19 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 						}
 					}
 				}
-				// if the current chip not found, proceed to next chip
-				if devId == -1 {
-					fmt.Println("chip", item.SerialNumber, item.BusId, "is not selected")
-					continue
-				}
-				// found the right chip and sign
-				sign := chipApi.SignMinerChips(devId, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
-				signatures = append(signatures, &rpc.SignatureSets{
-					SerialNumber: item.SerialNumber,
-					BusID:        item.BusId,
-					Signature:    sign.Signature,
-				})
 			}
+			// if the current chip not found, proceed to next chip
+			if devId == -1 {
+				fmt.Println("chip", item.SerialNumber, item.BusId, "is not found in ", each)
+				continue
+			}
+			// found the right chip and sign
+			sign := chipApi.SignMinerChips(devId, item.P2, item.PublicKey, int(item.P2Size), int(item.PublicKeySize), req.Message)
+			signatures = append(signatures, &rpc.SignatureSets{
+				SerialNumber: item.SerialNumber,
+				BusID:        item.BusId,
+				Signature:    sign.Signature,
+			})
 		}
 	}
 
