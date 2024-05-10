@@ -31,6 +31,7 @@ type ReportNodesStatusReply struct {
 
 type ViewAccountReply struct {
 	Total   string `json:"total"`
+	Pledge  string `json:"pledge"`
 	Rewards string `json:"rewards"`
 	Slashed string `json:"slashed"`
 	Power   string `json:"power"`

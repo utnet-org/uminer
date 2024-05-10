@@ -354,6 +354,7 @@ func (s *MinerStatusServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *ht
 	res := gjson.Get(string(gzipBytes), "result").String()
 	power := gjson.Get(res, "power").Int() / (1e12)
 	balance := gjson.Get(res, "amount").String()
+	pledged := gjson.Get(res, "pledging").String()
 
 	num := new(big.Float)
 	num.SetString(balance)
@@ -362,15 +363,20 @@ func (s *MinerStatusServiceHTTP) ViewAccountHandler(w http.ResponseWriter, r *ht
 	amount := new(big.Float).Quo(num, new(big.Float).SetInt(divisor))
 	amountString := amount.Text('f', 3)
 
+	num.SetString(pledged)
+	pledge := new(big.Float).Quo(num, new(big.Float).SetInt(divisor))
+	pledgeString := pledge.Text('f', 3)
+
 	if gjson.Get(string(gzipBytes), "error").String() != "" {
 		amountString = "--"
 	}
 
 	response := HTTP.ViewAccountReply{
-		Total: amountString,
+		Total:  amountString,
+		Pledge: pledgeString,
 		//  Rewards Slashed are mock data currently
-		Rewards: "1",
-		Slashed: "-1",
+		Rewards: "0",
+		Slashed: "0",
 		Power:   strconv.FormatInt(power, 10),
 	}
 
