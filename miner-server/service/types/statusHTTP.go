@@ -78,6 +78,81 @@ func (s *MinerStatusServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r 
 	res := gjson.Get(string(gzipBytes), "result").String()
 	sync := gjson.Get(res, "sync_info").String()
 	latestHeight := gjson.Get(sync, "latest_block_height").Int()
+	latestHash := gjson.Get(sync, "latest_block_hash").String()
+
+	// get all miners
+	jsonData = map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "dontcare",
+		"method":  "all_miners",
+		"params":  map[string]interface{}{"block_hash": latestHash},
+	}
+	jsonStr, _ = json.Marshal(jsonData)
+	clientDeadline = time.Now().Add(time.Duration(connect.Delay * time.Second))
+	ctx, cancel = context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+	r, err = http2.NewRequestWithContext(ctx, http2.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client = &http2.Client{Timeout: 5 * time.Second}
+	resp, err = client.Do(r)
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+	gzipBytes = util.GzipApi(resp)
+	res = gjson.Get(string(gzipBytes), "result").String()
+	totalPower := gjson.Get(res, "total_power").String()
+	num := new(big.Float)
+	num.SetString(totalPower)
+	divisor := new(big.Int)
+	divisor.SetString("1000000000000", 10) // = 1e12
+	amount := new(big.Float).Quo(num, new(big.Float).SetInt(divisor))
+	totalPowerString := amount.Text('f', 1)
+	miners := gjson.Get(res, "miners").Array()
+	numOfMiners := len(miners)
+
+	// get all rewards
+	jsonData = map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      "dontcare",
+		"method":  "block",
+		"params":  map[string]interface{}{"finality": "final"},
+	}
+	jsonStr, _ = json.Marshal(jsonData)
+	clientDeadline = time.Now().Add(time.Duration(connect.Delay * time.Second))
+	ctx, cancel = context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+	r, err = http2.NewRequestWithContext(ctx, http2.MethodPost, cmd.NodeURL, bytes.NewReader(jsonStr))
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
+	r.Header.Add("Content-Type", "application/json; charset=utf-8")
+	r.Header.Add("accept-encoding", "gzip,deflate")
+
+	client = &http2.Client{Timeout: 5 * time.Second}
+	resp, err = client.Do(r)
+	if err != nil {
+		http2.Error(w, err.Error(), http2.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+	gzipBytes = util.GzipApi(resp)
+	res = gjson.Get(string(gzipBytes), "result").String()
+	header := gjson.Get(res, "header").String()
+	rewards := gjson.Get(header, "total_supply").String()
+	num = new(big.Float)
+	num.SetString(rewards)
+	divisor.SetString("1000000000000000000000000", 10) // 1 unc = 1e24
+	amount = new(big.Float).Quo(num, new(big.Float).SetInt(divisor))
+	rewardsString := amount.Text('f', 1)
 
 	// get gas fee
 	jsonData = map[string]interface{}{
@@ -106,9 +181,9 @@ func (s *MinerStatusServiceHTTP) GetNodesStatusHandler(w http.ResponseWriter, r 
 
 	response := HTTP.ReportNodesStatusReply{
 		//  Computation NumberOfMiners Rewards are mock data currently
-		Computation:       "1000",
-		NumberOfMiners:    "100",
-		Rewards:           "10",
+		Computation:       totalPowerString,
+		NumberOfMiners:    strconv.FormatInt(int64(numOfMiners), 10),
+		Rewards:           rewardsString,
 		LatestBlockHeight: strconv.FormatInt(latestHeight, 10),
 		GasFee:            gas,
 	}
