@@ -19,6 +19,7 @@ import (
 	"strings"
 	chipRPC "uminer/miner-server/api/chipApi/rpc"
 	"uminer/miner-server/cmd"
+	"uminer/miner-server/cmd/utlog"
 	"uminer/miner-server/service/connect"
 
 	//"github.com/ethereum/go-ethereum/rpc"
@@ -684,9 +685,17 @@ func (s *ChainService) GetMinerChipsList(ctx context.Context, req *rpc.GetMinerC
 // ChallengeComputation accept challenge by the blockchain nodes to sign chips when chosen to report a new block
 func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.ChallengeComputationRequest) (*rpc.ChallengeComputationReply, error) {
 
+	// get all chips information
+	list, err := s.GetMinerChipsList(ctx, &rpc.GetMinerChipsListRequest{AccountId: req.Account})
+	if err != nil {
+		utlog.Mainlog.Error("fail to get miner chip lists RPC:", err.Error())
+		return nil, err
+	}
+	fmt.Println("my total chip power:", list.TotalPower)
+
 	// read data from chains db ...
 	signatures := make([]*rpc.SignatureSets, 0)
-	if len(req.Chips) == 0 {
+	if len(list.Chips) == 0 {
 		return &rpc.ChallengeComputationReply{
 			SignatureSets: signatures,
 			TxHash:        "",
@@ -724,7 +733,7 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			cardLists = response.Cards
 		}
 		conn.Close()
-		for _, item := range req.Chips {
+		for _, item := range list.Chips {
 			devId := -1
 			for _, card := range cardLists {
 				if card.SerialNum == item.SerialNumber {
@@ -750,22 +759,38 @@ func (s *ChainService) ChallengeComputation(ctx context.Context, req *rpc.Challe
 			})
 		}
 	}
+	if len(signatures) == 0 {
+		utlog.Mainlog.Error("NO chip signature is produced!")
+		return nil, errors.New("NO chip signature is produced")
+	}
 
 	// broadcast the signature to nodes (now under development)
-	privKeyBytes, err := ioutil.ReadFile("private.pem")
-	if err != nil {
-		return nil, err
-	}
-	privKey := string(privKeyBytes)
-	txStr := fmt.Sprintf("%+v", signatures)
-	txhash, err := connect.SendTransactionAsync(ctx, privKey+txStr)
-	if err != nil {
-		return nil, err
-	}
+	//file, fileErr := filepath.Glob("*.json")
+	//if fileErr != nil {
+	//	return nil, fileErr
+	//}
+	//fileContent, err := os.Open(file[0])
+	//if err != nil {
+	//	return nil, err
+	//}
+	//var keyData KeyData
+	//err = json.NewDecoder(fileContent).Decode(&keyData)
+	//if err != nil {
+	//	fmt.Println("Error decoding JSON:", err)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//}
+	//privKey := keyData.PrivateKey
+	//txStr := fmt.Sprintf("%+v", signatures)
+	//txhash, err := connect.SendTransactionAsync(ctx, privKey+txStr)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	return &rpc.ChallengeComputationReply{
 		SignatureSets: signatures,
-		TxHash:        txhash,
+		TxHash:        "txhash",
 	}, nil
 
 }

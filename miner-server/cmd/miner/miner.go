@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/go-kratos/kratos/v2"
 	minerGprc "github.com/go-kratos/kratos/v2/transport/grpc"
 	minerHttp "github.com/go-kratos/kratos/v2/transport/http"
@@ -65,7 +64,7 @@ func StartMinerServer(c *cli.Context) error {
 		Storage: []byte("my_storage_data"), // 设置 Storage 字段
 	}
 
-	app, close, err := initMinerApp(context.Background(), bootstrap, log.DefaultLogger)
+	app, close, err := initMinerApp(context.Background(), bootstrap, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -115,7 +114,7 @@ func newMiner(ctx context.Context, logger log.Logger, hs *minerHttp.Server, gs *
 	return kratos.New(
 		kratos.Context(ctx),
 		kratos.Metadata(map[string]string{}),
-		kratos.Logger(logger),
+		//kratos.Logger(logger),
 		kratos.Server(
 			hs,
 			gs,
@@ -144,13 +143,7 @@ func listenMining(ctx context.Context, address string) {
 		utlog.Mainlog.Error("fail to get miner address RPC:", err.Error())
 		return
 	}
-	// get all chips and workers address ready
-	list, err := chaincli.GetMinerChipsList(ctx, &chainApi.GetMinerChipsListRequest{AccountId: keys.Address})
-	if err != nil {
-		utlog.Mainlog.Error("fail to get miner chip lists RPC:", err.Error())
-		return
-	}
-	fmt.Println("my total chip power:", list.TotalPower)
+	// get all workers address ready
 	workers := make([]string, 0)
 	for _, item := range cmd.WorkerLists {
 		workers = append(workers, item)
@@ -158,10 +151,10 @@ func listenMining(ctx context.Context, address string) {
 
 	// start listening loop
 	request := &chainApi.ChallengeComputationRequest{
+		Account:      keys.Address,
 		ChallengeKey: keys.PubKey,
 		Url:          workers,
 		Message:      "utility",
-		Chips:        list.Chips,
 	}
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -202,6 +195,7 @@ func listenMining(ctx context.Context, address string) {
 		gzipBytes := util.GzipApi(resp)
 		res := gjson.Get(string(gzipBytes), "result").String()
 		sync := gjson.Get(res, "sync_info").String()
+		epochID := gjson.Get(sync, "epoch_id").String()
 		latestBlockH := gjson.Get(sync, "latest_block_height").Int()
 		if cmd.LatestBlockH == latestBlockH {
 			continue
@@ -215,6 +209,7 @@ func listenMining(ctx context.Context, address string) {
 			"id":      "dontcare",
 			"method":  "provider",
 			"params": map[string]interface{}{
+				"epoch_id":     epochID,
 				"block_height": latestBlockH,
 			},
 		}
@@ -227,8 +222,8 @@ func listenMining(ctx context.Context, address string) {
 		r.Header.Add("Content-Type", "application/json; charset=utf-8")
 		r.Header.Add("accept-encoding", "gzip,deflate")
 
-		cli := &http.Client{Timeout: 5 * time.Second}
-		resp, err = cli.Do(r)
+		CLI := &http.Client{Timeout: 5 * time.Second}
+		resp, err = CLI.Do(r)
 		if err != nil {
 			utlog.Mainlog.Error("fail to get query miner provider RPC response:", err.Error())
 			continue
@@ -238,8 +233,8 @@ func listenMining(ctx context.Context, address string) {
 		res = gjson.Get(string(gzipBytes), "result").String()
 		provider := gjson.Get(res, "provider_account").String()
 		// check if the provider candidate is yourself
-		if provider != request.ChallengeKey {
-			utlog.Mainlog.Warn("chosen : ", provider, ", my account is", request.ChallengeKey)
+		if provider != request.Account {
+			utlog.Mainlog.Warn("chosen account is: ", provider, ", my account is: ", request.Account)
 			continue
 		}
 
@@ -266,8 +261,8 @@ func waitingChallengeLoop(ctx context.Context, cli chainApi.ChainServiceClient, 
 				utlog.Mainlog.Error("Error calling ChallengeComputation:", err.Error())
 			} else {
 				utlog.Mainlog.Info("ChallengeComputation response: ", response)
+				utlog.Mainlog.Info("block is burst and broadcast !")
 			}
-			utlog.Mainlog.Info("block is burst and broadcast !")
 			return
 		}
 	}
