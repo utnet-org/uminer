@@ -5,7 +5,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"os"
 	"uminer/miner-server/cmd"
-	"uminer/miner-server/cmd/miner"
+	"uminer/miner-server/cmd/commander"
 	"uminer/miner-server/cmd/utlog"
 	"uminer/miner-server/cmd/worker"
 )
@@ -49,8 +49,8 @@ func main() {
 			{
 				Name:    "startcommander",
 				Aliases: []string{"s m"},
-				Usage:   "Start the miner server",
-				Action:  miner.StartMinerServer,
+				Usage:   "Start the commander server",
+				Action:  commander.StartCommanderServer,
 			},
 			{
 				Name:    "startworker",

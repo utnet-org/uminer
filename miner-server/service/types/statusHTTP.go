@@ -214,7 +214,7 @@ func (s *MinerStatusServiceHTTP) ListAllChipsHTTPHandler(w http.ResponseWriter, 
 	// get claimed chips
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(6*time.Second)))
 	defer cancel()
-	conn, err := grpc.DialContext(ctx, cmd.MinerServerIP+":9001", grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, cmd.CommanderServerIP+":9001", grpc.WithInsecure())
 	chainclient := chainRPC.NewChainServiceClient(conn)
 	var response2 *chainRPC.GetMinerChipsListReply
 	response2, err = chainclient.GetMinerChipsList(ctx, &chainRPC.GetMinerChipsListRequest{AccountId: req.Account}, grpc.WaitForReady(true))

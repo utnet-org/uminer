@@ -1,4 +1,4 @@
-package miner
+package commander
 
 import (
 	"bytes"
@@ -25,9 +25,9 @@ import (
 	"uminer/miner-server/util"
 )
 
-func StartMinerServer(c *cli.Context) error {
+func StartCommanderServer(c *cli.Context) error {
 
-	cmd.MinerServerIP = c.String("serverip")
+	cmd.CommanderServerIP = c.String("serverip")
 	if c.IsSet("node") {
 		cmd.NodeURL = c.String("node")
 	}
@@ -38,13 +38,13 @@ func StartMinerServer(c *cli.Context) error {
 	// activate miner server
 	httpServer := &serverConf.Server_HTTP{
 		Network: "tcp",
-		Addr:    cmd.MinerServerIP + ":8001",
+		Addr:    cmd.CommanderServerIP + ":8001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 
 	grpcServer := &serverConf.Server_GRPC{
 		Network: "tcp",
-		Addr:    cmd.MinerServerIP + ":9001",
+		Addr:    cmd.CommanderServerIP + ":9001",
 		Timeout: &duration.Duration{Seconds: 60},
 	}
 

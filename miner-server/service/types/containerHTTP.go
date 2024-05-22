@@ -90,7 +90,7 @@ func (s *ContainerServiceHTTP) GetNotebookListHandler(w http.ResponseWriter, r *
 	clientDeadline := time.Now().Add(time.Duration(connect.Delay * time.Second))
 	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
 	defer cancel()
-	conn, err := grpc.DialContext(ctx, cmd.MinerServerIP+":9001", grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, cmd.CommanderServerIP+":9001", grpc.WithInsecure())
 	if err != nil {
 		http2.Error(w, err.Error(), http2.StatusInternalServerError)
 		return

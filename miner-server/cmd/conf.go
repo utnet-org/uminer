@@ -5,8 +5,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-// MinerServerIP IP address of miner (for a single miner deployment)
-var MinerServerIP = "127.0.0.1"
+// CommanderServerIP IP address of miner (for a single miner deployment)
+var CommanderServerIP = "127.0.0.1"
 
 // WorkerServerIP IP address of worker (for a single worker deployment)
 var WorkerServerIP = "127.0.0.1"
